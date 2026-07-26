@@ -2,5 +2,6 @@
 cache/
 out/
 broadcast/
-deployments/
+deployments/*
+!deployments/example.env
 .env
