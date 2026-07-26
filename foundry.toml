@@ -1,0 +1,26 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.24"
+optimizer = true
+optimizer_runs = 10_000
+evm_version = "paris"
+fuzz.runs = 1_000
+invariant.runs = 256
+invariant.depth = 64
+invariant.fail_on_revert = false
+
+[profile.ci]
+fuzz.runs = 10_000
+invariant.runs = 1_000
+invariant.depth = 128
+
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = true
+wrap_comments = true
+

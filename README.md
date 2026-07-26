@@ -1,0 +1,43 @@
+# MINI Genesis Stream
+
+MINI Genesis Stream distributes a fixed allocation of MINI credit according to
+time-weighted DOT contributions. The first valid contribution starts the stream.
+All contributed DOT is irreversible and is forwarded to the immutable treasury in
+the same transaction.
+
+The deployment configuration supplies exact block counts and native-asset units.
+The intended product schedule is approximately ten days of contributions followed
+by four days of protected emission. No day-to-block conversion is hard-coded.
+
+## User rules
+
+- The first contribution must be at least the configured 1 DOT equivalent.
+- Later contributions must be strictly greater than the configured 0.1 DOT equivalent.
+- Contributions are accepted only before `contributionEndBlock`.
+- One percent of MINI's supply, supplied as `genesisAllocation`, streams over the
+  complete approximately fourteen-day period.
+- Earlier contributions participate in more completed emission blocks.
+- New DOT affects the current block and future blocks, never completed blocks.
+- Every contribution in the same block receives that block's emission according to
+  the block's final contribution balances, independent of transaction ordering.
+- DOT cannot be withdrawn or refunded and immediately enters the team treasury.
+- The protocol needs no randomness, keeper, oracle, or indexer.
+- Genesis outputs a conservative bonding-curve start-price anchor. With a 10:4
+  schedule it is approximately 3.5 times the final global average price.
+- MINI claims open only after the later bonding-curve and liquidity-pool process.
+- `totalRaisedDot` is gross on-chain contribution volume, not proof of unique external
+  capital; v0 does not identify recycled funds or related addresses.
+
+The bonding curve, graduation, AMM creation, and frontend are intentionally outside
+this repository's current scope.
+
+## Development
+
+Requirements: Foundry, Slither, Git, and Bash.
+
+```bash
+forge install
+make check
+```
+
+Dependencies are pinned as Git submodules.

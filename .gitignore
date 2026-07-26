@@ -1,0 +1,7 @@
+.agent/
+cache/
+out/
+broadcast/
+deployments/
+.env
+*.gas-snapshot
