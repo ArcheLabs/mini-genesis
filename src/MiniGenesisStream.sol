@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.24;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { IMiniGenesisStream } from "./interfaces/IMiniGenesisStream.sol";
 
 contract MiniGenesisStream is IMiniGenesisStream, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     uint256 public constant ACC_PRECISION = 1e36;
     uint256 private constant PRICE_PRECISION = 1e18;
 
@@ -158,12 +162,39 @@ contract MiniGenesisStream is IMiniGenesisStream, ReentrancyGuard {
         return users[account];
     }
 
-    function activateClaims(address) external pure {
-        revert ClaimsNotEnabled();
+    function activateClaims(address miniToken_) external {
+        if (msg.sender != claimActivator) revert Unauthorized();
+        if (!started()) revert NotStarted();
+        if (block.number < emissionEndBlock) revert EmissionNotEnded();
+        if (claimsEnabled) revert ClaimsAlreadyEnabled();
+        if (miniToken_ == address(0)) revert ZeroAddress();
+
+        if (!finalized) _finalize();
+
+        uint256 fundedAmount = IERC20(miniToken_).balanceOf(address(this));
+        if (fundedAmount < genesisAllocation) revert InsufficientMiniFunding();
+
+        miniToken = miniToken_;
+        claimsEnabled = true;
+        emit ClaimsActivated(miniToken_, fundedAmount);
     }
 
-    function claim() external pure {
-        revert ClaimsNotEnabled();
+    function claim() external nonReentrant {
+        if (!claimsEnabled) revert ClaimsNotEnabled();
+
+        _updateGlobal();
+        _accrue(msg.sender);
+
+        UserInfo storage user = users[msg.sender];
+        uint256 amount = user.accruedMini;
+        if (amount == 0) revert NothingToClaim();
+
+        user.accruedMini = 0;
+        user.claimedMini += amount;
+        totalClaimedMini += amount;
+
+        IERC20(miniToken).safeTransfer(msg.sender, amount);
+        emit Claimed(msg.sender, amount, user.claimedMini);
     }
 
     function _updateGlobal() internal {
