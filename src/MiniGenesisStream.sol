@@ -106,7 +106,7 @@ contract MiniGenesisStream is ReentrancyGuard {
         if (user.contributedDot == 0) ++contributorCount;
         user.contributedDot += msg.value;
         totalRaisedDot += msg.value;
-        user.rewardDebt = Math.mulDiv(user.contributedDot, accMiniPerDot, ACC_PRECISION);
+        user.rewardDebt += Math.mulDiv(msg.value, accMiniPerDot, ACC_PRECISION, Math.Rounding.Ceil);
 
         emit Contributed(msg.sender, msg.value, user.contributedDot, totalRaisedDot);
 
@@ -125,7 +125,8 @@ contract MiniGenesisStream is ReentrancyGuard {
         UserInfo storage user = users[account];
         uint256 accumulated =
             Math.mulDiv(user.contributedDot, _previewAccMiniPerDot(), ACC_PRECISION);
-        return user.accruedMini + accumulated - user.rewardDebt;
+        uint256 unsettled = accumulated > user.rewardDebt ? accumulated - user.rewardDebt : 0;
+        return user.accruedMini + unsettled;
     }
 
     function emittedMini() public view returns (uint256) {
@@ -166,8 +167,10 @@ contract MiniGenesisStream is ReentrancyGuard {
     function _accrue(address account) internal {
         UserInfo storage user = users[account];
         uint256 accumulated = Math.mulDiv(user.contributedDot, accMiniPerDot, ACC_PRECISION);
-        user.accruedMini += accumulated - user.rewardDebt;
-        user.rewardDebt = accumulated;
+        if (accumulated > user.rewardDebt) {
+            user.accruedMini += accumulated - user.rewardDebt;
+            user.rewardDebt = accumulated;
+        }
     }
 
     function _cumulativeEmission(uint256 elapsedBlocks) internal view returns (uint256) {
