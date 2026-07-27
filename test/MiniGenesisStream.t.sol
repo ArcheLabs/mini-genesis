@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import { Test } from "forge-std/Test.sol";
 import { MiniGenesisStream } from "../src/MiniGenesisStream.sol";
+import { PayableTreasury } from "./mocks/PayableTreasury.sol";
 import { ReentrantTreasury } from "./mocks/ReentrantTreasury.sol";
 import { RevertingTreasury } from "./mocks/RevertingTreasury.sol";
 
@@ -81,6 +82,13 @@ contract MiniGenesisStreamTest is Test {
         assertEq(uint256(stream.phase()), uint256(MiniGenesisStream.Phase.Ended));
     }
 
+    function testContributionSucceedsAtLastOpenBlock() public {
+        _contribute(alice, FIRST_MINIMUM);
+        vm.roll(stream.contributionEndBlock() - 1);
+        _contribute(bob, LATER_MINIMUM + 1);
+        assertEq(stream.userInfo(bob).contributedDot, LATER_MINIMUM + 1);
+    }
+
     function testSameBlockContributorsShareFirstBlock() public {
         _contribute(alice, 10 ether);
         _contribute(bob, 30 ether);
@@ -90,6 +98,44 @@ contract MiniGenesisStreamTest is Test {
         uint256 emission = ALLOCATION / 14;
         assertEq(stream.pendingMini(alice), emission / 4);
         assertEq(stream.pendingMini(bob), emission * 3 / 4);
+    }
+
+    function testSameBlockOrderDoesNotChangeCredit() public {
+        MiniGenesisStream aliceFirst = _deploy(makeAddr("treasury-a"));
+        MiniGenesisStream bobFirst = _deploy(makeAddr("treasury-b"));
+        _contributeTo(aliceFirst, alice, 10 ether);
+        _contributeTo(aliceFirst, bob, 30 ether);
+        _contributeTo(bobFirst, bob, 30 ether);
+        _contributeTo(bobFirst, alice, 10 ether);
+        vm.roll(block.number + 1);
+        assertEq(aliceFirst.pendingMini(alice), bobFirst.pendingMini(alice));
+        assertEq(aliceFirst.pendingMini(bob), bobFirst.pendingMini(bob));
+    }
+
+    function testSameBlockSplitAppendMatchesSingleAppend() public {
+        MiniGenesisStream split = _deploy(makeAddr("treasury-split"));
+        MiniGenesisStream combined = _deploy(makeAddr("treasury-combined"));
+        _contributeTo(split, alice, FIRST_MINIMUM);
+        _contributeTo(combined, alice, FIRST_MINIMUM);
+        _contributeTo(split, alice, LATER_MINIMUM + 1);
+        _contributeTo(split, alice, LATER_MINIMUM + 2);
+        _contributeTo(combined, alice, 2 * LATER_MINIMUM + 3);
+        vm.roll(block.number + 1);
+        assertEq(split.pendingMini(alice), combined.pendingMini(alice));
+    }
+
+    function testThreeUsersAndExistingAppendInSameBlock() public {
+        address carol = makeAddr("carol");
+        vm.deal(carol, 100 ether);
+        _contribute(alice, 10 ether);
+        _contribute(bob, 20 ether);
+        _contribute(alice, 10 ether);
+        _contribute(carol, 60 ether);
+        vm.roll(block.number + 1);
+        uint256 emission = ALLOCATION / 14;
+        assertApproxEqAbs(stream.pendingMini(alice), emission / 5, 1);
+        assertApproxEqAbs(stream.pendingMini(bob), emission / 5, 1);
+        assertApproxEqAbs(stream.pendingMini(carol), emission * 3 / 5, 1);
     }
 
     function testEmptyAndProtectionBlocksAccrueThroughView() public {
@@ -115,6 +161,37 @@ contract MiniGenesisStreamTest is Test {
         assertEq(stream.protectionEmissionMini(), ALLOCATION * 4 / 14);
     }
 
+    function testCompletedCreditUnaffectedByFutureParticipant() public {
+        _contribute(alice, FIRST_MINIMUM);
+        vm.roll(block.number + 3);
+        uint256 completedCredit = stream.pendingMini(alice);
+        _contribute(bob, FIRST_MINIMUM);
+        assertEq(stream.pendingMini(alice), completedCredit);
+    }
+
+    function testSingleParticipantWithAppendsReceivesAllocationWithinDustBound() public {
+        _contribute(alice, FIRST_MINIMUM);
+        vm.roll(block.number + 2);
+        _contribute(alice, LATER_MINIMUM + 1);
+        vm.roll(block.number + 3);
+        _contribute(alice, LATER_MINIMUM + 2);
+        vm.roll(stream.emissionEndBlock());
+        uint256 dust = ALLOCATION - stream.pendingMini(alice);
+        assertLe(dust, 2 * stream.totalEmissionBlocks() + 4);
+    }
+
+    function testSplitAddressesMatchesSingleAddressWithinDust() public {
+        MiniGenesisStream split = _deploy(makeAddr("treasury-split-addresses"));
+        MiniGenesisStream single = _deploy(makeAddr("treasury-single-address"));
+        _contributeTo(split, alice, FIRST_MINIMUM);
+        _contributeTo(split, bob, FIRST_MINIMUM);
+        _contributeTo(single, alice, 2 * FIRST_MINIMUM);
+        vm.roll(split.emissionEndBlock());
+        uint256 splitCredit = split.pendingMini(alice) + split.pendingMini(bob);
+        assertApproxEqAbs(splitCredit, single.pendingMini(alice), 2);
+        assertLe(splitCredit, ALLOCATION);
+    }
+
     function testTreasuryFailureRollsBackState() public {
         MiniGenesisStream broken = _deploy(address(new RevertingTreasury()));
         vm.prank(alice);
@@ -132,6 +209,14 @@ contract MiniGenesisStreamTest is Test {
         guarded.contribute{ value: 1 ether }();
         assertTrue(reentrant.attempted());
         assertEq(guarded.totalRaisedDot(), 1 ether);
+    }
+
+    function testPayableContractTreasuryReceivesDot() public {
+        PayableTreasury payableTreasury = new PayableTreasury();
+        MiniGenesisStream withContractTreasury = _deploy(address(payableTreasury));
+        _contributeTo(withContractTreasury, alice, FIRST_MINIMUM);
+        assertEq(payableTreasury.received(), FIRST_MINIMUM);
+        assertEq(address(withContractTreasury).balance, 0);
     }
 
     function testDirectNativeTransferReverts() public {
@@ -157,7 +242,11 @@ contract MiniGenesisStreamTest is Test {
     }
 
     function _contribute(address account, uint256 amount) internal {
+        _contributeTo(stream, account, amount);
+    }
+
+    function _contributeTo(MiniGenesisStream target, address account, uint256 amount) internal {
         vm.prank(account);
-        stream.contribute{ value: amount }();
+        target.contribute{ value: amount }();
     }
 }
