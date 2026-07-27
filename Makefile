@@ -20,8 +20,7 @@ snapshot:
 
 slither:
 	slither src/MiniGenesisStream.sol --foundry-out-directory out \
-		--filter-paths "lib" \
-		--exclude dangerous-strict-equalities,low-level-calls
+		--filter-paths "lib"
 
 abi:
 	./packages/abi/export.sh

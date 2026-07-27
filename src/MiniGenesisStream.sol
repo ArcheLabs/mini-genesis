@@ -110,11 +110,13 @@ contract MiniGenesisStream is ReentrancyGuard {
 
         emit Contributed(msg.sender, msg.value, user.contributedDot, totalRaisedDot);
 
+        // slither-disable-next-line low-level-calls
         (bool success,) = treasury.call{ value: msg.value }("");
         if (!success) revert TreasuryTransferFailed();
     }
 
     function phase() external view returns (Phase) {
+        // slither-disable-next-line dangerous-strict-equalities
         if (startBlock == 0) return Phase.Waiting;
         if (block.number < contributionEndBlock) return Phase.Contribution;
         if (block.number < emissionEndBlock) return Phase.Protection;
@@ -130,6 +132,7 @@ contract MiniGenesisStream is ReentrancyGuard {
     }
 
     function emittedMini() public view returns (uint256) {
+        // slither-disable-next-line dangerous-strict-equalities
         if (startBlock == 0 || block.number <= startBlock) return 0;
         return _cumulativeEmission(block.number - startBlock);
     }
@@ -143,6 +146,7 @@ contract MiniGenesisStream is ReentrancyGuard {
     }
 
     function _updateGlobal() internal {
+        // slither-disable-next-line dangerous-strict-equalities
         if (startBlock == 0) return;
         uint256 target = Math.min(block.number, emissionEndBlock);
         if (target <= lastSettledBlock) return;
@@ -155,6 +159,7 @@ contract MiniGenesisStream is ReentrancyGuard {
 
     function _previewAccMiniPerDot() internal view returns (uint256 currentAcc) {
         currentAcc = accMiniPerDot;
+        // slither-disable-next-line dangerous-strict-equalities
         if (startBlock == 0) return currentAcc;
         uint256 target = Math.min(block.number, emissionEndBlock);
         if (target <= lastSettledBlock) return currentAcc;

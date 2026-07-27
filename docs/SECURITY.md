@@ -9,10 +9,10 @@ transfer reverts all accounting, and `contribute` is reentrancy guarded. Direct
 native-asset transfers revert. Forced native transfers are not accounted as raised
 DOT and cannot be recovered by this contract.
 
-Slither excludes `dangerous-strict-equalities` because `startBlock == 0` is the
-intentional pre-start sentinel, and `low-level-calls` because forwarding native DOT
-requires a low-level call whose result is checked. Dependency paths are filtered;
-OpenZeppelin is pinned and analyzed by its upstream project.
+Slither suppressions are local to the reviewed lines: `startBlock == 0` is the
+intentional pre-start sentinel, and forwarding native DOT requires a low-level call
+whose result is checked. No detector is disabled globally. Dependency paths are
+filtered; OpenZeppelin is pinned and analyzed by its upstream project.
 
 Reward and price calculations use full-precision `Math.mulDiv`. Integer division can
 leave tiny accounting dust. The contract only records credit and never holds MINI.
