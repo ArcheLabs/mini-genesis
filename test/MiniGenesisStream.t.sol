@@ -110,10 +110,9 @@ contract MiniGenesisStreamTest is Test {
         assertEq(stream.emittedMini(), ALLOCATION);
     }
 
-    function testProtectionEmissionAndCurveAnchor() public {
+    function testProtectionEmission() public {
         _contribute(alice, 10 ether);
         assertEq(stream.protectionEmissionMini(), ALLOCATION * 4 / 14);
-        assertEq(stream.curveStartPriceX18(), 10 ether * 1e18 / stream.protectionEmissionMini());
     }
 
     function testTreasuryFailureRollsBackState() public {

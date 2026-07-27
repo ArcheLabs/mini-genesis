@@ -22,8 +22,9 @@ by four days of protected emission. No day-to-block conversion is hard-coded.
   the block's final contribution balances, independent of transaction ordering.
 - DOT cannot be withdrawn or refunded and immediately enters the team treasury.
 - The protocol needs no randomness, keeper, oracle, or indexer.
-- Genesis outputs a conservative bonding-curve start-price anchor. With a 10:4
-  schedule it is approximately 3.5 times the final global average price.
+- The contract exposes the raw values required to derive a later bonding-curve
+  anchor: `totalRaisedDot` and `protectionEmissionMini()`. Unit normalization belongs
+  to the future curve module.
 - The contract records future MINI credit only; it does not issue, hold, or transfer MINI.
 - `totalRaisedDot` is gross on-chain contribution volume, not proof of unique external
   capital; v0 does not identify recycled funds or related addresses.

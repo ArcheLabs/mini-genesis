@@ -37,8 +37,6 @@ contract MiniGenesisStream is ReentrancyGuard {
     error TreasuryTransferFailed();
 
     uint256 public constant ACC_PRECISION = 1e36;
-    uint256 private constant PRICE_PRECISION = 1e18;
-
     address public immutable treasury;
     uint256 public immutable genesisAllocation;
     uint256 public immutable contributionBlocks;
@@ -137,10 +135,6 @@ contract MiniGenesisStream is ReentrancyGuard {
 
     function protectionEmissionMini() public view returns (uint256) {
         return genesisAllocation - _cumulativeEmission(contributionBlocks);
-    }
-
-    function curveStartPriceX18() external view returns (uint256) {
-        return Math.mulDiv(totalRaisedDot, PRICE_PRECISION, protectionEmissionMini());
     }
 
     function userInfo(address account) external view returns (UserInfo memory) {
