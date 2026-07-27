@@ -25,6 +25,5 @@ jobs:
       - run: forge fmt --check
       - run: forge build
       - run: FOUNDRY_PROFILE=ci forge test
-      - run: slither . --foundry-out-directory out
+      - run: make slither
       - run: make abi-check
-

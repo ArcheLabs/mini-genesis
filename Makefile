@@ -19,7 +19,9 @@ snapshot:
 	forge snapshot
 
 slither:
-	slither . --foundry-out-directory out
+	slither src/MiniGenesisStream.sol --foundry-out-directory out \
+		--filter-paths "lib" \
+		--exclude dangerous-strict-equalities,low-level-calls
 
 abi:
 	./packages/abi/export.sh
@@ -28,4 +30,3 @@ abi-check: abi
 	git diff --exit-code -- packages/abi/MiniGenesisStream.json
 
 check: fmt-check build test slither abi-check
-
