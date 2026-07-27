@@ -16,10 +16,10 @@ contract GenesisHandler is Test {
     }
 
     function contribute(uint256 actorSeed, uint96 rawAmount) external {
-        if (block.number >= stream.contributionEndBlock() && stream.started()) return;
+        bool started = stream.startBlock() != 0;
+        if (started && block.number >= stream.contributionEndBlock()) return;
         address actor = address(uint160(uint256(keccak256(abi.encode(actorSeed)))));
-        uint256 minimum =
-            stream.started() ? stream.subsequentContributionMinimumExclusive() + 1 : 1 ether;
+        uint256 minimum = started ? stream.subsequentContributionMinimumExclusive() + 1 : 1 ether;
         uint256 amount = bound(rawAmount, minimum, 100 ether);
         vm.deal(actor, amount);
         vm.prank(actor);
@@ -38,9 +38,7 @@ contract MiniGenesisStreamInvariantTest is Test {
     address internal treasury = makeAddr("treasury");
 
     function setUp() public {
-        stream = new MiniGenesisStream(
-            treasury, makeAddr("activator"), 1_400_000 ether, 100, 40, 1 ether, 0.1 ether
-        );
+        stream = new MiniGenesisStream(treasury, 1_400_000 ether, 100, 40, 1 ether, 0.1 ether);
         handler = new GenesisHandler(stream, treasury);
         targetContract(address(handler));
     }
@@ -53,7 +51,6 @@ contract MiniGenesisStreamInvariantTest is Test {
     function invariantEmissionAndSettlementAreBounded() public view {
         assertLe(stream.emittedMini(), stream.genesisAllocation());
         assertLe(stream.lastSettledBlock(), stream.emissionEndBlock());
-        assertLe(stream.totalClaimedMini(), stream.genesisAllocation());
         assertEq(address(stream).balance, 0);
     }
 }

@@ -2,22 +2,15 @@
 pragma solidity 0.8.24;
 
 import { Test } from "forge-std/Test.sol";
-
 import { MiniGenesisStream } from "../src/MiniGenesisStream.sol";
-import { IMiniGenesisStream } from "../src/interfaces/IMiniGenesisStream.sol";
-import { MockMiniToken } from "./mocks/MockMiniToken.sol";
 import { ReentrantTreasury } from "./mocks/ReentrantTreasury.sol";
 import { RevertingTreasury } from "./mocks/RevertingTreasury.sol";
 
 contract MiniGenesisStreamTest is Test {
     uint256 internal constant ALLOCATION = 1_400_000 ether;
-    uint256 internal constant CONTRIBUTION_BLOCKS = 10;
-    uint256 internal constant PROTECTION_BLOCKS = 4;
     uint256 internal constant FIRST_MINIMUM = 1 ether;
     uint256 internal constant LATER_MINIMUM = 0.1 ether;
-
     address internal treasury = makeAddr("treasury");
-    address internal activator = makeAddr("activator");
     address internal alice = makeAddr("alice");
     address internal bob = makeAddr("bob");
     MiniGenesisStream internal stream;
@@ -28,68 +21,64 @@ contract MiniGenesisStreamTest is Test {
         vm.deal(bob, 100 ether);
     }
 
-    function testInitialConfigurationAndWaitingPhase() public view {
+    function testConfigurationAndWaitingPhase() public view {
         assertEq(stream.treasury(), treasury);
-        assertEq(stream.claimActivator(), activator);
+        assertEq(stream.genesisAllocation(), ALLOCATION);
         assertEq(stream.totalEmissionBlocks(), 14);
-        assertEq(uint256(stream.phase()), uint256(IMiniGenesisStream.Phase.Waiting));
-        assertFalse(stream.started());
+        assertEq(uint256(stream.phase()), uint256(MiniGenesisStream.Phase.Waiting));
     }
 
     function testConstructorValidation() public {
-        vm.expectRevert(IMiniGenesisStream.ZeroAddress.selector);
-        new MiniGenesisStream(
-            address(0), activator, ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM
-        );
-        vm.expectRevert(IMiniGenesisStream.InvalidConfiguration.selector);
-        new MiniGenesisStream(treasury, activator, 0, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
-        vm.expectRevert(IMiniGenesisStream.InvalidConfiguration.selector);
-        new MiniGenesisStream(treasury, activator, ALLOCATION, 10, 4, 1, 1);
+        vm.expectRevert(MiniGenesisStream.ZeroAddress.selector);
+        new MiniGenesisStream(address(0), ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
+        vm.expectRevert(MiniGenesisStream.InvalidConfiguration.selector);
+        new MiniGenesisStream(treasury, 0, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
+        vm.expectRevert(MiniGenesisStream.InvalidConfiguration.selector);
+        new MiniGenesisStream(treasury, ALLOCATION, 10, 4, 1, 1);
     }
 
-    function testFirstContributionMinimumAndStart() public {
+    function testFirstContributionStartsAndForwardsDot() public {
         vm.prank(alice);
-        vm.expectRevert(IMiniGenesisStream.FirstContributionTooSmall.selector);
+        vm.expectRevert(MiniGenesisStream.FirstContributionTooSmall.selector);
         stream.contribute{ value: FIRST_MINIMUM - 1 }();
-
-        uint256 treasuryBefore = treasury.balance;
         vm.expectEmit(true, true, false, true);
-        emit IMiniGenesisStream.GenesisStarted(
+        emit MiniGenesisStream.GenesisStarted(
             block.number, block.number + 10, block.number + 14, alice, FIRST_MINIMUM
         );
         vm.expectEmit(true, false, false, true);
-        emit IMiniGenesisStream.Contributed(alice, FIRST_MINIMUM, FIRST_MINIMUM, FIRST_MINIMUM);
+        emit MiniGenesisStream.Contributed(alice, FIRST_MINIMUM, FIRST_MINIMUM, FIRST_MINIMUM);
         vm.prank(alice);
         stream.contribute{ value: FIRST_MINIMUM }();
-
         assertEq(stream.startBlock(), block.number);
         assertEq(stream.contributionEndBlock(), block.number + 10);
         assertEq(stream.emissionEndBlock(), block.number + 14);
         assertEq(stream.lastSettledBlock(), block.number);
         assertEq(stream.totalRaisedDot(), FIRST_MINIMUM);
         assertEq(stream.contributorCount(), 1);
-        assertEq(treasury.balance - treasuryBefore, FIRST_MINIMUM);
+        assertEq(treasury.balance, FIRST_MINIMUM);
         assertEq(address(stream).balance, 0);
     }
 
-    function testLaterContributionIsStrictAndCountsUniqueUsers() public {
+    function testLaterMinimumAndContributorCount() public {
         _contribute(alice, FIRST_MINIMUM);
         vm.prank(bob);
-        vm.expectRevert(IMiniGenesisStream.ContributionTooSmall.selector);
+        vm.expectRevert(MiniGenesisStream.ContributionTooSmall.selector);
         stream.contribute{ value: LATER_MINIMUM }();
-
         _contribute(bob, LATER_MINIMUM + 1);
         _contribute(bob, 1 ether);
         assertEq(stream.contributorCount(), 2);
         assertEq(stream.userInfo(bob).contributedDot, LATER_MINIMUM + 1 + 1 ether);
     }
 
-    function testContributionEndBlockIsExclusive() public {
+    function testContributionEndIsExclusiveAndPhasesAreDerived() public {
         _contribute(alice, FIRST_MINIMUM);
         vm.roll(stream.contributionEndBlock());
+        assertEq(uint256(stream.phase()), uint256(MiniGenesisStream.Phase.Protection));
         vm.prank(bob);
-        vm.expectRevert(IMiniGenesisStream.ContributionClosed.selector);
+        vm.expectRevert(MiniGenesisStream.ContributionClosed.selector);
         stream.contribute{ value: 1 ether }();
+        vm.roll(stream.emissionEndBlock());
+        assertEq(uint256(stream.phase()), uint256(MiniGenesisStream.Phase.Ended));
     }
 
     function testSameBlockContributorsShareFirstBlock() public {
@@ -97,41 +86,42 @@ contract MiniGenesisStreamTest is Test {
         _contribute(bob, 30 ether);
         assertEq(stream.pendingMini(alice), 0);
         assertEq(stream.pendingMini(bob), 0);
-
         vm.roll(block.number + 1);
-        uint256 firstBlockEmission = ALLOCATION / 14;
-        assertEq(stream.pendingMini(alice), firstBlockEmission / 4);
-        assertEq(stream.pendingMini(bob), firstBlockEmission * 3 / 4);
+        uint256 emission = ALLOCATION / 14;
+        assertEq(stream.pendingMini(alice), emission / 4);
+        assertEq(stream.pendingMini(bob), emission * 3 / 4);
     }
 
-    function testEmptyBlocksAreSettledInOneUpdate() public {
+    function testEmptyAndProtectionBlocksAccrueThroughView() public {
         _contribute(alice, 1 ether);
         uint256 start = stream.startBlock();
         vm.roll(start + 7);
         _contribute(bob, 1 ether);
-
         assertEq(stream.lastSettledBlock(), start + 7);
         assertEq(stream.pendingMini(alice), ALLOCATION / 2);
         assertEq(stream.pendingMini(bob), 0);
-    }
-
-    function testEmissionViewsAndProtectionPrice() public {
-        _contribute(alice, 10 ether);
-        uint256 start = stream.startBlock();
-        assertEq(stream.cumulativeEmissionAt(start), 0);
-        assertEq(stream.protectionEmissionMini(), ALLOCATION * 4 / 14);
-        vm.roll(start + 14);
+        vm.roll(stream.contributionEndBlock() + 2);
+        uint256 duringProtection = stream.pendingMini(alice);
+        vm.roll(stream.emissionEndBlock());
+        assertGt(stream.pendingMini(alice), duringProtection);
+        uint256 finalCredit = stream.pendingMini(alice);
+        vm.roll(block.number + 1_000);
+        assertEq(stream.pendingMini(alice), finalCredit);
         assertEq(stream.emittedMini(), ALLOCATION);
-        assertEq(stream.remainingMini(), 0);
-        assertEq(stream.curveStartPriceX18(), 10 ether * 1e18 / (ALLOCATION * 4 / 14));
     }
 
-    function testTreasuryFailureRollsBackAllState() public {
+    function testProtectionEmissionAndCurveAnchor() public {
+        _contribute(alice, 10 ether);
+        assertEq(stream.protectionEmissionMini(), ALLOCATION * 4 / 14);
+        assertEq(stream.curveStartPriceX18(), 10 ether * 1e18 / stream.protectionEmissionMini());
+    }
+
+    function testTreasuryFailureRollsBackState() public {
         MiniGenesisStream broken = _deploy(address(new RevertingTreasury()));
         vm.prank(alice);
-        vm.expectRevert(IMiniGenesisStream.TreasuryTransferFailed.selector);
+        vm.expectRevert(MiniGenesisStream.TreasuryTransferFailed.selector);
         broken.contribute{ value: 1 ether }();
-        assertFalse(broken.started());
+        assertEq(broken.startBlock(), 0);
         assertEq(broken.totalRaisedDot(), 0);
     }
 
@@ -151,66 +141,6 @@ contract MiniGenesisStreamTest is Test {
         assertFalse(success);
     }
 
-    function testFinalizeIsPermissionlessAndSingleUse() public {
-        _contribute(alice, 1 ether);
-        vm.expectRevert(IMiniGenesisStream.EmissionNotEnded.selector);
-        stream.finalize();
-        vm.roll(stream.emissionEndBlock());
-        stream.finalize();
-        assertTrue(stream.finalized());
-        assertEq(stream.lastSettledBlock(), stream.emissionEndBlock());
-        vm.expectRevert(IMiniGenesisStream.AlreadyFinalized.selector);
-        stream.finalize();
-    }
-
-    function testActivateAndClaim() public {
-        _contribute(alice, 1 ether);
-        vm.roll(stream.emissionEndBlock());
-        uint256 expected = stream.pendingMini(alice);
-        MockMiniToken token = new MockMiniToken();
-
-        vm.prank(alice);
-        vm.expectRevert(IMiniGenesisStream.Unauthorized.selector);
-        stream.activateClaims(address(token));
-
-        token.mint(address(stream), ALLOCATION - 1);
-        vm.prank(activator);
-        vm.expectRevert(IMiniGenesisStream.InsufficientMiniFunding.selector);
-        stream.activateClaims(address(token));
-        token.mint(address(stream), 1);
-
-        vm.prank(activator);
-        stream.activateClaims(address(token));
-        assertTrue(stream.finalized());
-        assertTrue(stream.claimsEnabled());
-        assertEq(uint256(stream.phase()), uint256(IMiniGenesisStream.Phase.Claims));
-
-        vm.prank(alice);
-        stream.claim();
-        assertEq(token.balanceOf(alice), expected);
-        assertEq(stream.totalClaimedMini(), expected);
-        assertEq(stream.userInfo(alice).claimedMini, expected);
-        vm.prank(alice);
-        vm.expectRevert(IMiniGenesisStream.NothingToClaim.selector);
-        stream.claim();
-    }
-
-    function testCannotActivateBeforeEndOrTwice() public {
-        _contribute(alice, 1 ether);
-        MockMiniToken token = new MockMiniToken();
-        token.mint(address(stream), ALLOCATION);
-        vm.prank(activator);
-        vm.expectRevert(IMiniGenesisStream.EmissionNotEnded.selector);
-        stream.activateClaims(address(token));
-
-        vm.roll(stream.emissionEndBlock());
-        vm.prank(activator);
-        stream.activateClaims(address(token));
-        vm.prank(activator);
-        vm.expectRevert(IMiniGenesisStream.ClaimsAlreadyEnabled.selector);
-        stream.activateClaims(address(token));
-    }
-
     function testGas_FirstContribution() public {
         _contribute(alice, FIRST_MINIMUM);
     }
@@ -224,15 +154,7 @@ contract MiniGenesisStreamTest is Test {
     }
 
     function _deploy(address treasury_) internal returns (MiniGenesisStream) {
-        return new MiniGenesisStream(
-            treasury_,
-            activator,
-            ALLOCATION,
-            CONTRIBUTION_BLOCKS,
-            PROTECTION_BLOCKS,
-            FIRST_MINIMUM,
-            LATER_MINIMUM
-        );
+        return new MiniGenesisStream(treasury_, ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
     }
 
     function _contribute(address account, uint256 amount) internal {
