@@ -9,7 +9,6 @@ tested Polkadot Hub network before a production broadcast.
 RPC_URL
 PRIVATE_KEY
 TREASURY
-CLAIM_ACTIVATOR
 GENESIS_ALLOCATION
 CONTRIBUTION_BLOCKS
 PROTECTION_BLOCKS
@@ -25,7 +24,7 @@ one DOT on Polkadot Hub TestNet. Block counts, not timestamps, define the schedu
 ## Procedure
 
 1. Test the target RPC's block cadence and native-asset units.
-2. Review the treasury and activator (preferably simple multisigs or EOAs).
+2. Review the treasury (preferably a simple multisig or EOA).
 3. Dry-run and inspect every value printed by the script:
 
    ```bash
@@ -45,16 +44,3 @@ one DOT on Polkadot Hub TestNet. Block counts, not timestamps, define the schedu
 6. Read all immutable getters from the deployed contract and compare them with the
    signed deployment checklist.
 7. Do not send a start transaction. The first real participant starts the stream.
-
-## Claim activation
-
-After emission ends and the later bonding-curve/liquidity process is complete,
-transfer at least `genesisAllocation` MINI to the stream. Confirm its token balance,
-the token address, and the caller is `claimActivator`, then run:
-
-```bash
-GENESIS_STREAM=0x... MINI_TOKEN=0x... \
-forge script script/ActivateClaims.s.sol --rpc-url "$RPC_URL" --broadcast
-```
-
-Activation is irreversible. The MINI token address cannot be replaced.

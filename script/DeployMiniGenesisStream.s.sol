@@ -9,7 +9,6 @@ contract DeployMiniGenesisStream is Script {
     function run() external returns (MiniGenesisStream stream) {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         address treasury = vm.envAddress("TREASURY");
-        address claimActivator = vm.envAddress("CLAIM_ACTIVATOR");
         uint256 allocation = vm.envUint("GENESIS_ALLOCATION");
         uint256 contributionBlocks = vm.envUint("CONTRIBUTION_BLOCKS");
         uint256 protectionBlocks = vm.envUint("PROTECTION_BLOCKS");
@@ -19,13 +18,20 @@ contract DeployMiniGenesisStream is Script {
 
         console2.log("chain id", block.chainid);
         console2.log("treasury", treasury);
-        console2.log("claim activator", claimActivator);
         console2.log("genesis allocation", allocation);
         console2.log("contribution blocks", contributionBlocks);
         console2.log("protection blocks", protectionBlocks);
         console2.log("total blocks", contributionBlocks + protectionBlocks);
         console2.log("first contribution minimum", firstMinimum);
         console2.log("later exclusive minimum", laterMinimum);
+        console2.log(
+            "protection ratio (x1e18)",
+            protectionBlocks * 1e18 / (contributionBlocks + protectionBlocks)
+        );
+        console2.log(
+            "theoretical curve multiple (x1e18)",
+            (contributionBlocks + protectionBlocks) * 1e18 / protectionBlocks
+        );
         if (expectedBlockTime != 0) {
             console2.log(
                 "estimated duration (seconds)",
@@ -35,18 +41,11 @@ contract DeployMiniGenesisStream is Script {
 
         vm.startBroadcast(privateKey);
         stream = new MiniGenesisStream(
-            treasury,
-            claimActivator,
-            allocation,
-            contributionBlocks,
-            protectionBlocks,
-            firstMinimum,
-            laterMinimum
+            treasury, allocation, contributionBlocks, protectionBlocks, firstMinimum, laterMinimum
         );
         vm.stopBroadcast();
 
         require(stream.treasury() == treasury, "treasury verification");
-        require(stream.claimActivator() == claimActivator, "activator verification");
         require(stream.genesisAllocation() == allocation, "allocation verification");
         require(stream.contributionBlocks() == contributionBlocks, "contribution verification");
         require(stream.protectionBlocks() == protectionBlocks, "protection verification");

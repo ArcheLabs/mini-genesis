@@ -7,11 +7,6 @@
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "claimActivator_",
-        "type": "address"
-      },
-      {
         "internalType": "uint256",
         "name": "genesisAllocation_",
         "type": "uint256"
@@ -67,52 +62,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "miniToken_",
-        "type": "address"
-      }
-    ],
-    "name": "activateClaims",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "claim",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "claimActivator",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "claimsEnabled",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "contribute",
     "outputs": [],
@@ -148,25 +97,6 @@
   {
     "inputs": [],
     "name": "contributorCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "blockNumber",
-        "type": "uint256"
-      }
-    ],
-    "name": "cumulativeEmissionAt",
     "outputs": [
       {
         "internalType": "uint256",
@@ -218,26 +148,6 @@
   },
   {
     "inputs": [],
-    "name": "finalize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "finalized",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "firstContributionMinimum",
     "outputs": [
       {
@@ -276,19 +186,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "miniToken",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -312,7 +209,7 @@
     "name": "phase",
     "outputs": [
       {
-        "internalType": "enum IMiniGenesisStream.Phase",
+        "internalType": "enum MiniGenesisStream.Phase",
         "name": "",
         "type": "uint8"
       }
@@ -348,19 +245,6 @@
   },
   {
     "inputs": [],
-    "name": "remainingMini",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "startBlock",
     "outputs": [
       {
@@ -374,46 +258,7 @@
   },
   {
     "inputs": [],
-    "name": "started",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "streamAveragePriceX18",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "subsequentContributionMinimumExclusive",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalClaimedMini",
     "outputs": [
       {
         "internalType": "uint256",
@@ -489,64 +334,15 @@
             "internalType": "uint256",
             "name": "accruedMini",
             "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "claimedMini",
-            "type": "uint256"
           }
         ],
-        "internalType": "struct IMiniGenesisStream.UserInfo",
+        "internalType": "struct MiniGenesisStream.UserInfo",
         "name": "",
         "type": "tuple"
       }
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "accountClaimedTotal",
-        "type": "uint256"
-      }
-    ],
-    "name": "Claimed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "miniToken",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "fundedAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "ClaimsActivated",
-    "type": "event"
   },
   {
     "anonymous": false,
@@ -577,37 +373,6 @@
       }
     ],
     "name": "Contributed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "totalRaised",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "genesisAllocation",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "protectionEmission",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "curveStartPriceX18",
-        "type": "uint256"
-      }
-    ],
-    "name": "Finalized",
     "type": "event"
   },
   {
@@ -648,43 +413,6 @@
     "type": "event"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "target",
-        "type": "address"
-      }
-    ],
-    "name": "AddressEmptyCode",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "AddressInsufficientBalance",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "AlreadyFinalized",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ClaimsAlreadyEnabled",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ClaimsNotEnabled",
-    "type": "error"
-  },
-  {
     "inputs": [],
     "name": "ContributionClosed",
     "type": "error"
@@ -696,22 +424,7 @@
   },
   {
     "inputs": [],
-    "name": "EmissionNotEnded",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "FailedInnerCall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "FirstContributionTooSmall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InsufficientMiniFunding",
     "type": "error"
   },
   {
@@ -726,38 +439,12 @@
   },
   {
     "inputs": [],
-    "name": "NotStarted",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NothingToClaim",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      }
-    ],
-    "name": "SafeERC20FailedOperation",
     "type": "error"
   },
   {
     "inputs": [],
     "name": "TreasuryTransferFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "Unauthorized",
     "type": "error"
   },
   {

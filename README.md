@@ -24,7 +24,7 @@ by four days of protected emission. No day-to-block conversion is hard-coded.
 - The protocol needs no randomness, keeper, oracle, or indexer.
 - Genesis outputs a conservative bonding-curve start-price anchor. With a 10:4
   schedule it is approximately 3.5 times the final global average price.
-- MINI claims open only after the later bonding-curve and liquidity-pool process.
+- The contract records future MINI credit only; it does not issue, hold, or transfer MINI.
 - `totalRaisedDot` is gross on-chain contribution volume, not proof of unique external
   capital; v0 does not identify recycled funds or related addresses.
 

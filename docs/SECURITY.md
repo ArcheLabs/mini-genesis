@@ -1,21 +1,16 @@
 # Security model
 
-The contract is immutable and non-upgradeable. It has no owner, pause, refund,
-withdrawal, allocation edit, timing edit, user-balance edit, token sweep, keeper,
-oracle, randomness, or participant iteration.
-
-The only post-deployment authority is `claimActivator`, which can set the MINI token
-once after emission ends and only when the contract holds at least the complete
-Genesis allocation. `finalize` is permissionless.
+The contract is immutable and non-upgradeable. It has no owner, administrator,
+pause, refund, withdrawal, allocation edit, timing edit, user-balance edit, keeper,
+oracle, randomness, token integration, or participant iteration.
 
 Contributed DOT is forwarded to the immutable treasury synchronously. A failed
 transfer reverts all accounting, and `contribute` is reentrancy guarded. Direct
 native-asset transfers revert. Forced native transfers are not accounted as raised
 DOT and cannot be recovered by this contract.
 
-Claims use OpenZeppelin `SafeERC20`. Reward and price calculations use full-precision
-`Math.mulDiv`. Integer division can leave tiny MINI dust; there is deliberately no
-sweep function.
+Reward and price calculations use full-precision `Math.mulDiv`. Integer division can
+leave tiny accounting dust. The contract only records credit and never holds MINI.
 
 `totalRaisedDot` records gross contribution flow. The protocol cannot prove unique
 capital or prevent DOT returned by the treasury or other parties from being
