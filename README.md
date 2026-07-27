@@ -32,6 +32,15 @@ by four days of protected emission. No day-to-block conversion is hard-coded.
 The bonding curve, graduation, AMM creation, and frontend are intentionally outside
 this repository's current scope.
 
+## Documentation
+
+- [Accounting](docs/ACCOUNTING.md)
+- [Build](docs/BUILD.md)
+- [Deployment](docs/DEPLOYMENT.md)
+- [Security](docs/SECURITY.md)
+- [TestNet checklist](docs/TESTNET_CHECKLIST.md)
+- [Mainnet checklist](docs/MAINNET_CHECKLIST.md)
+
 ## Development
 
 Requirements: Foundry, Slither, Git, and Bash.

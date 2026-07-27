@@ -17,9 +17,11 @@ SUBSEQUENT_CONTRIBUTION_MINIMUM_EXCLUSIVE
 EXPECTED_BLOCK_TIME_SECONDS (optional display aid)
 ```
 
-`GENESIS_ALLOCATION` is MINI base units. Contribution thresholds are DOT native
-base units. Do not assume Ethereum-style decimals: validate the representation of
-one DOT on Polkadot Hub TestNet. Block counts, not timestamps, define the schedule.
+`GENESIS_ALLOCATION` is the future MINI base-unit accounting scale. Contribution
+thresholds are target-chain native base units. Do not assume DOT has 18 decimals,
+and do not assume any MINI decimal count. Validate the representation of one DOT
+and 0.1 DOT on Polkadot Hub TestNet. Block counts, not timestamps, define the
+schedule and must be derived from measured TestNet cadence.
 
 ## Procedure
 
@@ -44,3 +46,4 @@ one DOT on Polkadot Hub TestNet. Block counts, not timestamps, define the schedu
 6. Read all immutable getters from the deployed contract and compare them with the
    signed deployment checklist.
 7. Do not send a start transaction. The first real participant starts the stream.
+   The deployment team must not send a test contribution to the production address.

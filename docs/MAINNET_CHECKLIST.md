@@ -1,0 +1,24 @@
+# Mainnet checklist
+
+- [ ] Treasury address independently reviewed by two people
+- [ ] Final MINI total supply recorded
+- [ ] `genesisAllocation == total supply / 100` in matching accounting units
+- [ ] `contributionBlocks` confirmed
+- [ ] `protectionBlocks` confirmed
+- [ ] First contribution minimum confirmed in native base units
+- [ ] Later exclusive minimum confirmed in native base units
+- [ ] Solidity compiler version recorded
+- [ ] Foundry version recorded
+- [ ] OpenZeppelin commit recorded
+- [ ] Source commit SHA recorded
+- [ ] ABI hash recorded
+- [ ] Creation bytecode hash recorded
+- [ ] Runtime bytecode hash recorded
+- [ ] Constructor arguments independently reviewed
+- [ ] Signed TestNet validation record attached
+- [ ] Deployment account balance confirmed
+- [ ] Deployment transaction recorded
+- [ ] Explorer source verification completed
+- [ ] Every immutable read back and compared with the signed checklist
+- [ ] Deployment address publicly announced
+- [ ] Deployment team will not send a test/start contribution

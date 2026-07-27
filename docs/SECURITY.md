@@ -1,6 +1,7 @@
 # Security model
 
-The contract is immutable and non-upgradeable. It has no owner, administrator,
+The contract does not know, issue, hold, or transfer a MINI token. It is immutable
+and non-upgradeable. It has no owner, administrator,
 pause, refund, withdrawal, allocation edit, timing edit, user-balance edit, keeper,
 oracle, randomness, token integration, or participant iteration.
 
@@ -22,6 +23,6 @@ capital or prevent DOT returned by the treasury or other parties from being
 contributed again.
 
 Before mainnet deployment, validate compiler/runtime behavior, native units, block
-cadence, treasury call behavior, and ERC-20 compatibility on Polkadot Hub TestNet.
+cadence, treasury call behavior, and RPC reads on Polkadot Hub TestNet.
 Report vulnerabilities privately to the maintainers; do not include exploitable
 details in a public issue.

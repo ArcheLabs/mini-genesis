@@ -1,0 +1,24 @@
+# TestNet checklist
+
+- [ ] Target chain and chain ID recorded
+- [ ] RPC endpoint recorded and tested
+- [ ] Explorer URL recorded
+- [ ] Foundry deployment path exercised
+- [ ] Solidity 0.8.24 behavior verified
+- [ ] Native base units representing 1 DOT verified through `msg.value`
+- [ ] Native base units representing 0.1 DOT verified through `msg.value`
+- [ ] Actual block cadence measured
+- [ ] Approximately 10-day contribution block count confirmed
+- [ ] Approximately 4-day protection block count confirmed
+- [ ] First valid contribution starts the stream
+- [ ] Two users contributing in one block receive block-final allocation
+- [ ] `contributionEndBlock - 1` accepts and `contributionEndBlock` rejects
+- [ ] Protection blocks continue increasing `pendingMini`
+- [ ] Credit and emission freeze at `emissionEndBlock`
+- [ ] EOA treasury behavior verified
+- [ ] Intended production treasury type and callback behavior verified
+- [ ] `pendingMini` RPC query verified without log scanning
+- [ ] `Contributed` event retrieval verified
+- [ ] Contract source verified on explorer
+- [ ] Exported ABI corresponds to deployed bytecode
+- [ ] Deployment and contribution fees recorded
