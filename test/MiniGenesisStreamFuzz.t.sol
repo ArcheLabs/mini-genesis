@@ -16,8 +16,9 @@ contract MiniGenesisStreamFuzzTest is Test {
         allocation = uint128(bound(allocation, 1, type(uint128).max));
         contributionBlocks = uint16(bound(contributionBlocks, 1, 10_000));
         protectionBlocks = uint16(bound(protectionBlocks, 1, 10_000));
-        MiniGenesisStream stream =
-            new MiniGenesisStream(treasury, allocation, contributionBlocks, protectionBlocks, 2, 1);
+        MiniGenesisStream stream = new MiniGenesisStream(
+            treasury, allocation, allocation, contributionBlocks, protectionBlocks, 2, 1
+        );
         vm.deal(alice, 2);
         vm.prank(alice);
         stream.contribute{ value: 2 }();
@@ -37,7 +38,7 @@ contract MiniGenesisStreamFuzzTest is Test {
     function testFuzzSingleContributorFinalCredit(uint96 amount) public {
         amount = uint96(bound(amount, 1 ether, 1_000_000 ether));
         MiniGenesisStream stream =
-            new MiniGenesisStream(treasury, 1e30, 100, 40, 1 ether, 0.1 ether);
+            new MiniGenesisStream(treasury, 1e30, 1e30, 100, 40, 1 ether, 0.1 ether);
         vm.deal(alice, amount);
         vm.prank(alice);
         stream.contribute{ value: amount }();

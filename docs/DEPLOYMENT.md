@@ -10,6 +10,7 @@ RPC_URL
 PRIVATE_KEY
 TREASURY
 GENESIS_ALLOCATION
+LUCKY_ROOT_ALLOCATION
 CONTRIBUTION_BLOCKS
 PROTECTION_BLOCKS
 FIRST_CONTRIBUTION_MINIMUM
@@ -17,7 +18,8 @@ SUBSEQUENT_CONTRIBUTION_MINIMUM_EXCLUSIVE
 EXPECTED_BLOCK_TIME_SECONDS (optional display aid)
 ```
 
-`GENESIS_ALLOCATION` is the future MINI base-unit accounting scale. Contribution
+`GENESIS_ALLOCATION` is the future MINI base-unit accounting scale.
+`LUCKY_ROOT_ALLOCATION` is the independent, non-zero Lucky Root Credit schedule total. Contribution
 thresholds are target-chain native base units. Do not assume DOT has 18 decimals,
 and do not assume any MINI decimal count. Validate the representation of one DOT
 and 0.1 DOT on Polkadot Hub TestNet. Block counts, not timestamps, define the

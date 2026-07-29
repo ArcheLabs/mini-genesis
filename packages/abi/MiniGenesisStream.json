@@ -13,6 +13,11 @@
       },
       {
         "internalType": "uint256",
+        "name": "luckyRootAllocation_",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "contributionBlocks_",
         "type": "uint256"
       },
@@ -108,6 +113,25 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "elapsedContributionBlocks",
+        "type": "uint256"
+      }
+    ],
+    "name": "cumulativeLuckyRootCredit",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "emissionEndBlock",
     "outputs": [
@@ -162,6 +186,38 @@
   {
     "inputs": [],
     "name": "lastSettledBlock",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "luckyRootAllocation",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "elapsedBlock",
+        "type": "uint256"
+      }
+    ],
+    "name": "luckyRootCreditForElapsedBlock",
     "outputs": [
       {
         "internalType": "uint256",
@@ -397,6 +453,25 @@
       }
     ],
     "name": "GenesisStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "allocation",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "contributionBlocks",
+        "type": "uint256"
+      }
+    ],
+    "name": "LuckyRootCreditConfigured",
     "type": "event"
   },
   {

@@ -29,6 +29,7 @@ contract MiniGenesisStreamModelTest is Test {
         stream = new MiniGenesisStream(
             treasury,
             ALLOCATION,
+            ALLOCATION,
             CONTRIBUTION_BLOCKS,
             PROTECTION_BLOCKS,
             FIRST_MINIMUM,

@@ -10,6 +10,7 @@ contract DeployMiniGenesisStream is Script {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         address treasury = vm.envAddress("TREASURY");
         uint256 allocation = vm.envUint("GENESIS_ALLOCATION");
+        uint256 luckyRootAllocation = vm.envUint("LUCKY_ROOT_ALLOCATION");
         uint256 contributionBlocks = vm.envUint("CONTRIBUTION_BLOCKS");
         uint256 protectionBlocks = vm.envUint("PROTECTION_BLOCKS");
         uint256 firstMinimum = vm.envUint("FIRST_CONTRIBUTION_MINIMUM");
@@ -19,6 +20,7 @@ contract DeployMiniGenesisStream is Script {
         console2.log("chain id", block.chainid);
         console2.log("treasury", treasury);
         console2.log("genesis allocation", allocation);
+        console2.log("lucky root allocation", luckyRootAllocation);
         console2.log("contribution blocks", contributionBlocks);
         console2.log("protection blocks", protectionBlocks);
         console2.log("total blocks", contributionBlocks + protectionBlocks);
@@ -41,12 +43,21 @@ contract DeployMiniGenesisStream is Script {
 
         vm.startBroadcast(privateKey);
         stream = new MiniGenesisStream(
-            treasury, allocation, contributionBlocks, protectionBlocks, firstMinimum, laterMinimum
+            treasury,
+            allocation,
+            luckyRootAllocation,
+            contributionBlocks,
+            protectionBlocks,
+            firstMinimum,
+            laterMinimum
         );
         vm.stopBroadcast();
 
         require(stream.treasury() == treasury, "treasury verification");
         require(stream.genesisAllocation() == allocation, "allocation verification");
+        require(
+            stream.luckyRootAllocation() == luckyRootAllocation, "lucky allocation verification"
+        );
         require(stream.contributionBlocks() == contributionBlocks, "contribution verification");
         require(stream.protectionBlocks() == protectionBlocks, "protection verification");
         require(stream.firstContributionMinimum() == firstMinimum, "first min verification");

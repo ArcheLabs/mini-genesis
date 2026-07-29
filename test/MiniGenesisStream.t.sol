@@ -31,11 +31,15 @@ contract MiniGenesisStreamTest is Test {
 
     function testConstructorValidation() public {
         vm.expectRevert(MiniGenesisStream.ZeroAddress.selector);
-        new MiniGenesisStream(address(0), ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
+        new MiniGenesisStream(
+            address(0), ALLOCATION, ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM
+        );
         vm.expectRevert(MiniGenesisStream.InvalidConfiguration.selector);
-        new MiniGenesisStream(treasury, 0, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
+        new MiniGenesisStream(treasury, 0, ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
         vm.expectRevert(MiniGenesisStream.InvalidConfiguration.selector);
-        new MiniGenesisStream(treasury, ALLOCATION, 10, 4, 1, 1);
+        new MiniGenesisStream(treasury, ALLOCATION, 0, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
+        vm.expectRevert(MiniGenesisStream.InvalidConfiguration.selector);
+        new MiniGenesisStream(treasury, ALLOCATION, ALLOCATION, 10, 4, 1, 1);
     }
 
     function testFirstContributionStartsAndForwardsDot() public {
@@ -238,7 +242,9 @@ contract MiniGenesisStreamTest is Test {
     }
 
     function _deploy(address treasury_) internal returns (MiniGenesisStream) {
-        return new MiniGenesisStream(treasury_, ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM);
+        return new MiniGenesisStream(
+            treasury_, ALLOCATION, ALLOCATION, 10, 4, FIRST_MINIMUM, LATER_MINIMUM
+        );
     }
 
     function _contribute(address account, uint256 amount) internal {

@@ -5,6 +5,10 @@ time-weighted DOT contributions. The first valid contribution starts the stream.
 All contributed DOT is irreversible and is forwarded to the immutable treasury in
 the same transaction.
 
+An independent `luckyRootAllocation` cumulative-difference schedule defines off-chain,
+finalized-event Lucky Root Credit settlement without changing direct MINI streaming accounting.
+See `docs/LUCKY_ROOT_CREDIT_ACCOUNTING.md`.
+
 The deployment configuration supplies exact block counts and native-asset units.
 The intended product schedule is approximately ten days of contributions followed
 by four days of protected emission. No day-to-block conversion is hard-coded.

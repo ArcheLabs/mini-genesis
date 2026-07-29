@@ -28,6 +28,7 @@ contract MiniGenesisStream is ReentrancyGuard {
     event Contributed(
         address indexed contributor, uint256 amount, uint256 accountTotal, uint256 totalRaised
     );
+    event LuckyRootCreditConfigured(uint256 allocation, uint256 contributionBlocks);
 
     error ZeroAddress();
     error InvalidConfiguration();
@@ -39,6 +40,7 @@ contract MiniGenesisStream is ReentrancyGuard {
     uint256 public constant ACC_PRECISION = 1e36;
     address public immutable treasury;
     uint256 public immutable genesisAllocation;
+    uint256 public immutable luckyRootAllocation;
     uint256 public immutable contributionBlocks;
     uint256 public immutable protectionBlocks;
     uint256 public immutable totalEmissionBlocks;
@@ -58,6 +60,7 @@ contract MiniGenesisStream is ReentrancyGuard {
     constructor(
         address treasury_,
         uint256 genesisAllocation_,
+        uint256 luckyRootAllocation_,
         uint256 contributionBlocks_,
         uint256 protectionBlocks_,
         uint256 firstContributionMinimum_,
@@ -65,18 +68,41 @@ contract MiniGenesisStream is ReentrancyGuard {
     ) {
         if (treasury_ == address(0)) revert ZeroAddress();
         if (
-            genesisAllocation_ == 0 || contributionBlocks_ == 0 || protectionBlocks_ == 0
-                || firstContributionMinimum_ == 0 || subsequentContributionMinimumExclusive_ == 0
+            genesisAllocation_ == 0 || luckyRootAllocation_ == 0 || contributionBlocks_ == 0
+                || protectionBlocks_ == 0 || firstContributionMinimum_ == 0
+                || subsequentContributionMinimumExclusive_ == 0
                 || firstContributionMinimum_ <= subsequentContributionMinimumExclusive_
         ) revert InvalidConfiguration();
 
         treasury = treasury_;
         genesisAllocation = genesisAllocation_;
+        luckyRootAllocation = luckyRootAllocation_;
         contributionBlocks = contributionBlocks_;
         protectionBlocks = protectionBlocks_;
         totalEmissionBlocks = contributionBlocks_ + protectionBlocks_;
         firstContributionMinimum = firstContributionMinimum_;
         subsequentContributionMinimumExclusive = subsequentContributionMinimumExclusive_;
+        emit LuckyRootCreditConfigured(luckyRootAllocation_, contributionBlocks_);
+    }
+
+    /// @notice Planned Lucky Root Credit after a number of contribution blocks.
+    /// @dev The input is capped at contributionBlocks and the cumulative-difference
+    /// schedule guarantees that all block allocations sum exactly to the configured total.
+    function cumulativeLuckyRootCredit(uint256 elapsedContributionBlocks)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 elapsed = elapsedContributionBlocks > contributionBlocks
+            ? contributionBlocks
+            : elapsedContributionBlocks;
+        return Math.mulDiv(luckyRootAllocation, elapsed, contributionBlocks);
+    }
+
+    /// @notice Planned Lucky Root Credit for a zero-based elapsed contribution block.
+    function luckyRootCreditForElapsedBlock(uint256 elapsedBlock) external view returns (uint256) {
+        if (elapsedBlock >= contributionBlocks) return 0;
+        return cumulativeLuckyRootCredit(elapsedBlock + 1) - cumulativeLuckyRootCredit(elapsedBlock);
     }
 
     function contribute() external payable nonReentrant {
