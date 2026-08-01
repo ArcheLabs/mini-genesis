@@ -16,8 +16,13 @@ contract DeployMiniGenesisStream is Script {
         uint256 firstMinimum = vm.envUint("FIRST_CONTRIBUTION_MINIMUM");
         uint256 laterMinimum = vm.envUint("SUBSEQUENT_CONTRIBUTION_MINIMUM_EXCLUSIVE");
         uint256 expectedBlockTime = vm.envOr("EXPECTED_BLOCK_TIME_SECONDS", uint256(0));
+        uint256 expectedChainId = vm.envUint("EXPECTED_CHAIN_ID");
+        bytes32 expectedGenesisHash = vm.envBytes32("EXPECTED_GENESIS_HASH");
+
+        require(block.chainid == expectedChainId, "unexpected chain id");
 
         console2.log("chain id", block.chainid);
+        console2.logBytes32(expectedGenesisHash);
         console2.log("treasury", treasury);
         console2.log("genesis allocation", allocation);
         console2.log("lucky root allocation", luckyRootAllocation);
