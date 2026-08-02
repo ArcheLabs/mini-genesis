@@ -21,7 +21,7 @@ contract MiniGenesisStreamFuzzTest is Test {
         );
         vm.deal(alice, 2);
         vm.prank(alice);
-        stream.contribute{ value: 2 }();
+        stream.contribute{ value: 2 }("alice");
         uint256 total = uint256(contributionBlocks) + protectionBlocks;
         uint256 previous;
         for (uint256 k; k <= 32; ++k) {
@@ -41,7 +41,7 @@ contract MiniGenesisStreamFuzzTest is Test {
             new MiniGenesisStream(treasury, 1e30, 1e30, 100, 40, 1 ether, 0.1 ether);
         vm.deal(alice, amount);
         vm.prank(alice);
-        stream.contribute{ value: amount }();
+        stream.contribute{ value: amount }("alice");
         vm.roll(stream.emissionEndBlock());
         assertApproxEqAbs(stream.pendingMini(alice), 1e30, 1);
     }

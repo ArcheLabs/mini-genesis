@@ -77,7 +77,7 @@ contract MiniGenesisStreamModelTest is Test {
     function _contribute(address actor, uint256 amount) internal {
         model.settleTo(block.number);
         vm.prank(actor);
-        stream.contribute{ value: amount }();
+        stream.contribute{ value: amount }(vm.toString(actor));
         model.contribute(actor, amount, block.number);
         ++contributionOperations;
     }

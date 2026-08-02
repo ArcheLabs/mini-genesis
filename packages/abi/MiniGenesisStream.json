@@ -67,7 +67,13 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "username",
+        "type": "string"
+      }
+    ],
     "name": "contribute",
     "outputs": [],
     "stateMutability": "payable",
@@ -107,6 +113,25 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "contributor",
+        "type": "address"
+      }
+    ],
+    "name": "contributorUsernameHash",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "usernameHash",
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -403,16 +428,10 @@
         "type": "uint256"
       },
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "accountTotal",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "totalRaised",
-        "type": "uint256"
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "usernameHash",
+        "type": "bytes32"
       }
     ],
     "name": "Contributed",
@@ -475,6 +494,31 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contributor",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "usernameHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "username",
+        "type": "string"
+      }
+    ],
+    "name": "UsernameRegistered",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "ContributionClosed",
     "type": "error"
@@ -496,6 +540,11 @@
   },
   {
     "inputs": [],
+    "name": "InvalidUsernameLength",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "MathOverflowedMulDiv",
     "type": "error"
   },
@@ -507,6 +556,11 @@
   {
     "inputs": [],
     "name": "TreasuryTransferFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "UsernameMismatch",
     "type": "error"
   },
   {

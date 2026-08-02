@@ -17,6 +17,9 @@ by four days of protected emission. No day-to-block conversion is hard-coded.
 
 - The first contribution must be at least the configured 1 DOT equivalent.
 - Later contributions must be strictly greater than the configured 0.1 DOT equivalent.
+- Every contribution supplies a UTF-8 username between 1 and 64 bytes. The first
+  contribution records `keccak256(bytes(username))`; later contributions from that
+  account must use the same username. A username may be shared by multiple accounts.
 - Contributions are accepted only before `contributionEndBlock`.
 - One percent of MINI's supply, supplied as `genesisAllocation`, streams over the
   complete approximately fourteen-day period.
@@ -35,6 +38,19 @@ by four days of protected emission. No day-to-block conversion is hard-coded.
 
 The bonding curve, graduation, AMM creation, and frontend are intentionally outside
 this repository's current scope.
+
+## Local contribution call
+
+Use the ABI's `contribute(string username)` function. For example, with Foundry:
+
+```bash
+cast send "$MINI_GENESIS_STREAM_ADDRESS" \
+  "contribute(string)" "alice.dot" \
+  --value 1ether --private-key "$CONTRIBUTOR_PRIVATE_KEY" --rpc-url "$RPC_URL"
+```
+
+The username is only an input to the later Lucky Credit allocation. MINI entitlement
+continues to be calculated from each contributor account's DOT contributions.
 
 ## Documentation
 
