@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import { formatUnits, getAddress } from "viem";
+import { deploymentManifests } from "./src/generated/deployment-manifests";
 import "./style.css";
 
 declare global { interface Window { ethereum?: { request(args: { method: string; params?: unknown[] }): Promise<unknown> } } }
@@ -10,8 +11,11 @@ export const EVM_NATIVE_DECIMALS = 18;
 export const formatNative = (value: bigint) => formatUnits(value, EVM_NATIVE_DECIMALS);
 
 function App() {
+  const environment = (import.meta.env.VITE_DEPLOYMENT_ENVIRONMENT ?? "local") as keyof typeof deploymentManifests;
+  const manifest = deploymentManifests[environment] as { status: "template" | "deployed" } | undefined;
   const [account, setAccount] = useState("");
   const [notice, setNotice] = useState("Connect an EIP-1193 browser wallet. Genesis never uses the Product Host account API.");
+  if (!manifest || manifest.status !== "deployed") return <main><h1>Deployment template</h1><p>{`Manifest ${String(environment)} is not runtime-ready.`}</p></main>;
   const connect = async () => {
     try {
       if (!window.ethereum) throw new Error("BROWSER_WALLET_UNAVAILABLE");

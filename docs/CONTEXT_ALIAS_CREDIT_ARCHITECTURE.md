@@ -1,8 +1,9 @@
 # MINI Lucky context-alias credit architecture
 
-> **SUPERSEDED — DO NOT IMPLEMENT**
+> **Authoritative protocol architecture.**
 >
-> Replaced by `docs/MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md`.
+> Environment structure, standalone Genesis wallet boundaries, PVM requirements,
+> and milestones are defined in [`MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md`](MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md).
 
 This is the tracked baseline for the final MINI Genesis and Mini Lucky model.
 It replaces username allocation and Admin Grant designs; they must not be

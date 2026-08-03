@@ -1,4 +1,4 @@
-.PHONY: fmt fmt-check build test test-ci snapshot slither abi abi-check manifest-check check
+.PHONY: fmt fmt-check build test test-ci snapshot slither abi abi-check manifest-check manifest-test check
 
 fmt:
 	forge fmt
@@ -31,4 +31,7 @@ abi-check: abi
 manifest-check:
 	node scripts/validate-deployment-manifests.mjs
 
-check: fmt-check build test slither abi-check manifest-check
+manifest-test:
+	node scripts/test-deployment-manifests.mjs
+
+check: fmt-check build test slither abi-check manifest-check manifest-test

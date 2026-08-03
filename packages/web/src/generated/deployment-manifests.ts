@@ -2,41 +2,43 @@
 export const deploymentManifests = {
   "local": {
     "environment": "local",
+    "status": "template",
     "evmNativeDecimals": 18,
     "source": {
       "chainId": "31337",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
-      "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "deploymentBlock": "0"
     },
     "destination": {
       "chainId": "31337",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "miniLucky": "0x0000000000000000000000000000000000000000",
       "trustGraph": "0x0000000000000000000000000000000000000000",
-      "personhoodPrecompile": "0x000000000000000000000000000000000A010000"
+      "personhoodPrecompile": "0x000000000000000000000000000000000A010000",
+      "deploymentBlock": "0"
     },
-    "product": {
-      "productId": "mini-lucky-local",
-      "dotName": "mini-lucky-local.invalid",
-      "ownerH160": "0x0000000000000000000000000000000000000000"
-    }
+    "product": null
   },
   "staging": {
     "environment": "staging",
+    "status": "template",
     "evmNativeDecimals": 18,
     "source": {
       "chainId": "0",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
-      "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "deploymentBlock": "0"
     },
     "destination": {
       "chainId": "0",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "miniLucky": "0x0000000000000000000000000000000000000000",
       "trustGraph": "0x0000000000000000000000000000000000000000",
-      "personhoodPrecompile": "0x000000000000000000000000000000000A010000"
+      "personhoodPrecompile": "0x000000000000000000000000000000000A010000",
+      "deploymentBlock": "0"
     },
     "product": {
       "productId": "mini-lucky-staging",
@@ -46,19 +48,22 @@ export const deploymentManifests = {
   },
   "production": {
     "environment": "production",
+    "status": "template",
     "evmNativeDecimals": 18,
     "source": {
       "chainId": "0",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
-      "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
+      "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "deploymentBlock": "0"
     },
     "destination": {
       "chainId": "0",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "miniLucky": "0x0000000000000000000000000000000000000000",
       "trustGraph": "0x0000000000000000000000000000000000000000",
-      "personhoodPrecompile": "0x000000000000000000000000000000000A010000"
+      "personhoodPrecompile": "0x000000000000000000000000000000000A010000",
+      "deploymentBlock": "0"
     },
     "product": {
       "productId": "mini-lucky",
