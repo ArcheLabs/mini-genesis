@@ -1,7 +1,7 @@
 # MINI Genesis Stream
 
-> **Architecture notice:** username contributions and frozen allocation artifacts
-> are superseded. See [`docs/CONTEXT_ALIAS_CREDIT_ARCHITECTURE.md`](docs/CONTEXT_ALIAS_CREDIT_ARCHITECTURE.md).
+> **Architecture notice:** prior Product Host/AccountId32 Genesis claim material is
+> superseded. See [`docs/MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md`](docs/MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md).
 
 MINI Genesis Stream distributes a fixed allocation of MINI credit according to
 time-weighted DOT contributions. The first valid contribution starts the stream.

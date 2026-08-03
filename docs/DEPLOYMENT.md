@@ -1,5 +1,10 @@
 # Deployment
 
+> **SUPERSEDED — DO NOT IMPLEMENT**
+>
+> Replaced by `docs/MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md` and the
+> validated `deployments/{local,staging,production}.json` templates.
+
 Genesis Stream parameters are immutable. Every value must be confirmed against a
 tested Polkadot Hub network before a production broadcast.
 

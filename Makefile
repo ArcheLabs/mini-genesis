@@ -1,4 +1,4 @@
-.PHONY: fmt fmt-check build test test-ci snapshot slither abi abi-check check
+.PHONY: fmt fmt-check build test test-ci snapshot slither abi abi-check manifest-check check
 
 fmt:
 	forge fmt
@@ -28,4 +28,7 @@ abi:
 abi-check: abi
 	git diff --exit-code -- packages/abi/MiniGenesisStream.json
 
-check: fmt-check build test slither abi-check
+manifest-check:
+	node scripts/validate-deployment-manifests.mjs
+
+check: fmt-check build test slither abi-check manifest-check

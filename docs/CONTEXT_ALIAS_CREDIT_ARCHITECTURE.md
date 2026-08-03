@@ -1,5 +1,9 @@
 # MINI Lucky context-alias credit architecture
 
+> **SUPERSEDED — DO NOT IMPLEMENT**
+>
+> Replaced by `docs/MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md`.
+
 This is the tracked baseline for the final MINI Genesis and Mini Lucky model.
 It replaces username allocation and Admin Grant designs; they must not be
 deployed or revived.

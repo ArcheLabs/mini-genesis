@@ -1,22 +1,26 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { deriveH160 } from "@parity/product-sdk-address";
-import { getAccountsProvider, isInsideContainer } from "@parity/product-sdk/host";
+import { formatUnits, getAddress } from "viem";
 import "./style.css";
 
-const api = import.meta.env.VITE_GENESIS_API_URL ?? "";
-type Account = { contributedDot: string; earned: string; claimed: string; reserved: string; claimable: string };
-type Prepared = { claim: { creditGrantId: string; amount: string; sourceAccountId32: string; sourceH160: string; deadline: string }; message: Record<string, number> };
-const request = async <T,>(path: string, init?: RequestInit): Promise<T> => { const response = await fetch(`${api}${path}`, init); const body = await response.json(); if (!response.ok) throw new Error(body.code ?? "REQUEST_FAILED"); return body; };
-const result = <T,>(value: { match: (ok: (item: T) => T, fail: () => never) => T }) => value.match((item) => item, () => { throw new Error("HOST_ACCOUNT_REQUEST_FAILED"); });
-const accountId32 = (key: Uint8Array) => `0x${Array.from(key, (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+declare global { interface Window { ethereum?: { request(args: { method: string; params?: unknown[] }): Promise<unknown> } } }
+
+/** Genesis is a standalone EVM dApp. Native EVM values are always 18 decimals. */
+export const EVM_NATIVE_DECIMALS = 18;
+export const formatNative = (value: bigint) => formatUnits(value, EVM_NATIVE_DECIMALS);
 
 function App() {
-  const [sourceAccountId32, setSourceAccountId32] = useState(""); const [sourceH160, setSourceH160] = useState(""); const [username, setUsername] = useState(""); const [account, setAccount] = useState<Account>(); const [prepared, setPrepared] = useState<Prepared>(); const [notice, setNotice] = useState("Connect the Product Host to contribute or claim.");
-  const connect = async () => { try { if (!(await isInsideContainer())) throw new Error("HOST_UNAVAILABLE"); const provider = await getAccountsProvider(); if (!provider) throw new Error("HOST_ACCOUNT_UNAVAILABLE"); const accounts = result<readonly { publicKey: Uint8Array }[]>(await provider.getLegacyAccounts()); if (!accounts.length) throw new Error("HOST_ACCOUNT_UNAVAILABLE"); const id32 = accountId32(accounts[0].publicKey); setSourceAccountId32(id32); setSourceH160(deriveH160(accounts[0].publicKey)); setNotice("Host account connected. Ledger is keyed by its derived H160."); } catch (error) { setNotice(error instanceof Error ? error.message : "HOST_CONNECT_FAILED"); } };
-  const refresh = async () => { try { setAccount(await request<Account>(`/v1/accounts/${sourceH160}`)); } catch (error) { setNotice(error instanceof Error ? error.message : "ACCOUNT_LOOKUP_FAILED"); } };
-  const prepare = async () => { try { const value = await request<Prepared>("/v1/claims/prepare", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ sourceAccountId32, username }) }); setPrepared(value); setNotice("Review the exact username, AccountId32, H160, amount and deadline before signing."); } catch (error) { setNotice(error instanceof Error ? error.message : "PREPARE_FAILED"); } };
-  const submit = async () => { try { if (!prepared) return; const provider = await getAccountsProvider(); if (!provider) throw new Error("HOST_ACCOUNT_UNAVAILABLE"); const accounts = result<readonly { publicKey: Uint8Array }[]>(await provider.getLegacyAccounts()); const source = accounts.find((item) => accountId32(item.publicKey).toLowerCase() === sourceAccountId32.toLowerCase()); if (!source) throw new Error("HOST_ACCOUNT_CHANGED"); const signer = provider.getLegacyAccountSigner(source); const signed = await signer.signBytes(Uint8Array.from(Object.values(prepared.message))); const signature = `0x${Array.from(signed, (byte) => byte.toString(16).padStart(2, "0")).join("")}`; await request("/v1/claims", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ creditGrantId: prepared.claim.creditGrantId, signature }) }); setNotice("Submitted. The backend waits for a matching finalized GenesisCreditMinted event."); } catch (error) { setNotice(error instanceof Error ? error.message : "CLAIM_SUBMIT_FAILED"); } };
-  return <main><header><span className="eyebrow">MINI GENESIS</span><h1>Contribute. Earn. Claim.</h1><p>Finalized contributions create MINI entitlement and repeatable Lucky Credit claims.</p></header><section><h2>贡献 DOT</h2><p>Contribute uses the Product Host signer and an explicitly configured Revive contract. No local balance is fabricated.</p><button type="button" onClick={connect}>Connect Host account</button></section><section><h2>Credit ledger</h2><p>{sourceAccountId32 || "No Host AccountId32"}<br />{sourceH160 || "No derived H160"}</p><button disabled={!sourceH160} onClick={refresh}>Refresh finalized ledger</button>{account && <dl><dt>Contributed DOT</dt><dd>{account.contributedDot}</dd><dt>Earned</dt><dd>{account.earned}</dd><dt>Claimed</dt><dd>{account.claimed}</dd><dt>Reserved</dt><dd>{account.reserved}</dd><dt>Claimable</dt><dd>{account.claimable}</dd></dl>}</section><section><h2>Claim Lucky Credit</h2><input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Exact People username" /><button disabled={!sourceAccountId32 || !username} onClick={prepare}>Prepare claim</button>{prepared && <><p>Prepared {prepared.claim.amount} Credit · grant {prepared.claim.creditGrantId.slice(0, 12)}…</p><button onClick={submit}>Sign and submit Claim</button></>}<p role="status">{notice}</p></section></main>;
+  const [account, setAccount] = useState("");
+  const [notice, setNotice] = useState("Connect an EIP-1193 browser wallet. Genesis never uses the Product Host account API.");
+  const connect = async () => {
+    try {
+      if (!window.ethereum) throw new Error("BROWSER_WALLET_UNAVAILABLE");
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" }) as string[];
+      if (!accounts[0]) throw new Error("BROWSER_WALLET_ACCOUNT_UNAVAILABLE");
+      setAccount(getAddress(accounts[0]));
+      setNotice("Browser wallet connected. EVM-native contribution amounts use 18 decimals.");
+    } catch (error) { setNotice(error instanceof Error ? error.message : "BROWSER_WALLET_CONNECT_FAILED"); }
+  };
+  return <main><header><span className="eyebrow">MINI GENESIS</span><h1>Contribute. Earn. Claim.</h1><p>Standalone Genesis dApp baseline. Contributions and claims use an EIP-1193 browser wallet.</p></header><section><h2>Browser wallet</h2><p>{account || "No connected H160 account"}</p><button type="button" onClick={connect}>Connect browser wallet</button></section><section><h2>Amount handling</h2><p>Native EVM values are normalized with 18 decimals (example: {formatNative(1_000_000_000_000_000_000n)}).</p><p>Contract contribution and Claim write flows are introduced in subsequent milestones; this baseline does not submit transactions.</p></section><p role="status">{notice}</p></main>;
 }
 createRoot(document.getElementById("root")!).render(<App />);
