@@ -1,5 +1,8 @@
 # MINI Genesis Stream
 
+> **Architecture notice:** username contributions and frozen allocation artifacts
+> are superseded. See [`docs/CONTEXT_ALIAS_CREDIT_ARCHITECTURE.md`](docs/CONTEXT_ALIAS_CREDIT_ARCHITECTURE.md).
+
 MINI Genesis Stream distributes a fixed allocation of MINI credit according to
 time-weighted DOT contributions. The first valid contribution starts the stream.
 All contributed DOT is irreversible and is forwarded to the immutable treasury in
