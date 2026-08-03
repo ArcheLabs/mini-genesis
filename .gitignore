@@ -5,3 +5,5 @@ broadcast/
 deployments/*
 !deployments/example.env
 .env
+packages/web/node_modules/
+packages/web/dist/
