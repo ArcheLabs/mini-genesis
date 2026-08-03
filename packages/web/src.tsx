@@ -11,7 +11,7 @@ import { readGlobal, readUser, type GenesisGlobal, type GenesisUser } from "./sr
 import { contribute, type ContributionState } from "./src/genesis/contribution";
 import { formatNative, safeMaxAmount } from "./src/genesis/amount";
 import { phaseMessage } from "./src/genesis/phase";
-import { getLedger, prepareClaim, submitClaim, claimStatus, type ApiError, validateExactUsername } from "./src/claim/api";
+import { getLedger, prepareClaim, submitClaim, pollClaimStatus, type ApiError, validateExactUsername } from "./src/claim/api";
 import { signPreparedClaim } from "./src/claim/typed-data";
 import type { ClaimState, Ledger, PreparedClaim } from "./src/claim/types";
 import "./style.css";
@@ -46,6 +46,8 @@ function App() {
   const [prepared, setPrepared] = useState<PreparedClaim | null>(null);
   const [signature, setSignature] = useState<`0x${string}` | null>(null);
   const [claimState, setClaimState] = useState<ClaimState>("idle");
+  const contributionAbort = useRef<AbortController | null>(null);
+  const claimAbort = useRef<AbortController | null>(null);
   const refreshLock = useRef(false);
   const manifest = useMemo(() => getManifest(selectedEnvironment(import.meta.env.MODE, import.meta.env.VITE_DEPLOYMENT_ENV)), []);
   const environment = manifest?.environment ?? "unknown";
@@ -54,10 +56,12 @@ function App() {
   useEffect(() => { localStorage.setItem("mini-genesis-language", language); }, [language]);
   useEffect(() => {
     const p = injectedProvider(); if (!p) return;
-    const onAccounts = async (value: unknown) => { const list = (value as string[]).filter(Boolean); setPrepared(null); setSignature(null); setLedger(null); if (!list.length) { setAccount(null); setWalletState("disconnected"); return; } setAccount(getAddress(list[0])); setWalletState("connected"); };
-    const onChain = () => { setPrepared(null); setSignature(null); setClient(null); setRuntime(null); setGlobal(null); setUser(null); setWalletState("wrong_chain"); };
-    p.on?.("accountsChanged", onAccounts); p.on?.("chainChanged", onChain);
-    return () => { p.removeListener?.("accountsChanged", onAccounts); p.removeListener?.("chainChanged", onChain); };
+    const cancelOperations = () => { contributionAbort.current?.abort(); claimAbort.current?.abort(); contributionAbort.current = null; claimAbort.current = null; };
+    const onAccounts = async (value: unknown) => { cancelOperations(); const list = (value as string[]).filter(Boolean); setPrepared(null); setSignature(null); setLedger(null); if (!list.length) { setAccount(null); setWalletState("disconnected"); return; } setAccount(getAddress(list[0])); setWalletState("connected"); };
+    const onChain = () => { cancelOperations(); setPrepared(null); setSignature(null); setClient(null); setRuntime(null); setGlobal(null); setUser(null); setWalletState("wrong_chain"); };
+    const onDisconnect = () => { cancelOperations(); setAccount(null); setClient(null); setRuntime(null); setWalletState("disconnected"); };
+    p.on?.("accountsChanged", onAccounts); p.on?.("chainChanged", onChain); p.on?.("disconnect", onDisconnect);
+    return () => { cancelOperations(); p.removeListener?.("accountsChanged", onAccounts); p.removeListener?.("chainChanged", onChain); p.removeListener?.("disconnect", onDisconnect); };
   }, []);
 
   const refresh = useCallback(async (nextClient = client, nextAccount = account) => {
@@ -83,13 +87,15 @@ function App() {
       setProvider(p); setAccount(address); setClient(c); setWalletState("connected"); setNotice("Connected"); await refresh(c, address);
     } catch (error) { const message = error instanceof Error ? error.message : "WALLET_CONNECTION_REJECTED"; setWalletState(message === "WRONG_CHAIN" ? "wrong_chain" : "error"); setNotice(message); }
   };
-  const disconnect = () => { setAccount(null); setProvider(null); setClient(null); setRuntime(null); setGlobal(null); setUser(null); setLedger(null); setPrepared(null); setSignature(null); setWalletState("disconnected"); };
+  const cancelOperations = () => { contributionAbort.current?.abort(); claimAbort.current?.abort(); contributionAbort.current = null; claimAbort.current = null; };
+  const disconnect = () => { cancelOperations(); setAccount(null); setProvider(null); setClient(null); setRuntime(null); setGlobal(null); setUser(null); setLedger(null); setPrepared(null); setSignature(null); setWalletState("disconnected"); };
   const join = async () => {
     if (!manifest || !client || !provider || !account || !global || !runtime?.ok) return;
-    try { const hash = await contribute(client, walletClient(provider, manifest), manifest, account, amount, global.phase, global.firstContributionMinimum, global.subsequentContributionMinimumExclusive, (update) => { setContributionState(update.state); if (update.hash) setTxHash(update.hash); if (update.error) setNotice(update.error); }); setTxHash(hash); await refresh(); } catch (error) { setNotice(error instanceof Error ? error.message : "TRANSACTION_REVERTED"); }
+    cancelOperations(); const controller = new AbortController(); contributionAbort.current = controller;
+    try { const hash = await contribute(client, walletClient(provider, manifest), manifest, account, amount, global.phase, global.firstContributionMinimum, global.subsequentContributionMinimumExclusive, (update) => { setContributionState(update.state); if (update.hash) setTxHash(update.hash); if (update.error) setNotice(update.error); }, controller.signal); setTxHash(hash); await refresh(); } catch (error) { if (error instanceof Error && error.message !== "OPERATION_CANCELLED") setNotice(error.message); } finally { if (contributionAbort.current === controller) contributionAbort.current = null; }
   };
-  const prepare = async () => { if (!manifest || !account || !manifest.backend?.baseUrl) { setNotice(t.unavailable); return; } try { setClaimState("preparing"); setPrepared(await prepareClaim(manifest, account, validateExactUsername(username))); setSignature(null); setClaimState("review"); } catch (error) { setClaimState("failed"); setNotice(error instanceof Error ? error.message : "CLAIM_SERVICE_ERROR"); } };
-  const signAndSubmit = async () => { if (!manifest || !provider || !account || !prepared) return; try { setClaimState("awaiting_signature"); const sig = await signPreparedClaim(walletClient(provider, manifest), prepared, account, username, manifest); setSignature(sig); setClaimState("submitting"); await submitClaim(manifest, prepared.claim.creditGrantId, sig); setClaimState("submitted"); const poll = async () => { const current = await claimStatus(manifest, prepared.claim.creditGrantId); if (current.status === "FINALIZED") { setClaimState("finalized"); await refresh(); } else if (current.status === "FAILED") setClaimState("failed"); else window.setTimeout(poll, 4000); }; await poll(); } catch (error) { setClaimState("failed"); setNotice(error instanceof Error ? error.message : "CLAIM_SERVICE_ERROR"); } };
+  const prepare = async () => { if (!manifest || !account || !manifest.backend?.baseUrl) { setNotice(t.unavailable); return; } cancelOperations(); try { setClaimState("preparing"); setPrepared(await prepareClaim(manifest, account, validateExactUsername(username))); setSignature(null); setClaimState("review"); } catch (error) { setClaimState("failed"); setNotice(error instanceof Error ? error.message : "CLAIM_SERVICE_ERROR"); } };
+  const signAndSubmit = async () => { if (!manifest || !provider || !account || !prepared) return; cancelOperations(); const controller = new AbortController(); claimAbort.current = controller; try { setClaimState("awaiting_signature"); const sig = await signPreparedClaim(walletClient(provider, manifest), prepared, account, username, manifest); setSignature(sig); setClaimState("submitting"); await submitClaim(manifest, prepared.claim.creditGrantId, sig, controller.signal); setClaimState("submitted"); const current = await pollClaimStatus(manifest, prepared.claim.creditGrantId, { signal: controller.signal }); if (current.status === "FINALIZED") { setClaimState("finalized"); await refresh(); } else if (current.status === "FAILED") setClaimState("failed"); } catch (error) { if (!(error instanceof Error && error.message === "OPERATION_CANCELLED")) { setClaimState("failed"); setNotice(error instanceof Error ? error.message : "CLAIM_SERVICE_ERROR"); } } finally { if (claimAbort.current === controller) claimAbort.current = null; } };
   const progress = global && global.genesisAllocation > 0n ? Math.min(100, Number((global.emittedMini * 10_000n) / global.genesisAllocation) / 100) : 0;
   const phaseText = global ? phaseMessage[global.phaseName][language === "zh-CN" ? "zh" : "en"] : "—";
   const setQuickAmount = (value: string) => { try { const requested = BigInt(value) * 10n ** 18n; if (safeMaximum !== null && requested <= safeMaximum) setAmount(value); } catch { /* fixed button values */ } };

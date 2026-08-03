@@ -42,7 +42,10 @@ sends AccountId32 or uses `personal_sign`.
 
 The Backend is an M2 deliverable. If `backend.baseUrl` is null, contribution
 remains available while Claim prepare/sign is disabled and the page reports
-that the Claim service is not configured.
+that the Claim service is not configured. Claim signing uses the M2
+`GenesisCreditClaim` EIP-712 V2 schema: `sourceAccount` is the only source
+field and every source, identity, destination, amount, sequence and deadline
+field is checked against the prepared claim before `signTypedData`.
 
 ## Checks and limitations
 
@@ -50,11 +53,8 @@ that the Claim service is not configured.
 pnpm typecheck
 pnpm lint
 pnpm test
-pnpm test:e2e
 VITE_DEPLOYMENT_ENV=local pnpm build
 ```
 
-The offline web test is deterministic and does not require a public RPC or a
-browser. Playwright browser coverage is intentionally not started by this
-repository until a browser fixture is installed; no real wallet or TestNet
-transaction is used in M1.
+The offline Vitest suite is deterministic and does not require a public RPC or
+a browser wallet; no real wallet or TestNet transaction is used in M1.1.

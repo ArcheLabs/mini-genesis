@@ -2,7 +2,27 @@
   "name": "mini-genesis-web",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vite", "prebuild": "node ../../scripts/generate-web-abi.mjs && node ../../scripts/generate-deployment-config.mjs", "build": "tsc --noEmit && vite build", "typecheck": "tsc --noEmit", "lint": "tsc --noEmit", "test": "node ../../scripts/test-web-contracts.mjs", "test:e2e": "node ../../scripts/test-web-contracts.mjs" },
-  "dependencies": { "react": "19.2.8", "react-dom": "19.2.8", "viem": "2.55.10" },
-  "devDependencies": { "@types/react": "19.2.17", "@types/react-dom": "19.2.3", "@vitejs/plugin-react": "6.0.4", "typescript": "7.0.2", "vite": "8.1.5" }
+  "scripts": {
+    "dev": "vite",
+    "prebuild": "node ../../scripts/generate-web-abi.mjs && node ../../scripts/generate-deployment-config.mjs",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "viem": "2.55.10"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.4",
+    "jsdom": "30.0.0",
+    "typescript": "7.0.2",
+    "vite": "8.1.5",
+    "vitest": "4.1.10"
+  }
 }
