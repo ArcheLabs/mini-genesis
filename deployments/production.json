@@ -1,0 +1,9 @@
+{
+  "environment": "production",
+  "status": "template",
+  "evmNativeDecimals": 18,
+  "source": { "chainId": "0", "name": "Polkadot Hub", "currencySymbol": "PAS", "evmNativeDecimals": 18, "rpcHttpUrls": [], "explorerUrl": "https://blockscout-testnet.polkadot.io/", "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000", "contract": "0x0000000000000000000000000000000000000000", "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000", "deploymentBlock": "0", "contractConfig": { "treasury": "0x0000000000000000000000000000000000000000", "genesisAllocation": "0", "luckyRootAllocation": "0", "contributionBlocks": "0", "protectionBlocks": "0", "firstContributionMinimum": "0", "subsequentContributionMinimumExclusive": "0" } },
+  "destination": { "chainId": "0", "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000", "miniLucky": "0x0000000000000000000000000000000000000000", "trustGraph": "0x0000000000000000000000000000000000000000", "personhoodPrecompile": "0x000000000000000000000000000000000A010000", "deploymentBlock": "0" },
+  "product": { "productId": "mini-lucky", "dotName": "mini-lucky.dot", "ownerH160": "0x0000000000000000000000000000000000000000" },
+  "backend": { "baseUrl": null }
+}

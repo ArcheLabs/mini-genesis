@@ -70,4 +70,24 @@ forge install
 make check
 ```
 
+## Standalone Web (M1)
+
+The browser dApp lives in [`packages/web`](packages/web) and uses only an
+injected EIP-1193 wallet. It reads the fixed Polkadot Hub TestNet manifest,
+uses 18-decimal EVM native values, and refuses template or mismatched runtime
+configuration. No checked-in manifest contains deployable addresses.
+
+```bash
+cd packages/web
+pnpm install
+VITE_DEPLOYMENT_ENV=local pnpm dev
+pnpm typecheck
+pnpm test
+VITE_DEPLOYMENT_ENV=local pnpm build
+```
+
+M1 does not deploy contracts or broadcast transactions. Lucky Credit Claim
+endpoints are consumed only when the selected manifest provides a fixed
+Backend URL; Backend implementation is a later milestone.
+
 Dependencies are pinned as Git submodules.

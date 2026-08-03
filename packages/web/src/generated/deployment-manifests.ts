@@ -5,11 +5,28 @@ export const deploymentManifests = {
     "status": "template",
     "evmNativeDecimals": 18,
     "source": {
-      "chainId": "31337",
+      "chainId": "420420417",
+      "name": "Polkadot Hub TestNet",
+      "currencySymbol": "PAS",
+      "evmNativeDecimals": 18,
+      "rpcHttpUrls": [
+        "https://eth-rpc-testnet.polkadot.io/",
+        "https://services.polkadothub-rpc.com/testnet/"
+      ],
+      "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "deploymentBlock": "0"
+      "deploymentBlock": "0",
+      "contractConfig": {
+        "treasury": "0x0000000000000000000000000000000000000000",
+        "genesisAllocation": "0",
+        "luckyRootAllocation": "0",
+        "contributionBlocks": "0",
+        "protectionBlocks": "0",
+        "firstContributionMinimum": "0",
+        "subsequentContributionMinimumExclusive": "0"
+      }
     },
     "destination": {
       "chainId": "31337",
@@ -19,7 +36,10 @@ export const deploymentManifests = {
       "personhoodPrecompile": "0x000000000000000000000000000000000A010000",
       "deploymentBlock": "0"
     },
-    "product": null
+    "product": null,
+    "backend": {
+      "baseUrl": null
+    }
   },
   "staging": {
     "environment": "staging",
@@ -27,10 +47,24 @@ export const deploymentManifests = {
     "evmNativeDecimals": 18,
     "source": {
       "chainId": "0",
+      "name": "Polkadot Hub Staging",
+      "currencySymbol": "PAS",
+      "evmNativeDecimals": 18,
+      "rpcHttpUrls": [],
+      "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "deploymentBlock": "0"
+      "deploymentBlock": "0",
+      "contractConfig": {
+        "treasury": "0x0000000000000000000000000000000000000000",
+        "genesisAllocation": "0",
+        "luckyRootAllocation": "0",
+        "contributionBlocks": "0",
+        "protectionBlocks": "0",
+        "firstContributionMinimum": "0",
+        "subsequentContributionMinimumExclusive": "0"
+      }
     },
     "destination": {
       "chainId": "0",
@@ -44,6 +78,9 @@ export const deploymentManifests = {
       "productId": "mini-lucky-staging",
       "dotName": "mini-lucky-dev.dot",
       "ownerH160": "0x0000000000000000000000000000000000000000"
+    },
+    "backend": {
+      "baseUrl": null
     }
   },
   "production": {
@@ -52,10 +89,24 @@ export const deploymentManifests = {
     "evmNativeDecimals": 18,
     "source": {
       "chainId": "0",
+      "name": "Polkadot Hub",
+      "currencySymbol": "PAS",
+      "evmNativeDecimals": 18,
+      "rpcHttpUrls": [],
+      "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "deploymentBlock": "0"
+      "deploymentBlock": "0",
+      "contractConfig": {
+        "treasury": "0x0000000000000000000000000000000000000000",
+        "genesisAllocation": "0",
+        "luckyRootAllocation": "0",
+        "contributionBlocks": "0",
+        "protectionBlocks": "0",
+        "firstContributionMinimum": "0",
+        "subsequentContributionMinimumExclusive": "0"
+      }
     },
     "destination": {
       "chainId": "0",
@@ -69,6 +120,9 @@ export const deploymentManifests = {
       "productId": "mini-lucky",
       "dotName": "mini-lucky.dot",
       "ownerH160": "0x0000000000000000000000000000000000000000"
+    },
+    "backend": {
+      "baseUrl": null
     }
   }
 } as const;

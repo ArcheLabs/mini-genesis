@@ -4,6 +4,9 @@ out/
 broadcast/
 deployments/*
 !deployments/example.env
+!deployments/local.json
+!deployments/staging.json
+!deployments/production.json
 .env
 packages/web/node_modules/
 packages/web/dist/

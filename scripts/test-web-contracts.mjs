@@ -1,0 +1,16 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const amount = await readFile(new URL("../packages/web/src/genesis/amount.ts", import.meta.url), "utf8");
+const api = await readFile(new URL("../packages/web/src/claim/api.ts", import.meta.url), "utf8");
+const source = await readFile(new URL("../packages/web/src.tsx", import.meta.url), "utf8");
+assert.match(amount, /parseEther/);
+assert.match(amount, /1,18/);
+assert.match(api, /sourceH160/);
+assert.match(api, /PREPARED_CLAIM_MISMATCH/);
+assert.match(source, /createPublicClient/);
+assert.match(source, /signPreparedClaim/);
+assert.match(source, /runtime\?\.ok/);
+assert.match(source, /VITE_DEPLOYMENT_ENV/);
+assert.match(source, /finalized/);
+assert.match(api, /TextEncoder/);
+console.log("Web contract tests passed (offline structural/unit smoke checks)");
