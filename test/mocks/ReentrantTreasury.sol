@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 interface IContribute {
-    function contribute(string calldata username) external payable;
+    function contribute() external payable;
 }
 
 contract ReentrantTreasury {
@@ -16,9 +16,8 @@ contract ReentrantTreasury {
     receive() external payable {
         if (!attempted) {
             attempted = true;
-            (bool success,) = address(target).call{ value: msg.value }(
-                abi.encodeCall(IContribute.contribute, ("reentrant"))
-            );
+            (bool success,) =
+                address(target).call{ value: msg.value }(abi.encodeCall(IContribute.contribute, ()));
             require(!success, "reentrancy succeeded");
         }
     }

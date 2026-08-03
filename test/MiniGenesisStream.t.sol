@@ -45,24 +45,21 @@ contract MiniGenesisStreamTest is Test {
     function testFirstContributionStartsAndForwardsDot() public {
         vm.prank(alice);
         vm.expectRevert(MiniGenesisStream.FirstContributionTooSmall.selector);
-        stream.contribute{ value: FIRST_MINIMUM - 1 }("alice");
-        vm.expectEmit(true, true, false, true);
-        emit MiniGenesisStream.UsernameRegistered(alice, keccak256(bytes("alice")), "alice");
+        stream.contribute{ value: FIRST_MINIMUM - 1 }();
         vm.expectEmit(true, true, false, true);
         emit MiniGenesisStream.GenesisStarted(
             block.number, block.number + 10, block.number + 14, alice, FIRST_MINIMUM
         );
         vm.expectEmit(true, true, false, true);
-        emit MiniGenesisStream.Contributed(alice, FIRST_MINIMUM, keccak256(bytes("alice")));
+        emit MiniGenesisStream.Contributed(alice, FIRST_MINIMUM);
         vm.prank(alice);
-        stream.contribute{ value: FIRST_MINIMUM }("alice");
+        stream.contribute{ value: FIRST_MINIMUM }();
         assertEq(stream.startBlock(), block.number);
         assertEq(stream.contributionEndBlock(), block.number + 10);
         assertEq(stream.emissionEndBlock(), block.number + 14);
         assertEq(stream.lastSettledBlock(), block.number);
         assertEq(stream.totalRaisedDot(), FIRST_MINIMUM);
         assertEq(stream.contributorCount(), 1);
-        assertEq(stream.contributorUsernameHash(alice), keccak256(bytes("alice")));
         assertEq(treasury.balance, FIRST_MINIMUM);
         assertEq(address(stream).balance, 0);
     }
@@ -71,7 +68,7 @@ contract MiniGenesisStreamTest is Test {
         _contribute(alice, FIRST_MINIMUM);
         vm.prank(bob);
         vm.expectRevert(MiniGenesisStream.ContributionTooSmall.selector);
-        stream.contribute{ value: LATER_MINIMUM }("bob");
+        stream.contribute{ value: LATER_MINIMUM }();
         _contribute(bob, LATER_MINIMUM + 1);
         _contribute(bob, 1 ether);
         assertEq(stream.contributorCount(), 2);
@@ -84,7 +81,7 @@ contract MiniGenesisStreamTest is Test {
         assertEq(uint256(stream.phase()), uint256(MiniGenesisStream.Phase.Protection));
         vm.prank(bob);
         vm.expectRevert(MiniGenesisStream.ContributionClosed.selector);
-        stream.contribute{ value: 1 ether }("bob");
+        stream.contribute{ value: 1 ether }();
         vm.roll(stream.emissionEndBlock());
         assertEq(uint256(stream.phase()), uint256(MiniGenesisStream.Phase.Ended));
     }
@@ -203,10 +200,9 @@ contract MiniGenesisStreamTest is Test {
         MiniGenesisStream broken = _deploy(address(new RevertingTreasury()));
         vm.prank(alice);
         vm.expectRevert(MiniGenesisStream.TreasuryTransferFailed.selector);
-        broken.contribute{ value: 1 ether }("alice");
+        broken.contribute{ value: 1 ether }();
         assertEq(broken.startBlock(), 0);
         assertEq(broken.totalRaisedDot(), 0);
-        assertEq(broken.contributorUsernameHash(alice), bytes32(0));
     }
 
     function testTreasuryCannotReenter() public {
@@ -214,7 +210,7 @@ contract MiniGenesisStreamTest is Test {
         MiniGenesisStream guarded = _deploy(address(reentrant));
         reentrant.setTarget(address(guarded));
         vm.prank(alice);
-        guarded.contribute{ value: 1 ether }("alice");
+        guarded.contribute{ value: 1 ether }();
         assertTrue(reentrant.attempted());
         assertEq(guarded.totalRaisedDot(), 1 ether);
     }
@@ -257,38 +253,6 @@ contract MiniGenesisStreamTest is Test {
 
     function _contributeTo(MiniGenesisStream target, address account, uint256 amount) internal {
         vm.prank(account);
-        target.contribute{ value: amount }(_username(account));
-    }
-
-    function testUsernameValidationAndRegistrationLock() public {
-        vm.prank(alice);
-        vm.expectRevert(MiniGenesisStream.InvalidUsernameLength.selector);
-        stream.contribute{ value: FIRST_MINIMUM }("");
-        vm.prank(alice);
-        vm.expectRevert(MiniGenesisStream.InvalidUsernameLength.selector);
-        stream.contribute{ value: FIRST_MINIMUM }(string(new bytes(65)));
-        _contribute(alice, FIRST_MINIMUM);
-        _contribute(alice, 1 ether);
-        vm.prank(alice);
-        vm.expectRevert(MiniGenesisStream.UsernameMismatch.selector);
-        stream.contribute{ value: 1 ether }("different");
-        _contribute(bob, FIRST_MINIMUM);
-        assertEq(stream.contributorUsernameHash(alice), keccak256(bytes(_username(alice))));
-        assertEq(stream.contributorUsernameHash(bob), keccak256(bytes(_username(bob))));
-        assertEq(stream.contributorCount(), 2);
-    }
-
-    function testDifferentAccountsMayShareUsernameWithoutChangingMiniAccounting() public {
-        vm.prank(alice);
-        stream.contribute{ value: FIRST_MINIMUM }("shared.dot");
-        vm.prank(bob);
-        stream.contribute{ value: FIRST_MINIMUM }("shared.dot");
-        vm.roll(block.number + 1);
-        assertEq(stream.contributorUsernameHash(alice), stream.contributorUsernameHash(bob));
-        assertEq(stream.pendingMini(alice), stream.pendingMini(bob));
-    }
-
-    function _username(address account) internal pure returns (string memory) {
-        return vm.toString(account);
+        target.contribute{ value: amount }();
     }
 }

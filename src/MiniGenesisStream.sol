@@ -25,10 +25,7 @@ contract MiniGenesisStream is ReentrancyGuard {
         address indexed firstContributor,
         uint256 firstContribution
     );
-    event Contributed(address indexed contributor, uint256 amount, bytes32 indexed usernameHash);
-    event UsernameRegistered(
-        address indexed contributor, bytes32 indexed usernameHash, string username
-    );
+    event Contributed(address indexed contributor, uint256 amount);
     event LuckyRootCreditConfigured(uint256 allocation, uint256 contributionBlocks);
 
     error ZeroAddress();
@@ -37,8 +34,6 @@ contract MiniGenesisStream is ReentrancyGuard {
     error ContributionTooSmall();
     error ContributionClosed();
     error TreasuryTransferFailed();
-    error InvalidUsernameLength();
-    error UsernameMismatch();
 
     uint256 public constant ACC_PRECISION = 1e36;
     address public immutable treasury;
@@ -59,7 +54,6 @@ contract MiniGenesisStream is ReentrancyGuard {
     uint256 public accMiniPerDot;
 
     mapping(address account => UserInfo info) private users;
-    mapping(address contributor => bytes32 usernameHash) public contributorUsernameHash;
 
     constructor(
         address treasury_,
@@ -109,18 +103,7 @@ contract MiniGenesisStream is ReentrancyGuard {
         return cumulativeLuckyRootCredit(elapsedBlock + 1) - cumulativeLuckyRootCredit(elapsedBlock);
     }
 
-    function contribute(string calldata username) external payable nonReentrant {
-        bytes memory usernameBytes = bytes(username);
-        if (usernameBytes.length == 0 || usernameBytes.length > 64) revert InvalidUsernameLength();
-        bytes32 usernameHash = keccak256(usernameBytes);
-        bytes32 registeredUsernameHash = contributorUsernameHash[msg.sender];
-        if (registeredUsernameHash == bytes32(0)) {
-            contributorUsernameHash[msg.sender] = usernameHash;
-            emit UsernameRegistered(msg.sender, usernameHash, username);
-        } else if (registeredUsernameHash != usernameHash) {
-            revert UsernameMismatch();
-        }
-
+    function contribute() external payable nonReentrant {
         bool isFirst = startBlock == 0;
         if (isFirst) {
             if (msg.value < firstContributionMinimum) revert FirstContributionTooSmall();
@@ -149,7 +132,7 @@ contract MiniGenesisStream is ReentrancyGuard {
         totalRaisedDot += msg.value;
         user.rewardDebt += Math.mulDiv(msg.value, accMiniPerDot, ACC_PRECISION, Math.Rounding.Ceil);
 
-        emit Contributed(msg.sender, msg.value, usernameHash);
+        emit Contributed(msg.sender, msg.value);
 
         // slither-disable-next-line low-level-calls
         (bool success,) = treasury.call{ value: msg.value }("");

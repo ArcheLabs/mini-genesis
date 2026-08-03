@@ -37,7 +37,7 @@ contract GenesisHandler is Test {
 
         vm.deal(participant, amount);
         vm.prank(participant);
-        stream.contribute{ value: amount }(vm.toString(participant));
+        stream.contribute{ value: amount }();
         successfulContributions += amount;
         if (recordedStartBlock == 0) recordedStartBlock = stream.startBlock();
         if (stream.startBlock() != recordedStartBlock) startBlockViolated = true;
@@ -58,9 +58,8 @@ contract GenesisHandler is Test {
         uint256 contributedBefore = stream.userInfo(participant).contributedDot;
         vm.deal(participant, 1 ether);
         vm.prank(participant);
-        (bool success,) = address(stream).call{ value: 0 }(
-            abi.encodeCall(MiniGenesisStream.contribute, (vm.toString(participant)))
-        );
+        (bool success,) =
+            address(stream).call{ value: 0 }(abi.encodeCall(MiniGenesisStream.contribute, ()));
         if (
             success || stream.totalRaisedDot() != raisedBefore
                 || stream.contributorCount() != countBefore
