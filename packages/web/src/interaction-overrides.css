@@ -1,0 +1,14 @@
+.rules-header{display:flex;justify-content:center;align-items:center;text-align:center}
+.rules-header h2{margin:0;text-align:center}
+.stats-strip{grid-template-columns:repeat(3,1fr)}
+.stats-strip>div:last-child{border-right:0}
+.input-status{min-height:0;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap}
+.input-status.error{color:var(--protocol)}
+.input-status.success{color:var(--accent)}
+.input-status a{text-decoration:underline;text-underline-offset:3px}
+.global-status{margin:10px 0 0;color:var(--protocol);font:12px var(--font-mono);text-align:center}
+@media(max-width:640px){
+  .stats-strip{grid-template-columns:repeat(3,1fr)}
+  .stats-strip div:nth-child(2n){border-right:1px solid var(--line)}
+  .stats-strip div:last-child{border-right:0}
+}

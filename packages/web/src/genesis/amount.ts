@@ -1,4 +1,5 @@
-import { formatEther, parseEther } from "viem";
+import { formatEther, parseEther, type Address, type PublicClient } from "viem";
+import { genesisAbi } from "./abi";
 
 const STRICT_AMOUNT = /^(?:0|[1-9]\d*)(?:\.\d{1,18})?$/;
 export class AmountError extends Error { constructor(public readonly code: "INVALID_AMOUNT" | "FIRST_CONTRIBUTION_TOO_SMALL" | "CONTRIBUTION_TOO_SMALL" | "CONTRIBUTION_CLOSED") { super(code); } }
@@ -14,13 +15,40 @@ export function validateContributionAmount(input: string, phase: number, firstMi
   return amount;
 }
 export function formatNative(value: bigint): string { return formatEther(value); }
-export async function safeMaxAmount(client: { estimateGas(args: any): Promise<bigint>; getBalance(args: any): Promise<bigint> }, args: { account: `0x${string}`; to: `0x${string}` }): Promise<bigint | null> {
+export type SafeMaxAmountInput = {
+  account: Address;
+  contract: Address;
+  phase: number;
+  firstContributionMinimum: bigint;
+  subsequentContributionMinimumExclusive: bigint;
+};
+
+function contributionProbeValue(phase: number, firstMinimum: bigint, subsequentExclusive: bigint): bigint {
+  if (phase === 0) return firstMinimum;
+  if (phase === 1) return subsequentExclusive + 1n;
+  return 0n;
+}
+
+export async function safeMaxAmount(client: PublicClient, input: SafeMaxAmountInput): Promise<bigint | null> {
+  if (input.phase >= 2) return 0n;
   try {
-    const balance = await client.getBalance({ address: args.account });
-    const gas = await client.estimateGas({ account: args.account, to: args.to, value: 1n });
-    const gasPrice = await (client as any).getGasPrice();
+    const balance = await client.getBalance({ address: input.account });
+    const probeValue = contributionProbeValue(input.phase, input.firstContributionMinimum, input.subsequentContributionMinimumExclusive);
+    if (balance <= probeValue) return 0n;
+    const gas = await client.estimateContractGas({
+      address: input.contract,
+      abi: genesisAbi,
+      functionName: "contribute",
+      account: input.account,
+      value: probeValue,
+    } as any);
+    const gasPrice = await client.getGasPrice();
     const fee = gas * gasPrice;
-    const buffer = fee + fee / 10n;
-    return balance > buffer ? balance - buffer : 0n;
-  } catch { return null; }
+    const bufferedFee = fee + fee / 5n;
+    const max = balance > bufferedFee ? balance - bufferedFee : 0n;
+    const minimum = input.phase === 0 ? input.firstContributionMinimum : input.subsequentContributionMinimumExclusive + 1n;
+    return max >= minimum ? max : 0n;
+  } catch {
+    return null;
+  }
 }
