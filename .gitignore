@@ -7,6 +7,7 @@ deployments/*
 !deployments/local.json
 !deployments/staging.json
 !deployments/production.json
+.env.*
 .env
 packages/web/node_modules/
 packages/web/dist/
