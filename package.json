@@ -2,7 +2,9 @@
   "name": "mini-genesis",
   "private": true,
   "scripts": {
-    "deploy:staging": "node scripts/deploy-staging.mjs",
-    "finalize:staging": "node scripts/deploy-staging.mjs --finalize-only"
+    "deploy:staging": "node scripts/deploy.mjs staging",
+    "finalize:staging": "node scripts/deploy.mjs staging --finalize-only",
+    "deploy:production": "node scripts/deploy.mjs production",
+    "finalize:production": "node scripts/deploy.mjs production --finalize-only"
   }
 }

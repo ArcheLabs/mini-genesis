@@ -3,7 +3,8 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
-const finalizeOnly = process.argv.slice(2).includes("--finalize-only");
+const environment = process.argv[2];
+const finalizeOnly = process.argv[3] === "--finalize-only";
 const requiredEnvironment = [
   "RPC_URL",
   "PRIVATE_KEY",
@@ -86,8 +87,13 @@ async function ensureCommand(command) {
 }
 
 async function deploy() {
+  if (environment !== "staging" && environment !== "production") {
+    throw new Error("Deployment environment must be staging or production");
+  }
   const rpcUrl = requiredEnv("RPC_URL");
-  for (const name of requiredEnvironment.slice(1)) requiredEnv(name);
+  if (!finalizeOnly) {
+    for (const name of requiredEnvironment.slice(1)) requiredEnv(name);
+  }
   await ensureCommand("cast");
   if (!finalizeOnly) await ensureCommand("forge");
 
@@ -132,7 +138,7 @@ async function deploy() {
   const firstContributionMinimum = parseCastUint(call("firstContributionMinimum()(uint256)"));
   const subsequentContributionMinimumExclusive = parseCastUint(call("subsequentContributionMinimumExclusive()(uint256)"));
 
-  const manifestPath = resolve(repositoryRoot, "deployments", "staging.json");
+  const manifestPath = resolve(repositoryRoot, "deployments", `${environment}.json`);
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   manifest.status = "deployed";
   manifest.evmNativeDecimals = 18;
@@ -162,11 +168,11 @@ async function deploy() {
 
   run("node", ["scripts/generate-deployment-config.mjs"]);
   run("pnpm", ["--dir", "packages/web", "build"], {
-    env: { ...process.env, VITE_DEPLOYMENT_ENV: "staging", VITE_DEMO_MODE: "false" },
+    env: { ...process.env, VITE_DEPLOYMENT_ENV: environment, VITE_DEMO_MODE: "false" },
   });
   await access(resolve(repositoryRoot, "packages", "web", "dist"));
 
-  console.log(`MINI Genesis staging deployment completed.\n\nMode: ${finalizeOnly ? "finalize-only" : "deploy"}\nChain ID: ${chainId}\nContract: ${contractAddress}\nTransaction: ${transactionHash}\nDeployment block: ${deploymentBlock}\nRuntime code hash: ${runtimeCodeHash}\n\nManifest:\ndeployments/staging.json\n\nFrontend:\npackages/web/dist\n\nGenesis has not started yet.\nThe first valid contribution will start the contribution period.`);
+  console.log(`MINI Genesis ${environment} deployment completed.\n\nMode: ${finalizeOnly ? "finalize-only" : "deploy"}\nChain ID: ${chainId}\nContract: ${contractAddress}\nTransaction: ${transactionHash}\nDeployment block: ${deploymentBlock}\nRuntime code hash: ${runtimeCodeHash}\n\nManifest:\ndeployments/${environment}.json\n\nFrontend:\npackages/web/dist\n\nGenesis has not started yet.\nThe first valid contribution will start the contribution period.`);
 }
 
 try {
