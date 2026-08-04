@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
+const finalizeOnly = process.argv.slice(2).includes("--finalize-only");
 const requiredEnvironment = [
   "RPC_URL",
   "PRIVATE_KEY",
@@ -87,14 +88,28 @@ async function ensureCommand(command) {
 async function deploy() {
   const rpcUrl = requiredEnv("RPC_URL");
   for (const name of requiredEnvironment.slice(1)) requiredEnv(name);
-  await ensureCommand("forge");
   await ensureCommand("cast");
+  if (!finalizeOnly) await ensureCommand("forge");
 
-  const chainId = runText("cast", ["chain-id", "--rpc-url", rpcUrl]).split(/\s+/)[0];
-  run("forge", ["script", "script/DeployMiniGenesisStream.s.sol", "--rpc-url", rpcUrl, "--broadcast"]);
+  const chainId = integerString(runText("cast", ["chain-id", "--rpc-url", rpcUrl]).split(/\s+/)[0]);
+  if (!finalizeOnly) {
+    const forgeEnvironment = { ...process.env };
+    if (!forgeEnvironment.EXPECTED_CHAIN_ID?.trim()) delete forgeEnvironment.EXPECTED_CHAIN_ID;
+    run("forge", ["script", "script/DeployMiniGenesisStream.s.sol", "--rpc-url", rpcUrl, "--broadcast"], {
+      env: forgeEnvironment,
+    });
+  }
 
   const broadcastPath = resolve(repositoryRoot, "broadcast", "DeployMiniGenesisStream.s.sol", chainId, "run-latest.json");
-  const broadcast = JSON.parse(await readFile(broadcastPath, "utf8"));
+  let broadcast;
+  try {
+    broadcast = JSON.parse(await readFile(broadcastPath, "utf8"));
+  } catch (error) {
+    if (finalizeOnly && error?.code === "ENOENT") {
+      throw new Error("run-latest.json was not found; no deployment can be finalized");
+    }
+    throw error;
+  }
   const { contractAddress, transactionHash } = parseBroadcastDeployment(broadcast);
 
   const receipt = runJson("cast", ["receipt", transactionHash, "--rpc-url", rpcUrl, "--json"]);
@@ -124,7 +139,13 @@ async function deploy() {
   manifest.source.chainId = chainId;
   manifest.source.currencySymbol = "DOT";
   manifest.source.evmNativeDecimals = 18;
-  manifest.source.rpcHttpUrls = [rpcUrl];
+  const publicRpcUrl = process.env.PUBLIC_RPC_URL?.trim();
+  if (publicRpcUrl) {
+    manifest.source.rpcHttpUrls = [publicRpcUrl];
+  } else if (!Array.isArray(manifest.source.rpcHttpUrls) || manifest.source.rpcHttpUrls.length === 0) {
+    manifest.source.rpcHttpUrls = [rpcUrl];
+    console.warn("Warning: PUBLIC_RPC_URL is not configured; RPC_URL was written to the frontend manifest.");
+  }
   manifest.source.genesisHash = genesisHash;
   manifest.source.contract = contractAddress;
   manifest.source.deploymentBlock = deploymentBlock;
@@ -145,7 +166,7 @@ async function deploy() {
   });
   await access(resolve(repositoryRoot, "packages", "web", "dist"));
 
-  console.log(`MINI Genesis staging deployment completed.\n\nChain ID: ${chainId}\nContract: ${contractAddress}\nTransaction: ${transactionHash}\nDeployment block: ${deploymentBlock}\nRuntime code hash: ${runtimeCodeHash}\n\nManifest:\ndeployments/staging.json\n\nFrontend:\npackages/web/dist\n\nGenesis has not started yet.\nThe first valid contribution will start the contribution period.`);
+  console.log(`MINI Genesis staging deployment completed.\n\nMode: ${finalizeOnly ? "finalize-only" : "deploy"}\nChain ID: ${chainId}\nContract: ${contractAddress}\nTransaction: ${transactionHash}\nDeployment block: ${deploymentBlock}\nRuntime code hash: ${runtimeCodeHash}\n\nManifest:\ndeployments/staging.json\n\nFrontend:\npackages/web/dist\n\nGenesis has not started yet.\nThe first valid contribution will start the contribution period.`);
 }
 
 try {
