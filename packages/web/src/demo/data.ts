@@ -1,4 +1,4 @@
-import type { GenesisGlobal, GenesisUser } from "../genesis/reads";
+import type { GenesisDynamic, GenesisStatic, GenesisUser } from "../genesis/reads";
 
 const E18 = 10n ** 18n;
 export const DEMO_ACCOUNT = "0x7a31...f19c";
@@ -14,17 +14,8 @@ export const demoGenesis = {
   pendingMini: 48_620n * E18,
 };
 
-export const demoGlobal: GenesisGlobal = {
-  phase: 1,
-  phaseName: "Contribution",
-  startBlock: 1_000_000n,
-  contributionEndBlock: 1_000_100n,
-  emissionEndBlock: 1_000_240n,
-  lastSettledBlock: 1_000_084n,
-  totalRaisedDot: demoGenesis.totalRaisedDot,
-  contributorCount: demoGenesis.contributorCount,
+export const demoStatic: GenesisStatic = {
   genesisAllocation: demoGenesis.genesisAllocation,
-  emittedMini: demoGenesis.emittedMini,
   contributionBlocks: 100n,
   protectionBlocks: 140n,
   totalEmissionBlocks: 240n,
@@ -32,7 +23,18 @@ export const demoGlobal: GenesisGlobal = {
   subsequentContributionMinimumExclusive: 1n * E18,
   treasury: "0x0000000000000000000000000000000000000001",
   protectionEmissionMini: 5_833_333n * E18,
-  startPriceX18: demoGenesis.startPriceX18,
+};
+
+export const demoDynamic: GenesisDynamic = {
+  phase: 1,
+  phaseName: "Contribution",
+  startBlock: 1_000_000n,
+  contributionEndBlock: 1_000_100n,
+  emissionEndBlock: 1_000_240n,
+  lastSettledBlock: 1_000_084n,
+  observedBlockNumber: 1_000_164n,
+  totalRaisedDot: demoGenesis.totalRaisedDot,
+  contributorCount: demoGenesis.contributorCount,
 };
 
 export const demoUser: GenesisUser = {

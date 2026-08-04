@@ -1,128 +1,210 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { createPublicClient, formatEther, getAddress, type Address, type PublicClient } from "viem";
-import { deploymentManifests } from "./src/generated/deployment-manifests";
+import { createPublicClient, getAddress, type Address, type PublicClient } from "viem";
 import { genesisChain, publicTransport } from "./src/config/chain";
 import { getManifest, selectedEnvironment, type DeploymentManifest } from "./src/config/manifest";
 import { accounts, injectedProvider, providerChainId, switchChain, type Eip1193Provider } from "./src/wallet/provider";
 import { walletClient } from "./src/wallet/wallet-client";
-import { readGlobal, readUser, type GenesisGlobal, type GenesisUser } from "./src/genesis/reads";
 import { readContributionHistory, type ContributionHistoryItem } from "./src/genesis/history";
+import { readGlobalDynamic, readGlobalStatic, readUser, type GenesisDynamic, type GenesisStatic, type GenesisUser } from "./src/genesis/reads";
+import { calculateEmittedMini } from "./src/genesis/local-emission";
+import { calculateStartPriceX18 } from "./src/genesis/start-price";
 import { contribute, type ContributionState } from "./src/genesis/contribution";
 import { formatNative, safeMaxAmount } from "./src/genesis/amount";
-import { finalizedBlock } from "./src/genesis/finality";
-import { demoGenesis, demoGlobal, demoUser, DEMO_ACCOUNT } from "./src/demo/data";
+import { demoDynamic, demoGenesis, demoStatic, demoUser, DEMO_ACCOUNT } from "./src/demo/data";
 import { DOT_SYMBOL, MINI_SYMBOL } from "./src/config/assets";
+import { Price } from "./src/format/price";
 import "./style.css";
 
 type Language = "zh-CN" | "en";
 type Theme = "light" | "dark";
+type AppRoute = "genesis" | "rules" | "assets";
+type UiContributionState = ContributionState | "demo_processing" | "demo_success";
 const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
+const AUTO_CONNECT_KEY = "mini-genesis-wallet-autoconnect";
 
 const copy = {
   "zh-CN": {
     genesis: "启动", rules: "规则", connect: "连接钱包", disconnect: "断开连接", myAssets: "我的资产", pool: "Genesis Pool",
-    startPrice: "当前启动价格", progress: "总发放进度", contribution: "投入 DOT", balance: "余额", all: "全部", join: "加入 Pool",
-    phase: "当前阶段", contributors: "参与地址", raised: "已投入", blocks: "区块", mine: "我的", mini: "我的 MINI", vmini: "MINI 生态资产",
-    history: "交易明细", status: "状态", confirmed: "已确认", unavailable: "暂不可用", walletUnavailable: "未检测到钱包",
-    rulesTitle: "规则", account: "Account / 02", protocol: "Protocol / 01", language: "语言", light: "浅色", dark: "深色", system: "系统",
-    noData: "连接钱包后显示真实数据。", demo: "预览模式", waiting: "等待", contributionPhase: "投入阶段", protection: "保护阶段", ended: "已结束",
-    processing: "处理中…", success: "已确认（演示）", request: "已提交演示投入", statusLabel: "状态", unavailableNote: "此模块将在后续协议阶段启用。",
+    startPrice: "当前启动价格", contribution: "投入 DOT", balance: "余额", all: "全部", join: "加入 Pool", joinHint: "连接钱包后加入 Pool。",
+    phase: "当前阶段", contributors: "参与地址", raised: "已投入", blocks: "区块", mine: "我的资产", mini: "我的 MINI", vmini: "MINI 生态资产",
+    history: "交易明细", status: "状态", confirmed: "已确认", unavailable: "暂不可用", assetsEmpty: "连接钱包后查看资产。", noHistory: "暂无投入记录。",
+    language: "语言", light: "浅色", dark: "深色", demo: "预览模式", waiting: "等待", contributionPhase: "投入阶段", protection: "保护阶段", ended: "已结束",
+    unavailableNote: "此模块将在后续协议阶段启用。", protocol: "Protocol / 01", account: "Account / 02", rulesTitle: "规则", emissionTotal: "Genesis 总 MINI",
+    states: { validating: "检查中…", simulating: "模拟交易…", awaiting_signature: "请在钱包确认", submitted: "交易已上链…", included: "交易已上链…", finalizing: "等待最终确认…", finalized: "已加入 Pool", failed: "交易失败" },
+    errors: { wrongChain: "WRONG_CHAIN", rpc: "RPC_UNAVAILABLE" },
     ruleTitles: ["创世启动", "社交分发", "流动性引导", "主网上线", "代币经济学"],
     ruleDescs: ["用户投入 DOT，MINI 按区块持续发放；越早参与，持仓成本越低。", "部分激励通过社交关系与生态模块独立分发。", "创世阶段形成的价格与资金将用于后续 DOT / MINI 流动性启动。", "达到预定启动条件后，MINI 进入正式交易与网络使用阶段。", "MINI 总量、创世分发、流动性及长期激励安排。"],
     ruleDetails: ["用户在创世期投入 DOT。每个区块释放固定 MINI，按该区块有效投入权重分配；启动价格锚定最近投入区块的最大持有成本。", "Genesis 核心合约只负责 DOT 投入和 MINI 权益记录，其他生态分发模块独立运行。", "最终启动价格成为后续绑定曲线的起点，创世资金按协议规则用于 DOT / MINI 流动性。", "创世结束后协议进入后续曲线与流动性阶段，MINI 才进入正式使用。", "供应、阶段分配、流动性和长期激励由部署参数与协议规则共同确定。"],
   },
   en: {
     genesis: "Genesis", rules: "Rules", connect: "Connect", disconnect: "Disconnect", myAssets: "My assets", pool: "Genesis Pool",
-    startPrice: "Current Start Price", progress: "Total emission", contribution: "Contribute DOT", balance: "Balance", all: "Max", join: "Join Pool",
+    startPrice: "Current Start Price", contribution: "Contribute DOT", balance: "Balance", all: "Max", join: "Join Pool", joinHint: "Connect wallet to join the Pool.",
     phase: "Current phase", contributors: "Contributors", raised: "Contributed", blocks: "blocks", mine: "My Assets", mini: "My MINI", vmini: "MINI ecosystem asset",
-    history: "Transaction details", status: "Status", confirmed: "Confirmed", unavailable: "Unavailable", walletUnavailable: "No wallet detected",
-    rulesTitle: "Rules", account: "Account / 02", protocol: "Protocol / 01", language: "Language", light: "Light", dark: "Dark", system: "System",
-    noData: "Connect a wallet to show live data.", demo: "Preview mode", waiting: "Waiting", contributionPhase: "Contribution", protection: "Protection", ended: "Ended",
-    processing: "Processing…", success: "Confirmed (demo)", request: "Demo contribution submitted", statusLabel: "Status", unavailableNote: "This module will be enabled in a later protocol phase.",
+    history: "Transaction details", status: "Status", confirmed: "Confirmed", unavailable: "Unavailable", assetsEmpty: "Connect your wallet to view your assets.", noHistory: "No contributions yet.",
+    language: "Language", light: "Light", dark: "Dark", demo: "Preview mode", waiting: "Waiting", contributionPhase: "Contribution", protection: "Protection", ended: "Ended",
+    unavailableNote: "This module will be enabled in a later protocol phase.", protocol: "Protocol / 01", account: "Account / 02", rulesTitle: "Rules", emissionTotal: "Genesis MINI",
+    states: { validating: "Validating…", simulating: "Simulating…", awaiting_signature: "Confirm in wallet", submitted: "Transaction included…", included: "Transaction included…", finalizing: "Finalizing…", finalized: "Joined Pool", failed: "Transaction failed" },
+    errors: { wrongChain: "WRONG_CHAIN", rpc: "RPC_UNAVAILABLE" },
     ruleTitles: ["Genesis Launch", "Social Distribution", "Liquidity Bootstrap", "Mainnet Launch", "Token Economics"],
     ruleDescs: ["Contribute DOT while MINI streams per block; earlier participation has a lower cost basis.", "Some incentives are distributed independently through social and ecosystem modules.", "The price and funds formed during Genesis support the future DOT / MINI liquidity launch.", "After launch conditions are met, MINI enters formal trading and network use.", "MINI supply, Genesis distribution, liquidity, and long-term incentives."],
     ruleDetails: ["Users contribute DOT during Genesis. Fixed MINI is released per block and allocated by contribution weight; the start price is anchored to the maximum cost basis at the latest contribution block.", "The Genesis contract only records DOT contributions and MINI entitlement; other ecosystem distribution modules remain independent.", "The final start price becomes the bonding-curve starting point and Genesis funds bootstrap DOT / MINI liquidity under protocol rules.", "After Genesis, the protocol moves into the curve and liquidity phase, where MINI enters formal use.", "Supply, phase allocation, liquidity, and long-term incentives are defined by deployed parameters and protocol rules."],
   },
 } as const;
 
+function routeFromHash(): AppRoute { return window.location.hash === "#/assets" ? "assets" : window.location.hash === "#/rules" ? "rules" : "genesis"; }
 function shortHash(value: string): string { return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value; }
-function formatAmount(value: bigint | null | undefined, digits = 2): string { return value == null ? "—" : Number(formatEther(value)).toLocaleString(undefined, { maximumFractionDigits: digits }); }
-function phaseLabel(phase: number, t: typeof copy[Language]): string { return phase === 0 ? t.waiting : phase === 1 ? t.contributionPhase : phase === 2 ? t.protection : t.ended; }
+function formatAmount(value: bigint | null | undefined, digits = 2): string { return value == null ? "—" : Number(value / 10n ** 18n).toLocaleString(undefined, { maximumFractionDigits: digits }); }
+function phaseLabel(phase: number, text: typeof copy[Language]): string { return phase === 0 ? text.waiting : phase === 1 ? text.contributionPhase : phase === 2 ? text.protection : text.ended; }
+function stateLabel(state: UiContributionState, text: typeof copy[Language]): string { return state === "demo_processing" ? text.states.simulating : state === "demo_success" ? text.states.finalized : state === "idle" ? "" : text.states[state as keyof typeof text.states] || state; }
 
 function App() {
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem("mini-genesis-language") as Language) || "zh-CN");
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("mini-genesis-theme") as Theme) || "light");
   const text = copy[language];
+  const [route, setRoute] = useState<AppRoute>(() => routeFromHash());
   const [account, setAccount] = useState<Address | null>(null);
   const [provider, setProvider] = useState<Eip1193Provider | null>(null);
-  const [client, setClient] = useState<PublicClient | null>(null);
   const [manifest] = useState<DeploymentManifest | null>(() => getManifest(selectedEnvironment(import.meta.env.MODE, import.meta.env.VITE_DEPLOYMENT_ENV)));
-  const [global, setGlobal] = useState<GenesisGlobal | null>(demoMode ? demoGlobal : null);
+  const publicClient = useMemo<PublicClient | null>(() => {
+    if (demoMode || !manifest || manifest.status !== "deployed") return null;
+    return createPublicClient({ chain: genesisChain(manifest), transport: publicTransport(manifest) });
+  }, [manifest]);
+  const [staticState, setStaticState] = useState<GenesisStatic | null>(demoMode ? demoStatic : null);
+  const [dynamicState, setDynamicState] = useState<GenesisDynamic | null>(demoMode ? demoDynamic : null);
+  const [virtualBlockNumber, setVirtualBlockNumber] = useState<bigint | null>(demoMode ? demoDynamic.observedBlockNumber : null);
   const [user, setUser] = useState<GenesisUser | null>(demoMode ? demoUser : null);
   const [history, setHistory] = useState<ContributionHistoryItem[]>([]);
-  const [amount, setAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState<bigint | null>(demoMode ? demoGenesis.walletBalance : null);
-  const [contributionState, setContributionState] = useState<ContributionState | "demo_idle" | "demo_processing" | "demo_success">(demoMode ? "demo_idle" : "idle");
+  const [amount, setAmount] = useState("");
+  const [contributionState, setContributionState] = useState<UiContributionState>(demoMode ? "idle" : "idle");
   const [walletMenu, setWalletMenu] = useState(false);
   const [openRule, setOpenRule] = useState<number | null>(null);
-  const [notice, setNotice] = useState<string>(demoMode ? text.demo : text.noData);
-  const [myVisible, setMyVisible] = useState(demoMode);
-  const [refreshing, setRefreshing] = useState(false);
+  const [globalError, setGlobalError] = useState("");
+  const dynamicRunning = useRef(false);
 
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem("mini-genesis-theme", theme); }, [theme]);
   useEffect(() => { localStorage.setItem("mini-genesis-language", language); }, [language]);
-  useEffect(() => { if (demoMode) setNotice(copy[language].demo); }, [language]);
+  useEffect(() => { const onHashChange = () => setRoute(routeFromHash()); window.addEventListener("hashchange", onHashChange); return () => window.removeEventListener("hashchange", onHashChange); }, []);
+  useEffect(() => { if (route === "rules") window.setTimeout(() => document.getElementById("rules")?.scrollIntoView({ behavior: "smooth" }), 0); }, [route]);
 
-  const refresh = useCallback(async (nextClient = client, nextAccount = account) => {
-    if (demoMode || !manifest || !nextClient || !nextAccount) return;
-    setRefreshing(true);
+  const refreshDynamic = useCallback(async () => {
+    if (demoMode || !publicClient || !manifest || dynamicRunning.current) return;
+    dynamicRunning.current = true;
     try {
-      const nextGlobal = await readGlobal(nextClient, manifest);
-      const nextUser = await readUser(nextClient, manifest, nextAccount);
-      setGlobal(nextGlobal); setUser(nextUser); setMaxAmount(await safeMaxAmount(nextClient as any, { account: nextAccount, to: manifest.source.contract }));
-      const finalized = await finalizedBlock(nextClient);
-      if (finalized !== null) setHistory(await readContributionHistory(nextClient, manifest, nextAccount, finalized));
-      setMyVisible(true); setNotice("");
-    } catch (error) { setNotice(error instanceof Error ? error.message : "RPC_UNAVAILABLE"); }
-    finally { setRefreshing(false); }
-  }, [account, client, manifest]);
+      const next = await readGlobalDynamic(publicClient, manifest);
+      setDynamicState(next); setGlobalError("");
+      setVirtualBlockNumber((previous) => previous === null || next.observedBlockNumber > previous ? next.observedBlockNumber : previous);
+    } catch (error) { setGlobalError(error instanceof Error ? error.message : "RPC_UNAVAILABLE"); }
+    finally { dynamicRunning.current = false; }
+  }, [manifest, publicClient]);
+
+  useEffect(() => {
+    if (demoMode || !publicClient || !manifest) return;
+    let disposed = false;
+    void readGlobalStatic(publicClient, manifest).then((next) => { if (!disposed) setStaticState(next); }).catch((error) => { if (!disposed) setGlobalError(error instanceof Error ? error.message : "RPC_UNAVAILABLE"); });
+    return () => { disposed = true; };
+  }, [manifest, publicClient]);
+  useEffect(() => {
+    if (demoMode || !publicClient || !manifest) return;
+    void refreshDynamic();
+    const timer = window.setInterval(() => void refreshDynamic(), 6_000);
+    return () => window.clearInterval(timer);
+  }, [manifest, publicClient, refreshDynamic]);
+  useEffect(() => {
+    if (!staticState || !dynamicState) return;
+    const timer = window.setInterval(() => setVirtualBlockNumber((previous) => {
+      if (previous === null) return previous;
+      const next = previous + 1n;
+      return dynamicState.emissionEndBlock !== 0n && next > dynamicState.emissionEndBlock ? dynamicState.emissionEndBlock : next;
+    }), 6_000);
+    return () => window.clearInterval(timer);
+  }, [dynamicState, staticState]);
+
+  const loadUser = useCallback(async (targetAccount: Address) => {
+    if (demoMode || !publicClient || !manifest) return;
+    try {
+      const next = await readUser(publicClient, manifest, targetAccount);
+      setUser(next); setMaxAmount(await safeMaxAmount(publicClient as any, { account: targetAccount, to: manifest.source.contract }));
+    } catch (error) { setGlobalError(error instanceof Error ? error.message : "RPC_UNAVAILABLE"); }
+  }, [manifest, publicClient]);
+  const loadHistory = useCallback(async (targetAccount: Address) => {
+    if (demoMode || !publicClient || !manifest) return;
+    try {
+      const finalized = await publicClient.request({ method: "eth_getBlockByNumber", params: ["finalized", false] } as any) as { number?: string } | null;
+      if (finalized?.number) setHistory(await readContributionHistory(publicClient, manifest, targetAccount, BigInt(finalized.number)));
+    } catch { setGlobalError("HISTORY_UNAVAILABLE"); }
+  }, [manifest, publicClient]);
+  const clearUser = useCallback(() => { setAccount(null); setProvider(null); setUser(demoMode ? demoUser : null); setHistory([]); setMaxAmount(demoMode ? demoGenesis.walletBalance : null); }, []);
+
+  useEffect(() => {
+    if (demoMode || !publicClient || !manifest) return;
+    const p = injectedProvider(); if (!p) return;
+    let disposed = false;
+    const restore = async () => {
+      if (localStorage.getItem(AUTO_CONNECT_KEY) !== "1") return;
+      const chain = await providerChainId(p);
+      if (chain !== Number(manifest.source.chainId)) { if (!disposed) setGlobalError("WRONG_CHAIN"); return; }
+      const [nextAccount] = await accounts(p, false);
+      if (!disposed && nextAccount) { setProvider(p); setAccount(nextAccount); await loadUser(nextAccount); }
+      if (!disposed && nextAccount) await loadHistory(nextAccount);
+    };
+    void restore().catch(() => { if (!disposed) setGlobalError("WALLET_RESTORE_FAILED"); });
+    return () => { disposed = true; };
+  }, [loadHistory, loadUser, manifest, publicClient]);
+  useEffect(() => {
+    if (demoMode) return;
+    const p = injectedProvider(); if (!p) return;
+    const onAccounts = async (value: unknown) => {
+      const list = (value as string[]).filter(Boolean).map(getAddress);
+      if (!list.length) { clearUser(); return; }
+      setAccount(list[0]); setProvider(p); await loadUser(list[0]); if (route === "assets") await loadHistory(list[0]);
+    };
+    const onChain = async () => {
+      if (!manifest || await providerChainId(p) !== Number(manifest.source.chainId)) { clearUser(); setGlobalError("WRONG_CHAIN"); return; }
+      const [nextAccount] = await accounts(p, false); if (nextAccount) { setAccount(nextAccount); setProvider(p); await loadUser(nextAccount); if (route === "assets") await loadHistory(nextAccount); }
+    };
+    p.on?.("accountsChanged", onAccounts); p.on?.("chainChanged", onChain);
+    return () => { p.removeListener?.("accountsChanged", onAccounts); p.removeListener?.("chainChanged", onChain); };
+  }, [clearUser, loadHistory, loadUser, manifest, route]);
+  useEffect(() => { if (!account || demoMode || route !== "assets") return; void loadUser(account); const timer = window.setInterval(() => void loadUser(account), 6_000); return () => window.clearInterval(timer); }, [account, loadUser, route]);
+  useEffect(() => { if (account && route === "assets") void loadHistory(account); }, [account, loadHistory, route]);
 
   const connect = async () => {
-    if (demoMode) { setAccount(getAddress("0x0000000000000000000000000000000000000001")); setMyVisible(true); setWalletMenu(false); setNotice(text.demo); return; }
+    if (demoMode) { setAccount(getAddress("0x0000000000000000000000000000000000000001")); setWalletMenu(false); return; }
     try {
-      if (!manifest || manifest.status !== "deployed") throw new Error("TEMPLATE_MANIFEST_NOT_RUNTIME_READY");
-      const nextProvider = injectedProvider(); if (!nextProvider) throw new Error("BROWSER_WALLET_UNAVAILABLE");
-      await switchChain(nextProvider, manifest); const [nextAccount] = await accounts(nextProvider, true); if (!nextAccount) throw new Error("WALLET_CONNECTION_REJECTED");
-      if (await providerChainId(nextProvider) !== Number(manifest.source.chainId)) throw new Error("WRONG_CHAIN");
-      const nextClient = createPublicClient({ chain: genesisChain(manifest), transport: publicTransport(manifest) });
-      setProvider(nextProvider); setAccount(nextAccount); setClient(nextClient); setWalletMenu(false); await refresh(nextClient, nextAccount);
-    } catch (error) { setNotice(error instanceof Error ? error.message : "WALLET_CONNECTION_REJECTED"); }
+      if (!manifest || !publicClient || manifest.status !== "deployed") throw new Error("TEMPLATE_MANIFEST_NOT_RUNTIME_READY");
+      const p = injectedProvider(); if (!p) throw new Error("BROWSER_WALLET_UNAVAILABLE");
+      await switchChain(p, manifest); const [nextAccount] = await accounts(p, true); if (!nextAccount) throw new Error("WALLET_CONNECTION_REJECTED");
+      if (await providerChainId(p) !== Number(manifest.source.chainId)) throw new Error("WRONG_CHAIN");
+      localStorage.setItem(AUTO_CONNECT_KEY, "1"); setProvider(p); setAccount(nextAccount); setWalletMenu(false); await loadUser(nextAccount); await loadHistory(nextAccount);
+    } catch (error) { setGlobalError(error instanceof Error ? error.message : "WALLET_CONNECTION_REJECTED"); }
   };
-  const disconnect = () => { setAccount(null); setProvider(null); setClient(null); setGlobal(demoMode ? demoGlobal : null); setUser(demoMode ? demoUser : null); setHistory([]); setMyVisible(demoMode); setWalletMenu(false); };
-  const submit = async () => {
-    if (!amount || !global) { setNotice(text.contribution); return; }
-    if (demoMode) { setContributionState("demo_processing"); setNotice(text.processing); window.setTimeout(() => { setContributionState("demo_success"); setNotice(text.success); }, 700); return; }
-    if (!manifest || !client || !provider || !account) { setNotice("WALLET_REQUIRED"); return; }
-    try { await contribute(client, walletClient(provider, manifest), manifest, account, amount, global.phase, global.firstContributionMinimum, global.subsequentContributionMinimumExclusive, (update) => setContributionState(update.state)); await refresh(); } catch (error) { setNotice(error instanceof Error ? error.message : "TRANSACTION_FAILED"); }
-  };
-  const setAll = () => { if (maxAmount !== null) setAmount(formatNative(maxAmount)); };
-  const stepAmount = (delta: number) => { const current = Number(amount || 0); setAmount(String(Math.max(0, current + delta))); };
-  const progress = global && global.genesisAllocation > 0n ? Math.min(100, Number((global.emittedMini * 10_000n) / global.genesisAllocation) / 100) : 0;
-  const currentPrice = global?.startPriceX18 == null ? "—" : formatAmount(global.startPriceX18, 6);
-  const walletLabel = demoMode && !account ? text.connect : account ? shortHash(account) : text.connect;
-  const displayedHistory = demoMode ? [{ amount: 100n * 10n ** 18n, blockNumber: 1_000_072n, transactionHash: "0x9a7f0000000000000000000000000000000031c8" as `0x${string}`, logIndex: 0 }, { amount: 220n * 10n ** 18n, blockNumber: 1_000_041n, transactionHash: "0xf42100000000000000000000000000000000bc09" as `0x${string}`, logIndex: 0 }] : history;
-  const explorer = manifest?.source.explorerUrl;
+  const disconnect = () => { localStorage.removeItem(AUTO_CONNECT_KEY); clearUser(); setWalletMenu(false); };
 
-  return <>
-    <header className="site-header"><nav className="nav"><a className="brand" href="#genesis" aria-label="MINI Home"><span className="brand-mark">M</span><span className="brand-word">MINI</span></a><div className="nav-center"><a className="nav-link active" href="#genesis">{text.genesis}</a><a className="nav-link" href="#rules">{text.rules}</a></div><div className="nav-actions"><select className="language-select" value={language} onChange={(event) => setLanguage(event.target.value as Language)} aria-label={text.language}><option value="zh-CN">中文</option><option value="en">EN</option></select><button className="utility-button" type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Switch appearance"><span className="utility-icon">{theme === "dark" ? "☀" : "☾"}</span></button><div className="wallet-wrap"><button className="wallet-button" type="button" onClick={() => setWalletMenu((value) => !value)}><span className="wallet-dot" hidden={!account} />{walletLabel}<span>⌄</span></button>{walletMenu && <div className="wallet-menu open"><button type="button" onClick={() => { setMyVisible(true); setWalletMenu(false); document.getElementById("myPanel")?.scrollIntoView({ behavior: "smooth" }); }}>{text.myAssets}</button><button type="button" className="danger" onClick={account ? disconnect : connect}>{account ? text.disconnect : text.connect}</button></div>}</div></div></nav></header>
-    <main><section className="hero" id="genesis"><div className="genesis-card"><div className="demo-badge" hidden={!demoMode}>{text.demo}</div><h1 className="pool-title">{text.pool}</h1><div className="status-row"><div><span className="label">{text.startPrice}</span><div className="price">{currentPrice}<span className="price-unit">{DOT_SYMBOL} / {MINI_SYMBOL}</span></div></div><div className="progress-inline"><div className="progress-top"><strong>{progress.toFixed(1)}%</strong><span>{text.progress}</span></div><div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="progress-fill" style={{ width: `${progress}%` }} /></div><div className="progress-meta"><span>{global ? `${formatAmount(global.emittedMini)} ${MINI_SYMBOL}` : "—"}</span><span>{global ? `${formatAmount(global.genesisAllocation)} ${MINI_SYMBOL}` : "—"}</span></div></div></div><div className="input-panel"><div className="input-top"><span>{text.contribution}</span><span>{text.balance} <span className="balance-value">{formatAmount(user?.nativeBalance ?? maxAmount)} {DOT_SYMBOL}</span> · <button className="all-button" type="button" onClick={setAll}>{text.all}</button></span></div><div className="amount-control"><button className="step-button" type="button" onClick={() => stepAmount(-1)} aria-label="Decrease 1 DOT">−</button><input className="amount-field" value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="0" aria-label="DOT amount" /><button className="step-button" type="button" onClick={() => stepAmount(1)} aria-label="Increase 1 DOT">+</button></div><div className="unit-line">{DOT_SYMBOL}</div><div className="quick-row"><button className="quick-button" type="button" onClick={() => stepAmount(10)}>+10 {DOT_SYMBOL}</button><button className="quick-button" type="button" onClick={() => stepAmount(100)}>+100 {DOT_SYMBOL}</button></div><button className="submit-button" type="button" onClick={() => void submit()} disabled={contributionState === "demo_processing" || contributionState === "simulating" || contributionState === "awaiting_signature"}>{text.join}</button><p className="input-status" aria-live="polite">{contributionState === "demo_processing" ? text.processing : contributionState === "demo_success" ? text.success : notice}</p></div></div></section>
-      <section className="stats-strip"><div><span>{text.phase}</span><strong>{global ? phaseLabel(global.phase, text) : "—"}</strong></div><div><span>{text.raised}</span><strong>{global ? `${formatAmount(global.totalRaisedDot)} ${DOT_SYMBOL}` : "—"}</strong></div><div><span>{text.contributors}</span><strong>{global?.contributorCount.toLocaleString() ?? "—"}</strong></div><div><span>{text.blocks}</span><strong>{global ? (global.contributionEndBlock - global.startBlock).toString() : "—"}</strong></div><button className="refresh-button" type="button" onClick={() => void refresh()} disabled={refreshing || demoMode}>{refreshing ? "…" : "↻"}</button></section>
-      <section className="section" id="rules"><div className="section-header rules-header"><span className="section-index">{text.protocol}</span><h2>{text.rulesTitle}</h2></div><div className="rule-list">{text.ruleTitles.map((title, index) => <article className={`rule-item ${openRule === index ? "open" : ""}`} key={title}><button className="rule-summary" type="button" aria-expanded={openRule === index} onClick={() => setOpenRule(openRule === index ? null : index)}><span className="rule-num">{String(index + 1).padStart(2, "0")}</span><span className="rule-title">{title}</span><span className="rule-desc">{text.ruleDescs[index]}</span><span className="rule-arrow">＋</span></button><div className="rule-detail"><div className="rule-detail-inner"><div className="rule-detail-content">{text.ruleDetails[index]}</div></div></div></article>)}</div></section>
-      <section className={`my-panel ${myVisible ? "visible" : ""}`} id="myPanel"><div className="section-header"><div><span className="section-index">{text.account}</span><h2>{text.mine}</h2></div><span className="my-address">{account ? shortHash(account) : demoMode ? DEMO_ACCOUNT : text.noData}</span></div><div className="my-grid"><article className="asset-card"><span className="label">{text.mini}</span><div className="asset-value">{demoMode ? "12,480.00" : formatAmount(user?.pendingMini)}</div><div className="asset-note">{text.unavailableNote}</div></article><article className="asset-card"><span className="label">{text.vmini}</span><div className="asset-value">—</div><div className="asset-note">{text.unavailableNote}</div><button className="claim-button" type="button" disabled>{text.unavailable}</button></article></div><article className="history-card"><div className="history-head"><strong>{text.history}</strong><span>{text.status}</span><span>{DOT_SYMBOL}</span><span>Block</span></div>{displayedHistory.length ? displayedHistory.map((item) => <div className="tx-row" key={`${item.transactionHash}-${item.logIndex}`}><div><div className="tx-type">{text.contribution}</div><div className="tx-time">{shortHash(item.transactionHash)}</div></div><div className="tx-amount">{formatAmount(item.amount)} {DOT_SYMBOL}</div><div className="tx-status">{text.confirmed}</div><div className="tx-block">#{item.blockNumber.toString()}</div></div>) : <div className="empty-history">{text.noData}</div>}</article></section>
-      <footer><span>MINI Genesis Stream · {DOT_SYMBOL}</span><span>{demoMode ? text.demo : account ? text.confirmed : text.noData}</span></footer>
-    </main>
-  </>;
+  const displayedEmittedMini = staticState && dynamicState ? calculateEmittedMini({ startBlock: dynamicState.startBlock, currentBlock: virtualBlockNumber ?? dynamicState.observedBlockNumber, genesisAllocation: staticState.genesisAllocation, totalEmissionBlocks: staticState.totalEmissionBlocks }) : 0n;
+  const displayedProgress = staticState?.genesisAllocation ? Number(displayedEmittedMini * 10_000n / staticState.genesisAllocation) / 100 : 0;
+  const startPriceX18 = staticState && dynamicState ? calculateStartPriceX18({ totalRaisedDot: dynamicState.totalRaisedDot, lastSettledBlock: dynamicState.lastSettledBlock, startBlock: dynamicState.startBlock, genesisAllocation: staticState.genesisAllocation, totalEmissionBlocks: staticState.totalEmissionBlocks }) : null;
+  const contributionBusy = contributionState === "validating" || contributionState === "simulating" || contributionState === "awaiting_signature" || contributionState === "submitted" || contributionState === "included" || contributionState === "finalizing" || contributionState === "demo_processing";
+  const submit = async () => {
+    if (contributionBusy) return;
+    if (demoMode) { setContributionState("demo_processing"); window.setTimeout(() => { setContributionState("demo_success"); window.setTimeout(() => setContributionState("idle"), 1_500); }, 700); return; }
+    if (!amount || !publicClient || !provider || !account || !manifest || !dynamicState || !staticState) return;
+    try {
+      await contribute(publicClient, walletClient(provider, manifest), manifest, account, amount, dynamicState.phase, staticState.firstContributionMinimum, staticState.subsequentContributionMinimumExclusive, (update) => setContributionState(update.state));
+      setAmount(""); await Promise.all([refreshDynamic(), loadUser(account), loadHistory(account)]); setContributionState("finalized"); window.setTimeout(() => setContributionState("idle"), 1_500);
+    } catch (error) { setGlobalError(error instanceof Error ? error.message : "TRANSACTION_FAILED"); }
+  };
+  const setAll = () => { if (!contributionBusy && maxAmount !== null) setAmount(formatNative(maxAmount)); };
+  const stepAmount = (delta: number) => { if (!contributionBusy) setAmount(String(Math.max(0, Number(amount || 0) + delta))); };
+  const walletLabel = account ? shortHash(account) : text.connect;
+
+  const header = <header className="site-header"><nav className="nav"><a className="brand" href="#/" aria-label="MINI Home"><span className="brand-mark">M</span><span className="brand-word">MINI</span></a><div className="nav-center"><a className={`nav-link ${route !== "assets" ? "active" : ""}`} href="#/">{text.genesis}</a><a className={`nav-link ${route === "rules" ? "active" : ""}`} href="#/rules">{text.rules}</a></div><div className="nav-actions"><select className="language-select" value={language} onChange={(event) => setLanguage(event.target.value as Language)} aria-label={text.language}><option value="zh-CN">中文</option><option value="en">EN</option></select><button className="utility-button" type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Switch appearance"><span className="utility-icon">{theme === "dark" ? "☀" : "☾"}</span></button><div className="wallet-wrap"><button className="wallet-button" type="button" onClick={() => setWalletMenu((value) => !value)}><span className="wallet-dot" hidden={!account} />{walletLabel}<span>⌄</span></button>{walletMenu && <div className="wallet-menu open"><button type="button" onClick={() => { window.location.hash = "#/assets"; setWalletMenu(false); }}>{text.myAssets}</button><button type="button" className="danger" onClick={account ? disconnect : connect}>{account ? text.disconnect : text.connect}</button></div>}</div></div></nav></header>;
+  const footer = <footer><span>MINI Genesis Stream · {DOT_SYMBOL}</span><span>{demoMode ? text.demo : account ? text.confirmed : ""}</span></footer>;
+  const historyItems = demoMode ? [{ amount: 100n * 10n ** 18n, blockNumber: 1_000_072n, transactionHash: "0x9a7f0000000000000000000000000000000031c8" as `0x${string}`, logIndex: 0 }, { amount: 220n * 10n ** 18n, blockNumber: 1_000_041n, transactionHash: "0xf42100000000000000000000000000000000bc09" as `0x${string}`, logIndex: 0 }] : history;
+  const assetsPage = <main className="assets-page"><div className="assets-heading"><span className="section-index">{text.account}</span><h1>{text.mine}</h1><p className="my-address">{account ? shortHash(account) : demoMode ? DEMO_ACCOUNT : ""}</p></div>{!account && !demoMode ? <section className="assets-empty"><p>{text.assetsEmpty}</p><button className="submit-button" type="button" onClick={() => void connect()}>{text.connect}</button></section> : <><div className="my-grid"><article className="asset-card"><span className="label">{text.mini}</span><div className="asset-value">{demoMode ? "12,480.00" : formatAmount(user?.pendingMini)}</div><div className="asset-note">{text.unavailableNote}</div></article><article className="asset-card"><span className="label">{text.vmini}</span><div className="asset-value">—</div><div className="asset-note">{text.unavailableNote}</div><button className="claim-button" type="button" disabled>{text.unavailable}</button></article></div><article className="history-card"><div className="history-head"><strong>{text.history}</strong><span>{text.status}</span><span>{DOT_SYMBOL}</span><span>Block</span></div>{historyItems.length ? historyItems.map((item) => <div className="tx-row" key={`${item.transactionHash}-${item.logIndex}`}><div><div className="tx-type">{text.contribution}</div><div className="tx-time">{shortHash(item.transactionHash)}</div></div><div className="tx-amount">{formatAmount(item.amount)} {DOT_SYMBOL}</div><div className="tx-status">{text.confirmed}</div><div className="tx-block">#{item.blockNumber.toString()}</div></div>) : <div className="empty-history">{text.noHistory}</div>}</article></>}</main>;
+  const genesisPage = <main><section className="hero" id="genesis"><div className="genesis-card"><div className="demo-badge" hidden={!demoMode}>{text.demo}</div><h1 className="pool-title">{text.pool}</h1><div className="status-row"><div><span className="label">{text.startPrice}</span><div className="price"><Price value={startPriceX18} /><span className="price-unit">{DOT_SYMBOL} / {MINI_SYMBOL}</span></div></div><div className="progress-inline"><div className="progress-top"><strong key={`progress-${displayedEmittedMini}`} className="emission-pulse">{displayedProgress.toFixed(1)}%</strong></div><div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={displayedProgress}><div className="progress-fill" style={{ width: `${displayedProgress}%` }} /></div><div className="progress-meta"><span key={`emitted-${displayedEmittedMini}`} className="emission-pulse">{formatAmount(displayedEmittedMini)} {MINI_SYMBOL}</span><span>{formatAmount(staticState?.genesisAllocation)} {MINI_SYMBOL}</span></div></div></div><div className="input-panel"><div className="input-top"><span>{text.contribution}</span><span>{text.balance} <span className="balance-value">{account || demoMode ? `${formatAmount(user?.nativeBalance ?? maxAmount)} ${DOT_SYMBOL}` : "—"}</span> · <button className="all-button" type="button" disabled={contributionBusy || !account && !demoMode} onClick={setAll}>{text.all}</button></span></div><div className="amount-control"><button className="step-button" type="button" disabled={contributionBusy || !account && !demoMode} onClick={() => stepAmount(-1)} aria-label="Decrease 1 DOT">−</button><input className="amount-field" disabled={contributionBusy || !account && !demoMode} value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="0" aria-label="DOT amount" /><button className="step-button" type="button" disabled={contributionBusy || !account && !demoMode} onClick={() => stepAmount(1)} aria-label="Increase 1 DOT">+</button></div><div className="unit-line">{DOT_SYMBOL}</div><div className="quick-row"><button className="quick-button" type="button" disabled={contributionBusy || !account && !demoMode} onClick={() => stepAmount(10)}>+10 {DOT_SYMBOL}</button><button className="quick-button" type="button" disabled={contributionBusy || !account && !demoMode} onClick={() => stepAmount(100)}>+100 {DOT_SYMBOL}</button></div><button className={`submit-button ${contributionBusy ? "loading" : ""}`} type="button" onClick={() => void submit()} disabled={contributionBusy || !account && !demoMode}>{contributionBusy && <span className="button-spinner" aria-hidden="true" />}<span>{contributionBusy ? stateLabel(contributionState, text) : contributionState === "demo_success" ? text.states.finalized : text.join}</span></button><p className="input-status" aria-live="polite">{globalError || (!account && !demoMode ? text.joinHint : stateLabel(contributionState, text))}</p></div></div></section><section className="stats-strip"><div><span>{text.phase}</span><strong>{dynamicState ? phaseLabel(dynamicState.phase, text) : "—"}</strong></div><div><span>{text.raised}</span><strong>{dynamicState ? `${formatAmount(dynamicState.totalRaisedDot)} ${DOT_SYMBOL}` : "—"}</strong></div><div><span>{text.contributors}</span><strong>{dynamicState?.contributorCount.toLocaleString() ?? "—"}</strong></div><div><span>{text.emissionTotal}</span><strong>{formatAmount(staticState?.genesisAllocation)} {MINI_SYMBOL}</strong></div></section><section className="section" id="rules"><div className="section-header rules-header"><span className="section-index">{text.protocol}</span><h2>{text.rulesTitle}</h2></div><div className="rule-list">{text.ruleTitles.map((title, index) => <article className={`rule-item ${openRule === index ? "open" : ""}`} key={title}><button className="rule-summary" type="button" aria-expanded={openRule === index} onClick={() => setOpenRule(openRule === index ? null : index)}><span className="rule-num">{String(index + 1).padStart(2, "0")}</span><span className="rule-title">{title}</span><span className="rule-desc">{text.ruleDescs[index]}</span><span className="rule-arrow">＋</span></button><div className="rule-detail"><div className="rule-detail-inner"><div className="rule-detail-content">{text.ruleDetails[index]}</div></div></div></article>)}</div></section>{footer}</main>;
+  return <>{header}{route === "assets" ? assetsPage : genesisPage}</>;
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
