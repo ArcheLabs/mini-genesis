@@ -15,7 +15,7 @@ export const USERNAME = "alice.dot";
 export function manifest(overrides: Partial<DeploymentManifest> = {}): DeploymentManifest {
   return {
     environment: "local", status: "deployed", evmNativeDecimals: 18,
-    source: { chainId: "420420417", name: "test", currencySymbol: "PAS", evmNativeDecimals: 18, rpcHttpUrls: ["http://localhost"], explorerUrl: "", genesisHash: SOURCE_HASH, contract: SOURCE_CONTRACT, deploymentBlock: "1", runtimeCodeHash: BLOCK_HASH },
+    source: { chainId: "420420417", name: "test", currencySymbol: "DOT", evmNativeDecimals: 18, rpcHttpUrls: ["http://localhost"], explorerUrl: "", genesisHash: SOURCE_HASH, contract: SOURCE_CONTRACT, deploymentBlock: "1", runtimeCodeHash: BLOCK_HASH },
     destination: { chainId: "31337", genesisHash: DESTINATION_HASH, miniLucky: DESTINATION, trustGraph: ACCOUNT, personhoodPrecompile: DESTINATION, deploymentBlock: "1" },
     product: null, backend: { baseUrl: "http://localhost:8787" }, ...overrides,
   };

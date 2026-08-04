@@ -4,7 +4,7 @@ import { assertManifestRuntime } from "./manifest";
 import { genesisAbi } from "../genesis/abi";
 
 const getterNames = [
-  "treasury", "genesisAllocation", "luckyRootAllocation", "contributionBlocks",
+  "treasury", "genesisAllocation", "contributionBlocks",
   "protectionBlocks", "firstContributionMinimum", "subsequentContributionMinimumExclusive",
 ] as const;
 

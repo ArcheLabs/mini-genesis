@@ -110,7 +110,7 @@ contract MiniGenesisStreamInvariantTest is Test {
 
     function setUp() public {
         stream = new MiniGenesisStream(
-            treasury, 1_400_000 ether, 1_400_000 ether, 100, 40, 1 ether, 0.1 ether
+            treasury, 1_400_000 ether, 100, 40, 1 ether, 0.1 ether
         );
         handler = new GenesisHandler(stream, treasury);
         targetContract(address(handler));

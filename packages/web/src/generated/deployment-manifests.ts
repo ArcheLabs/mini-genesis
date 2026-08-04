@@ -7,7 +7,7 @@ export const deploymentManifests = {
     "source": {
       "chainId": "420420417",
       "name": "Polkadot Hub TestNet",
-      "currencySymbol": "PAS",
+      "currencySymbol": "DOT",
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
         "https://eth-rpc-testnet.polkadot.io/",
@@ -21,7 +21,6 @@ export const deploymentManifests = {
       "contractConfig": {
         "treasury": "0x0000000000000000000000000000000000000000",
         "genesisAllocation": "0",
-        "luckyRootAllocation": "0",
         "contributionBlocks": "0",
         "protectionBlocks": "0",
         "firstContributionMinimum": "0",
@@ -48,7 +47,7 @@ export const deploymentManifests = {
     "source": {
       "chainId": "0",
       "name": "Polkadot Hub Staging",
-      "currencySymbol": "PAS",
+      "currencySymbol": "DOT",
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [],
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
@@ -59,7 +58,6 @@ export const deploymentManifests = {
       "contractConfig": {
         "treasury": "0x0000000000000000000000000000000000000000",
         "genesisAllocation": "0",
-        "luckyRootAllocation": "0",
         "contributionBlocks": "0",
         "protectionBlocks": "0",
         "firstContributionMinimum": "0",
@@ -90,7 +88,7 @@ export const deploymentManifests = {
     "source": {
       "chainId": "0",
       "name": "Polkadot Hub",
-      "currencySymbol": "PAS",
+      "currencySymbol": "DOT",
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [],
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
@@ -101,7 +99,6 @@ export const deploymentManifests = {
       "contractConfig": {
         "treasury": "0x0000000000000000000000000000000000000000",
         "genesisAllocation": "0",
-        "luckyRootAllocation": "0",
         "contributionBlocks": "0",
         "protectionBlocks": "0",
         "firstContributionMinimum": "0",

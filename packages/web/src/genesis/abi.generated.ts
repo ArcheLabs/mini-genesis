@@ -14,11 +14,6 @@ export const genesisAbi = [
       },
       {
         "internalType": "uint256",
-        "name": "luckyRootAllocation_",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "contributionBlocks_",
         "type": "uint256"
       },
@@ -40,6 +35,102 @@ export const genesisAbi = [
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "ContributionClosed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ContributionTooSmall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FirstContributionTooSmall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidConfiguration",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "MathOverflowedMulDiv",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ReentrancyGuardReentrantCall",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "TreasuryTransferFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddress",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "contributor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Contributed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "startBlock",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "contributionEndBlock",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "emissionEndBlock",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "firstContributor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "firstContribution",
+        "type": "uint256"
+      }
+    ],
+    "name": "GenesisStarted",
+    "type": "event"
   },
   {
     "inputs": [],
@@ -114,25 +205,6 @@ export const genesisAbi = [
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "elapsedContributionBlocks",
-        "type": "uint256"
-      }
-    ],
-    "name": "cumulativeLuckyRootCredit",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "emissionEndBlock",
     "outputs": [
@@ -187,38 +259,6 @@ export const genesisAbi = [
   {
     "inputs": [],
     "name": "lastSettledBlock",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "luckyRootAllocation",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "elapsedBlock",
-        "type": "uint256"
-      }
-    ],
-    "name": "luckyRootCreditForElapsedBlock",
     "outputs": [
       {
         "internalType": "uint256",
@@ -387,120 +427,5 @@ export const genesisAbi = [
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "contributor",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "Contributed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "startBlock",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "contributionEndBlock",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "emissionEndBlock",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "firstContributor",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "firstContribution",
-        "type": "uint256"
-      }
-    ],
-    "name": "GenesisStarted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "allocation",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "contributionBlocks",
-        "type": "uint256"
-      }
-    ],
-    "name": "LuckyRootCreditConfigured",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "ContributionClosed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ContributionTooSmall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "FirstContributionTooSmall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidConfiguration",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "MathOverflowedMulDiv",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "TreasuryTransferFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
-    "type": "error"
   }
 ] as const;

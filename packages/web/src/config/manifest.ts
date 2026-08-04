@@ -7,7 +7,6 @@ export type ManifestStatus = "template" | "deployed";
 export type ContractConfig = Partial<Record<
   | "treasury"
   | "genesisAllocation"
-  | "luckyRootAllocation"
   | "contributionBlocks"
   | "protectionBlocks"
   | "firstContributionMinimum"
@@ -20,7 +19,7 @@ export type DeploymentManifest = {
   source: {
     chainId: string;
     name: string;
-    currencySymbol: string;
+    currencySymbol?: string;
     evmNativeDecimals: number;
     rpcHttpUrls: string[];
     explorerUrl: string;

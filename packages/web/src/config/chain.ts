@@ -1,11 +1,12 @@
 import { defineChain, fallback, http, type Chain, type Transport } from "viem";
 import type { DeploymentManifest } from "./manifest";
+import { DOT_SYMBOL, DOT_DECIMALS } from "./assets";
 
 export function genesisChain(manifest: DeploymentManifest): Chain {
   return defineChain({
     id: Number(manifest.source.chainId),
     name: manifest.source.name,
-    nativeCurrency: { name: manifest.source.currencySymbol, symbol: manifest.source.currencySymbol, decimals: 18 },
+    nativeCurrency: { name: DOT_SYMBOL, symbol: DOT_SYMBOL, decimals: DOT_DECIMALS },
     rpcUrls: { default: { http: manifest.source.rpcHttpUrls.filter(Boolean) } },
     blockExplorers: { default: { name: "Explorer", url: manifest.source.explorerUrl || "https://example.invalid" } },
   });

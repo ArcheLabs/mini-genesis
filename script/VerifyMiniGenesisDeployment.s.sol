@@ -18,10 +18,6 @@ contract VerifyMiniGenesisDeployment is Script {
             stream.genesisAllocation() == vm.envUint("GENESIS_ALLOCATION"), "allocation mismatch"
         );
         require(
-            stream.luckyRootAllocation() == vm.envUint("LUCKY_ROOT_ALLOCATION"),
-            "lucky allocation mismatch"
-        );
-        require(
             stream.contributionBlocks() == vm.envUint("CONTRIBUTION_BLOCKS"),
             "contribution blocks mismatch"
         );
