@@ -14,14 +14,11 @@ contract DeployMiniGenesisStream is Script {
         uint256 protectionBlocks = vm.envUint("PROTECTION_BLOCKS");
         uint256 firstMinimum = vm.envUint("FIRST_CONTRIBUTION_MINIMUM");
         uint256 laterMinimum = vm.envUint("SUBSEQUENT_CONTRIBUTION_MINIMUM_EXCLUSIVE");
-        uint256 expectedBlockTime = vm.envOr("EXPECTED_BLOCK_TIME_SECONDS", uint256(0));
-        uint256 expectedChainId = vm.envUint("EXPECTED_CHAIN_ID");
-        bytes32 expectedGenesisHash = vm.envBytes32("EXPECTED_GENESIS_HASH");
+        uint256 expectedChainId = vm.envOr("EXPECTED_CHAIN_ID", block.chainid);
 
         require(block.chainid == expectedChainId, "unexpected chain id");
 
         console2.log("chain id", block.chainid);
-        console2.logBytes32(expectedGenesisHash);
         console2.log("treasury", treasury);
         console2.log("genesis allocation", allocation);
         console2.log("contribution blocks", contributionBlocks);
@@ -37,13 +34,6 @@ contract DeployMiniGenesisStream is Script {
             "theoretical curve multiple (x1e18)",
             (contributionBlocks + protectionBlocks) * 1e18 / protectionBlocks
         );
-        if (expectedBlockTime != 0) {
-            console2.log(
-                "estimated duration (seconds)",
-                (contributionBlocks + protectionBlocks) * expectedBlockTime
-            );
-        }
-
         vm.startBroadcast(privateKey);
         stream = new MiniGenesisStream(
             treasury,
