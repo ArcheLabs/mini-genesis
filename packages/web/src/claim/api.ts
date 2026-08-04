@@ -49,7 +49,7 @@ export function validatePreparedClaim(prepared: PreparedClaim, account: Address,
   if (!isAddress(claim.sourceH160) || getAddress(claim.sourceH160) !== getAddress(account) || claim.username !== username || !bytes32(claim.creditGrantId) || !bytes32(claim.usernameHash) || keccak256(toBytes(username)) !== claim.usernameHash || !bytes32(claim.identityResolutionBlockHash) || !bytes32(claim.contextAlias) || claim.contextAlias.toLowerCase() === `0x${"0".repeat(64)}` || !bytes32(claim.targetChainGenesisHash) || !isAddress(claim.identityH160) || !/^\d+$/.test(claim.amount) || BigInt(claim.amount) <= 0n || !/^\d+$/.test(claim.deadline) || BigInt(claim.deadline) <= BigInt(Math.floor(Date.now() / 1000))) mismatch();
   if (!equalAddress(message.sourceAccount, account) || Object.hasOwn(message, "sourceH160") || Object.hasOwn(message, "source")) mismatch();
   const exact: Array<[unknown, unknown]> = [
-    [message.sourceChainGenesisHash, manifest.source.genesisHash], [message.sourceContract, manifest.source.contract], [message.sourceAccount, claim.sourceH160], [message.creditGrantId, claim.creditGrantId], [message.claimSequence, claim.claimSequence], [message.username, claim.username], [message.usernameHash, claim.usernameHash], [message.identityAccount, claim.identityH160], [message.identityResolutionBlock, claim.identityResolutionBlock], [message.identityResolutionBlockHash, claim.identityResolutionBlockHash], [message.contextAlias, claim.contextAlias], [message.amount, claim.amount], [message.deadline, claim.deadline], [message.targetChainId, claim.targetChainId], [message.targetChainGenesisHash, claim.targetChainGenesisHash], [message.miniLucky, claim.miniLucky],
+    [message.sourceContract, manifest.source.contract], [message.sourceAccount, claim.sourceH160], [message.creditGrantId, claim.creditGrantId], [message.claimSequence, claim.claimSequence], [message.username, claim.username], [message.usernameHash, claim.usernameHash], [message.identityAccount, claim.identityH160], [message.identityResolutionBlock, claim.identityResolutionBlock], [message.identityResolutionBlockHash, claim.identityResolutionBlockHash], [message.contextAlias, claim.contextAlias], [message.amount, claim.amount], [message.deadline, claim.deadline], [message.targetChainId, claim.targetChainId], [message.targetChainGenesisHash, claim.targetChainGenesisHash], [message.miniLucky, claim.miniLucky],
   ];
   for (const [left, right] of exact) {
     if (typeof right === "string" && isAddress(right)) { if (!equalAddress(left, right)) mismatch(); }
@@ -57,6 +57,6 @@ export function validatePreparedClaim(prepared: PreparedClaim, account: Address,
     else if (typeof right === "string" && /^\d+$/.test(right)) { if (!equalBigInt(left, right)) mismatch(); }
     else if (left !== right) mismatch();
   }
-  if (String(message.sourceChainGenesisHash).toLowerCase() !== manifest.source.genesisHash.toLowerCase() || !equalAddress(message.sourceContract, manifest.source.contract)) mismatch();
+  if (!equalAddress(message.sourceContract, manifest.source.contract)) mismatch();
   if (claim.targetChainId !== manifest.destination.chainId || claim.targetChainGenesisHash.toLowerCase() !== manifest.destination.genesisHash.toLowerCase() || claim.miniLucky.toLowerCase() !== manifest.destination.miniLucky.toLowerCase()) mismatch();
 }

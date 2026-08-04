@@ -14,7 +14,6 @@ export const deploymentManifests = {
         "https://services.polkadothub-rpc.com/testnet/"
       ],
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
-      "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "deploymentBlock": "0",
@@ -51,7 +50,6 @@ export const deploymentManifests = {
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [],
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
-      "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "deploymentBlock": "0",
@@ -92,7 +90,6 @@ export const deploymentManifests = {
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [],
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
-      "genesisHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "deploymentBlock": "0",

@@ -122,10 +122,6 @@ async function deploy() {
   if (receipt?.blockNumber === undefined) throw new Error("Deployment receipt did not include a block number");
   const deploymentBlock = integerString(receipt.blockNumber);
 
-  const genesisBlock = runJson("cast", ["block", "0", "--rpc-url", rpcUrl, "--json"]);
-  if (!genesisBlock?.hash) throw new Error("Genesis block hash was not returned");
-  const genesisHash = genesisBlock.hash.trim();
-
   const runtimeCode = runText("cast", ["code", contractAddress, "--rpc-url", rpcUrl]).split(/\s+/)[0];
   if (!runtimeCode || runtimeCode === "0x") throw new Error("Runtime bytecode was empty");
   const runtimeCodeHash = runText("cast", ["keccak", runtimeCode]).split(/\s+/)[0];
@@ -152,7 +148,6 @@ async function deploy() {
     manifest.source.rpcHttpUrls = [rpcUrl];
     console.warn("Warning: PUBLIC_RPC_URL is not configured; RPC_URL was written to the frontend manifest.");
   }
-  manifest.source.genesisHash = genesisHash;
   manifest.source.contract = contractAddress;
   manifest.source.deploymentBlock = deploymentBlock;
   manifest.source.runtimeCodeHash = runtimeCodeHash;

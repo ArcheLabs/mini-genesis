@@ -1,4 +1,4 @@
-import { keccak256, type Address, type Hex, type PublicClient } from "viem";
+import { keccak256, type Address, type PublicClient } from "viem";
 import type { DeploymentManifest, RuntimeDiagnostic } from "./manifest";
 import { assertManifestRuntime } from "./manifest";
 import { genesisAbi } from "../genesis/abi";
@@ -20,9 +20,6 @@ export async function validateRuntime(client: PublicClient, manifest: Deployment
     const chainId = await client.getChainId();
     if (String(chainId) !== manifest.source.chainId) throw new Error("chain id mismatch");
     checks.chainId = "passed";
-    const block = await client.getBlock({ blockNumber: 0n });
-    if (!block.hash || block.hash.toLowerCase() !== manifest.source.genesisHash.toLowerCase()) throw new Error("genesis hash mismatch");
-    checks.genesisHash = "passed";
     const bytecode = await client.getBytecode({ address: manifest.source.contract });
     if (!bytecode) throw new Error("contract bytecode missing");
     if (keccak256(bytecode) !== manifest.source.runtimeCodeHash) throw new Error("runtime code hash mismatch");
@@ -41,4 +38,4 @@ export async function validateRuntime(client: PublicClient, manifest: Deployment
   }
 }
 
-export type RuntimeSummary = { address: Address; chainId: bigint; genesisHash: Hex };
+export type RuntimeSummary = { address: Address; chainId: bigint };
