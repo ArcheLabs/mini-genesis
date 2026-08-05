@@ -7,7 +7,7 @@ export type PollTask = () => Promise<PollOutcome>;
 
 export type PollController = (() => void) & { retryNow: () => void };
 
-export function startVisiblePolling(task: PollTask, intervalMs = 6_000, isHidden: () => boolean = () => document.hidden): PollController {
+export function startVisiblePolling(task: PollTask, intervalMs = 30_000, isHidden: () => boolean = () => document.hidden): PollController {
   let disposed = false;
   let inFlight = false;
   let paused = false;

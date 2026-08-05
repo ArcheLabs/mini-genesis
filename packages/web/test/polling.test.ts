@@ -8,27 +8,42 @@ describe("visible polling", () => {
     vi.useRealTimers();
   });
 
-  it("polls immediately and then waits 6s after success", async () => {
+  it("uses a 30s default interval after success", async () => {
     const task = vi.fn<() => Promise<PollOutcome>>().mockResolvedValue({ status: "success" });
-    const stop = startVisiblePolling(task, 6_000, () => false);
+    const stop = startVisiblePolling(task, undefined, () => false);
 
-    await vi.advanceTimersByTimeAsync(6_000);
+    await vi.advanceTimersByTimeAsync(29_999);
+    expect(task).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(task).toHaveBeenCalledTimes(2);
+    stop();
+  });
+
+  it("polls immediately and then waits 30s after success", async () => {
+    const task = vi.fn<() => Promise<PollOutcome>>().mockResolvedValue({ status: "success" });
+    const stop = startVisiblePolling(task, 30_000, () => false);
+
+    await vi.advanceTimersByTimeAsync(29_999);
+    expect(task).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
     expect(task).toHaveBeenCalledTimes(2);
     stop();
   });
 
   it("waits 30s after a normal error", async () => {
     const task = vi.fn<() => Promise<PollOutcome>>().mockResolvedValueOnce({ status: "error" }).mockResolvedValue({ status: "success" });
-    const stop = startVisiblePolling(task, 6_000, () => false);
+    const stop = startVisiblePolling(task, 30_000, () => false);
 
-    await vi.advanceTimersByTimeAsync(30_000);
+    await vi.advanceTimersByTimeAsync(29_999);
+    expect(task).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
     expect(task).toHaveBeenCalledTimes(2);
     stop();
   });
 
   it("waits at least 60s after the first 429", async () => {
     const task = vi.fn<() => Promise<PollOutcome>>().mockResolvedValueOnce({ status: "rate_limited", retryAfterMs: 90_000 }).mockResolvedValue({ status: "success" });
-    const stop = startVisiblePolling(task, 6_000, () => false);
+    const stop = startVisiblePolling(task, 30_000, () => false);
 
     await vi.advanceTimersByTimeAsync(89_999);
     expect(task).toHaveBeenCalledTimes(1);
@@ -39,7 +54,7 @@ describe("visible polling", () => {
 
   it("pauses after two consecutive 429s", async () => {
     const task = vi.fn<() => Promise<PollOutcome>>().mockResolvedValueOnce({ status: "rate_limited", retryAfterMs: 60_000 }).mockResolvedValueOnce({ status: "rate_limited", retryAfterMs: 60_000 }).mockResolvedValue({ status: "success" });
-    const stop = startVisiblePolling(task, 6_000, () => false);
+    const stop = startVisiblePolling(task, 30_000, () => false);
 
     await vi.advanceTimersByTimeAsync(180_000);
     expect(task).toHaveBeenCalledTimes(2);
@@ -52,7 +67,7 @@ describe("visible polling", () => {
       .mockResolvedValueOnce({ status: "success" })
       .mockResolvedValueOnce({ status: "rate_limited", retryAfterMs: 60_000 })
       .mockResolvedValue({ status: "success" });
-    const stop = startVisiblePolling(task, 6_000, () => false);
+    const stop = startVisiblePolling(task, 30_000, () => false);
 
     await vi.advanceTimersByTimeAsync(120_000);
     expect(task).toHaveBeenCalledTimes(3);
@@ -69,22 +84,22 @@ describe("visible polling", () => {
       active -= 1;
       return { status: "success" };
     });
-    const stop = startVisiblePolling(task, 6_000, () => false);
+    const stop = startVisiblePolling(task, 30_000, () => false);
 
-    await vi.advanceTimersByTimeAsync(12_000);
+    await vi.advanceTimersByTimeAsync(60_000);
     expect(maxActive).toBe(1);
     expect(task).toHaveBeenCalledTimes(3);
     stop();
-    await vi.advanceTimersByTimeAsync(12_000);
+    await vi.advanceTimersByTimeAsync(30_000);
     expect(task).toHaveBeenCalledTimes(3);
   });
 
   it("skips hidden polls and resumes on visibility change", async () => {
     let hidden = true;
     const task = vi.fn<() => Promise<PollOutcome>>().mockResolvedValue({ status: "success" });
-    const stop = startVisiblePolling(task, 6_000, () => hidden);
+    const stop = startVisiblePolling(task, 30_000, () => hidden);
 
-    await vi.advanceTimersByTimeAsync(6_000);
+    await vi.advanceTimersByTimeAsync(30_000);
     expect(task).toHaveBeenCalledTimes(0);
     hidden = false;
     document.dispatchEvent(new Event("visibilitychange"));

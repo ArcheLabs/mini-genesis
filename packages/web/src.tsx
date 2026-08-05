@@ -138,7 +138,7 @@ function App() {
     }
   }, [context, feedback.clearCode, feedback.presentCode, manifest, presentGlobalError, publicClient]);
   useEffect(() => { if (demoMode || !publicClient || !manifest) return; let disposed = false; void readGlobalStatic(publicClient, manifest).then((next) => { if (!disposed) setStaticState(next); }).catch((error) => { if (!disposed) presentGlobalError(error); }); return () => { disposed = true; }; }, [manifest, presentGlobalError, publicClient]);
-  useEffect(() => { if (demoMode || !publicClient || !manifest) return; return startVisiblePolling(async () => refreshDynamic()); }, [manifest, publicClient, refreshDynamic]);
+  useEffect(() => { if (demoMode || !publicClient || !manifest) return; return startVisiblePolling(async () => refreshDynamic(), 30_000); }, [manifest, publicClient, refreshDynamic]);
   useEffect(() => {
     if (demoMode) return;
     const handleOffline = () => feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));
@@ -171,9 +171,9 @@ function App() {
     feedback.clearCode("CHAIN_SWITCH_REJECTED");
   }, [clearUser, context, correctChain, feedback.clearCode, feedback.presentCode, isConnected, manifest]);
   useEffect(() => {
-    if (!walletReady || !account) return;
+    if (!walletReady || !account || demoMode) return;
     void loadUser(account);
-  }, [account, loadUser, walletReady]);
+  }, [account, chainId, demoMode, loadUser, walletReady]);
   useEffect(() => {
     if (!walletReady || !account || !dynamicState || !staticState) return;
     const key = `${account}:${chainId}`;
@@ -181,8 +181,12 @@ function App() {
     maxRefreshKey.current = key;
     void calculateMax(account, dynamicState);
   }, [account, calculateMax, chainId, dynamicState, staticState, walletReady]);
-  useEffect(() => { if (!account || !walletReady || demoMode || route !== "assets") return; const timer = window.setInterval(() => void loadUser(account), 6_000); return () => window.clearInterval(timer); }, [account, loadUser, route, walletReady]);
-  useEffect(() => { if (account && walletReady && route === "assets") void loadHistory(account); }, [account, loadHistory, route, walletReady]);
+  useEffect(() => {
+    if (!account || !walletReady || demoMode) return;
+    if (route !== "assets") return;
+    void loadUser(account);
+    void loadHistory(account);
+  }, [account, chainId, demoMode, loadHistory, loadUser, route, walletReady]);
   const displayedEmittedMini = dynamicState?.emittedMini ?? 0n;
   const displayedProgress = staticState?.genesisAllocation ? Number(displayedEmittedMini * 10_000n / staticState.genesisAllocation) / 100 : 0;
   const startPriceX18 = staticState && dynamicState ? calculateStartPriceX18({ totalRaisedDot: dynamicState.totalRaisedDot, lastSettledBlock: dynamicState.lastSettledBlock, startBlock: dynamicState.startBlock, genesisAllocation: staticState.genesisAllocation, totalEmissionBlocks: staticState.totalEmissionBlocks }) : null;
