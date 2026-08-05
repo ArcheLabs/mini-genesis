@@ -35,6 +35,7 @@ export const demoDynamic: GenesisDynamic = {
   observedBlockNumber: 1_000_164n,
   totalRaisedDot: demoGenesis.totalRaisedDot,
   contributorCount: demoGenesis.contributorCount,
+  emittedMini: demoGenesis.emittedMini,
 };
 
 export const demoUser: GenesisUser = {

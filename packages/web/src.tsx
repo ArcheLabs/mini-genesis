@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { createPublicClient, getAddress, type Address, type PublicClient } from "viem";
+import { createPublicClient, formatUnits, getAddress, type Address, type PublicClient } from "viem";
 import { genesisChain, publicTransport } from "./src/config/chain";
 import { getManifest, selectedEnvironment, type DeploymentManifest } from "./src/config/manifest";
 import { accounts, injectedProvider, providerChainId, switchChain, type Eip1193Provider } from "./src/wallet/provider";
 import { walletClient } from "./src/wallet/wallet-client";
 import { readContributionHistory, type ContributionHistoryItem } from "./src/genesis/history";
 import { readGlobalDynamic, readGlobalStatic, readUser, type GenesisDynamic, type GenesisStatic, type GenesisUser } from "./src/genesis/reads";
-import { calculateEmittedMini } from "./src/genesis/local-emission";
 import { calculateStartPriceX18 } from "./src/genesis/start-price";
 import { contribute, type ContributionState } from "./src/genesis/contribution";
 import { formatNative, safeMaxAmount } from "./src/genesis/amount";
@@ -67,7 +66,7 @@ function routeFromHash(): AppRoute { return window.location.hash === "#/assets" 
 function hashForRoute(route: AppRoute): string { return route === "assets" ? "#/assets" : route === "rules" ? "#/rules" : "#/"; }
 function scrollToRoute(route: AppRoute, behavior: ScrollBehavior = "smooth"): void { const target = route === "rules" ? document.getElementById("rules") : route === "genesis" ? document.getElementById("genesis") : null; target?.scrollIntoView({ behavior }); }
 function shortHash(value: string): string { return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value; }
-function formatAmount(value: bigint | null | undefined, digits = 2): string { return value == null ? "—" : Number(value / 10n ** 18n).toLocaleString(undefined, { maximumFractionDigits: digits }); }
+function formatAmount(value: bigint | null | undefined, digits = 2): string { return value == null ? "—" : Number(formatUnits(value, 18)).toLocaleString(undefined, { maximumFractionDigits: digits }); }
 function phaseLabel(phase: number, text: { waiting: string; contributionPhase: string; protection: string; ended: string }): string { return phase === 0 ? text.waiting : phase === 1 ? text.contributionPhase : phase === 2 ? text.protection : text.ended; }
 function stateLabel(state: UiContributionState, text: { states: Record<string, string> }): string { return state === "demo_processing" ? text.states.simulating : state === "idle" ? "" : text.states[state] || state; }
 
@@ -83,7 +82,6 @@ function App() {
   const publicClient = useMemo<PublicClient | null>(() => demoMode || !manifest || manifest.status !== "deployed" ? null : createPublicClient({ chain: genesisChain(manifest), transport: publicTransport(manifest) }), [manifest]);
   const [staticState, setStaticState] = useState<GenesisStatic | null>(demoMode ? demoStatic : null);
   const [dynamicState, setDynamicState] = useState<GenesisDynamic | null>(demoMode ? demoDynamic : null);
-  const [virtualBlockNumber, setVirtualBlockNumber] = useState<bigint | null>(demoMode ? demoDynamic.observedBlockNumber : null);
   const [user, setUser] = useState<GenesisUser | null>(demoMode ? demoUser : null);
   const [history, setHistory] = useState<ContributionHistoryItem[]>([]);
   const [maxAmount, setMaxAmount] = useState<bigint | null>(demoMode ? demoGenesis.walletBalance : null);
@@ -106,11 +104,10 @@ function App() {
   const navigate = useCallback((nextRoute: AppRoute) => { setWalletMenu(false); const nextHash = hashForRoute(nextRoute); if (window.location.hash !== nextHash) window.location.hash = nextHash; else { setRoute(nextRoute); window.requestAnimationFrame(() => scrollToRoute(nextRoute)); } }, []);
 
   const calculateMax = useCallback(async (targetAccount: Address, nextDynamic = dynamicState): Promise<bigint | null> => { if (demoMode || !publicClient || !manifest || !staticState || !nextDynamic) return null; const value = await safeMaxAmount(publicClient, { account: targetAccount, contract: manifest.source.contract, phase: nextDynamic.phase, firstContributionMinimum: staticState.firstContributionMinimum, subsequentContributionMinimumExclusive: staticState.subsequentContributionMinimumExclusive }); setMaxAmount(value); return value; }, [dynamicState, manifest, publicClient, staticState]);
-  const refreshDynamic = useCallback(async () => { if (demoMode || !publicClient || !manifest || dynamicRunning.current) return; dynamicRunning.current = true; try { const next = await readGlobalDynamic(publicClient, manifest); setDynamicState(next); feedback.clearCode("RPC_UNAVAILABLE"); feedback.clearCode("GLOBAL_DATA_UNAVAILABLE"); setVirtualBlockNumber((previous) => previous === null || next.observedBlockNumber > previous ? next.observedBlockNumber : previous); if (account) void calculateMax(account, next); } catch (error) { feedback.presentError(error, context("load-global")); } finally { dynamicRunning.current = false; } }, [account, calculateMax, context, feedback, manifest, publicClient]);
+  const refreshDynamic = useCallback(async () => { if (demoMode || !publicClient || !manifest || dynamicRunning.current) return; dynamicRunning.current = true; try { const next = await readGlobalDynamic(publicClient, manifest); setDynamicState(next); feedback.clearCode("RPC_UNAVAILABLE"); feedback.clearCode("GLOBAL_DATA_UNAVAILABLE"); if (account) void calculateMax(account, next); } catch (error) { feedback.presentError(error, context("load-global")); } finally { dynamicRunning.current = false; } }, [account, calculateMax, context, feedback, manifest, publicClient]);
   useEffect(() => { if (demoMode || !publicClient || !manifest) return; let disposed = false; void readGlobalStatic(publicClient, manifest).then((next) => { if (!disposed) setStaticState(next); }).catch((error) => { if (!disposed) feedback.presentError(error, context("load-global")); }); return () => { disposed = true; }; }, [context, feedback, manifest, publicClient]);
   useEffect(() => { if (account && staticState && dynamicState) void calculateMax(account); }, [account, calculateMax, dynamicState, staticState]);
   useEffect(() => { if (demoMode || !publicClient || !manifest) return; void refreshDynamic(); const timer = window.setInterval(() => void refreshDynamic(), 6_000); return () => window.clearInterval(timer); }, [manifest, publicClient, refreshDynamic]);
-  useEffect(() => { if (!staticState || !dynamicState) return; const timer = window.setInterval(() => setVirtualBlockNumber((previous) => { if (previous === null) return previous; const next = previous + 1n; return dynamicState.emissionEndBlock !== 0n && next > dynamicState.emissionEndBlock ? dynamicState.emissionEndBlock : next; }), 6_000); return () => window.clearInterval(timer); }, [dynamicState, staticState]);
 
   const loadUser = useCallback(async (targetAccount: Address) => { if (demoMode || !publicClient || !manifest) return; try { setUser(await readUser(publicClient, manifest, targetAccount)); await calculateMax(targetAccount); feedback.clearCode("USER_DATA_UNAVAILABLE"); } catch (error) { feedback.presentError(error, context("load-user")); } }, [calculateMax, context, feedback, manifest, publicClient]);
   const loadHistory = useCallback(async (targetAccount: Address) => { if (demoMode || !publicClient || !manifest) return; try { const finalized = await publicClient.request({ method: "eth_getBlockByNumber", params: ["finalized", false] } as any) as { number?: string } | null; if (finalized?.number) setHistory(await readContributionHistory(publicClient, manifest, targetAccount, BigInt(finalized.number))); feedback.clearCode("HISTORY_UNAVAILABLE"); } catch (error) { feedback.presentError(error, context("load-history")); } }, [context, feedback, manifest, publicClient]);
@@ -122,7 +119,7 @@ function App() {
 
   const connect = async () => { if (demoMode) { setAccount(getAddress("0x0000000000000000000000000000000000000001")); setMaxAmount(demoGenesis.walletBalance); setWalletMenu(false); feedback.clearCode("WALLET_CONNECTION_REJECTED"); return; } if (!manifest || !publicClient || manifest.status !== "deployed") { feedback.presentCode("TEMPLATE_MANIFEST_NOT_RUNTIME_READY", context("connect-wallet")); return; } const p = injectedProvider(); if (!p) { feedback.presentCode("BROWSER_WALLET_UNAVAILABLE", context("connect-wallet")); return; } try { await switchChain(p, manifest); } catch (error) { feedback.presentError(error, context("switch-network", { networkName: manifest.source.name })); return; } try { const [nextAccount] = await accounts(p, true); if (!nextAccount) throw new Error("WALLET_CONNECTION_REJECTED"); if (await providerChainId(p) !== Number(manifest.source.chainId)) throw new Error("WRONG_CHAIN"); localStorage.setItem(AUTO_CONNECT_KEY, "1"); setProvider(p); setAccount(nextAccount); setWalletMenu(false); feedback.clearCode("WALLET_CONNECTION_REJECTED"); feedback.clearCode("WALLET_RESTORE_FAILED"); await loadUser(nextAccount); await loadHistory(nextAccount); } catch (error) { feedback.presentError(error, context("connect-wallet", { networkName: manifest.source.name })); } };
   const disconnect = () => { localStorage.removeItem(AUTO_CONNECT_KEY); clearUser(); setWalletMenu(false); };
-  const displayedEmittedMini = staticState && dynamicState ? calculateEmittedMini({ startBlock: dynamicState.startBlock, currentBlock: virtualBlockNumber ?? dynamicState.observedBlockNumber, genesisAllocation: staticState.genesisAllocation, totalEmissionBlocks: staticState.totalEmissionBlocks }) : 0n;
+  const displayedEmittedMini = dynamicState?.emittedMini ?? 0n;
   const displayedProgress = staticState?.genesisAllocation ? Number(displayedEmittedMini * 10_000n / staticState.genesisAllocation) / 100 : 0;
   const startPriceX18 = staticState && dynamicState ? calculateStartPriceX18({ totalRaisedDot: dynamicState.totalRaisedDot, lastSettledBlock: dynamicState.lastSettledBlock, startBlock: dynamicState.startBlock, genesisAllocation: staticState.genesisAllocation, totalEmissionBlocks: staticState.totalEmissionBlocks }) : null;
   const contributionBusy = ["validating", "simulating", "awaiting_signature", "submitted", "demo_processing"].includes(contributionState);

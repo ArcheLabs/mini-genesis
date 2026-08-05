@@ -23,6 +23,7 @@ export type GenesisDynamic = {
   lastSettledBlock: bigint;
   totalRaisedDot: bigint;
   contributorCount: bigint;
+  emittedMini: bigint;
   observedBlockNumber: bigint;
 };
 
@@ -39,7 +40,7 @@ export async function readGlobalStatic(client: PublicClient, manifest: Deploymen
 }
 
 export async function readGlobalDynamic(client: PublicClient, manifest: DeploymentManifest): Promise<GenesisDynamic> {
-  const [rawPhase, startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, observedBlockNumber] = await Promise.all([
+  const [rawPhase, startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, emittedMini, observedBlockNumber] = await Promise.all([
     read(client, manifest.source.contract, "phase"),
     read(client, manifest.source.contract, "startBlock"),
     read(client, manifest.source.contract, "contributionEndBlock"),
@@ -47,9 +48,10 @@ export async function readGlobalDynamic(client: PublicClient, manifest: Deployme
     read(client, manifest.source.contract, "lastSettledBlock"),
     read(client, manifest.source.contract, "totalRaisedDot"),
     read(client, manifest.source.contract, "contributorCount"),
+    read(client, manifest.source.contract, "emittedMini"),
     client.getBlockNumber(),
   ]);
-  return { phase: Number(rawPhase), phaseName: phaseName(rawPhase), startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, observedBlockNumber };
+  return { phase: Number(rawPhase), phaseName: phaseName(rawPhase), startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, emittedMini, observedBlockNumber };
 }
 
 export async function readUser(client: PublicClient, manifest: DeploymentManifest, account: Address): Promise<GenesisUser> {
