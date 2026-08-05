@@ -11,9 +11,9 @@
       "https://eth-rpc-testnet.polkadot.io/"
     ],
     "explorerUrl": "https://blockscout-testnet.polkadot.io/",
-    "contract": "0x01db9b035e3a6a21b84f1052a827d6f7dd6e1b75",
+    "contract": "0x2879159bbb2c59243d2cf94beb8f2d7a07c96c6f",
     "runtimeCodeHash": "0x12888f56c556c74d1925672c2b9c22a0a0c1981873545b103d1914b45e08c248",
-    "deploymentBlock": "11833823",
+    "deploymentBlock": "11835684",
     "contractConfig": {
       "treasury": "0x2A8E2fFc8d10e04a477623252026F4378d210b3A",
       "genesisAllocation": "10000000000000000000000000",
