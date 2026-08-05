@@ -19,3 +19,5 @@
 @keyframes feedback-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:640px){.notification-center{top:auto;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));left:12px;width:auto}.system-banner{margin:12px 16px 0;padding:0}.system-banner-item{align-items:flex-start;flex-direction:column;gap:4px}}
 @media(prefers-reduced-motion:reduce){.notification{animation:none;transition:none}}
+.footer-links{display:flex;align-items:center;gap:16px}.footer-links a{color:var(--muted);text-decoration:none;transition:color 160ms ease}.footer-links a:hover{color:var(--accent)}
+@media(max-width:640px){.footer-links{order:3;gap:14px}}
