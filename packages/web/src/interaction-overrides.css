@@ -21,4 +21,10 @@
 @media(prefers-reduced-motion:reduce){.notification{animation:none;transition:none}}
 .footer-links{display:flex;align-items:center;gap:16px}.footer-links a{color:var(--muted);text-decoration:none;transition:color 160ms ease}.footer-links a:hover{color:var(--accent)}
 .rule-detail-content{white-space:pre-line}
+.my-grid .asset-card:nth-child(2) .asset-value{font-size:0}
+.my-grid .asset-card:nth-child(2) .asset-value::after{content:"????.??";font:700 34px var(--font-mono);letter-spacing:-.05em;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;background-clip:text;color:transparent}
+.my-grid .asset-card:nth-child(2) .asset-note{font-size:0}
+.my-grid .asset-card:nth-child(2) .asset-note::after{content:"Come Soon";font-size:12px}
+.my-grid .asset-card:nth-child(2) .claim-button{font-size:0}
+.my-grid .asset-card:nth-child(2) .claim-button::after{content:"Claim";font-size:14px}
 @media(max-width:640px){.footer-links{order:3;gap:14px}}
