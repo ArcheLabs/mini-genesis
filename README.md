@@ -1,93 +1,195 @@
-# MINI Genesis Stream
+# MINI Genesis
 
-> **Architecture notice:** prior Product Host/AccountId32 Genesis claim material is
-> superseded. See [`docs/MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md`](docs/MINI_GENESIS_LUCKY_SIMPLIFIED_ARCHITECTURE.md).
+MINI Genesis is the fair-launch application for MINI.
 
-MINI Genesis Stream distributes a fixed allocation of MINI credit according to
-time-weighted DOT contributions. The first valid contribution starts the stream.
-All contributed DOT is irreversible and is forwarded to the immutable treasury in
-the same transaction.
+Users contribute DOT and accumulate MINI through block-by-block distribution. The repository contains:
 
-An independent `luckyRootAllocation` cumulative-difference schedule defines off-chain,
-finalized-event Lucky Root Credit settlement without changing direct MINI streaming accounting.
-See `docs/LUCKY_ROOT_CREDIT_ACCOUNTING.md`.
+* the `MiniGenesisStream` contract;
+* deployment and manifest tooling;
+* the standalone Genesis frontend;
+* staging and production release workflows.
 
-The deployment configuration supplies exact block counts and native-asset units.
-The intended product schedule is approximately ten days of contributions followed
-by four days of protected emission. No day-to-block conversion is hard-coded.
+## Requirements
 
-## User rules
+* Git
+* Foundry `v0.3.0`
+* Node.js `24`
+* pnpm `10`
+* Python `3.12` and Slither
 
-- The first contribution must be at least the configured 1 DOT equivalent.
-- Later contributions must be strictly greater than the configured 0.1 DOT equivalent.
-- Contributions are accepted only before `contributionEndBlock`.
-- One percent of MINI's supply, supplied as `genesisAllocation`, streams over the
-  complete approximately fourteen-day period.
-- Earlier contributions participate in more completed emission blocks.
-- New DOT affects the current block and future blocks, never completed blocks.
-- Every contribution in the same block receives that block's emission according to
-  the block's final contribution balances, independent of transaction ordering.
-- DOT cannot be withdrawn or refunded and immediately enters the team treasury.
-- The protocol needs no randomness, keeper, oracle, or indexer.
-- The contract exposes the raw values required to derive a later bonding-curve
-  anchor: `totalRaisedDot` and `protectionEmissionMini()`. Unit normalization belongs
-  to the future curve module.
-- The contract records future MINI credit only; it does not issue, hold, or transfer MINI.
-- `totalRaisedDot` is gross on-chain contribution volume, not proof of unique external
-  capital; v0 does not identify recycled funds or related addresses.
+Clone the repository with its submodules:
 
-The bonding curve, graduation, AMM creation, and frontend are intentionally outside
-this repository's current scope.
+```bash
+git clone --recurse-submodules https://github.com/ArcheLabs/mini-genesis.git
+cd mini-genesis
+```
+
+For an existing checkout:
+
+```bash
+git submodule update --init --recursive
+```
+
+## Contract checks
+
+Run the complete contract validation:
+
+```bash
+make check
+```
+
+Individual commands:
+
+```bash
+forge fmt --check
+forge build
+FOUNDRY_PROFILE=ci forge test
+make slither
+make abi-check
+make manifest-check
+make manifest-test
+```
+
+The same checks can also be run manually from the **contracts** workflow in GitHub Actions.
+
+## Frontend development
+
+Install frontend dependencies:
+
+```bash
+pnpm --dir packages/web install --frozen-lockfile
+```
+
+Start the local frontend:
+
+```bash
+VITE_DEPLOYMENT_ENV=local pnpm --dir packages/web dev
+```
+
+Run checks and tests:
+
+```bash
+pnpm --dir packages/web typecheck
+pnpm --dir packages/web test
+```
+
+Build the local frontend:
+
+```bash
+VITE_DEPLOYMENT_ENV=local pnpm --dir packages/web build
+```
+
+The generated site is written to:
+
+```text
+packages/web/dist
+```
+
+## Staging deployment
+
+Create and configure the staging environment file:
+
+```bash
+cp .env.example .env.staging
+```
+
+Load the environment:
+
+```bash
+set -a
+source .env.staging
+set +a
+```
+
+Install frontend dependencies, then deploy to Polkadot Hub TestNet:
+
+```bash
+pnpm --dir packages/web install --frozen-lockfile
+pnpm deploy:staging
+```
+
+To finalize an existing deployment without broadcasting another contract:
+
+```bash
+pnpm finalize:staging
+```
+
+The deployment updates:
+
+```text
+deployments/staging.json
+```
+
+## Production deployment
+
+Create and review the production environment file:
+
+```bash
+cp .env.example .env.production
+```
+
+Load the environment:
+
+```bash
+set -a
+source .env.production
+set +a
+```
+
+Run all checks before deployment:
+
+```bash
+make check
+pnpm --dir packages/web test
+```
+
+Deploy the contract and generate the production frontend:
+
+```bash
+pnpm deploy:production
+```
+
+To finalize an existing deployment:
+
+```bash
+pnpm finalize:production
+```
+
+The deployment updates:
+
+```text
+deployments/production.json
+```
+
+Production deployment must be performed from a controlled local environment. Do not store deployment private keys in GitHub Actions.
+
+## GitHub Pages
+
+The **deploy production pages** workflow publishes the production frontend manually.
+
+Before running it:
+
+1. Complete the production contract deployment.
+2. Commit the updated `deployments/production.json`.
+3. Open **Actions → deploy production pages → Run workflow**.
+4. Enter `DEPLOY_PRODUCTION` when prompted.
+
+The Pages workflow validates the production manifest and deployed contract before publishing. It does not deploy the contract.
 
 ## Local contribution call
-
-Use the ABI's `contribute()` function. For example, with Foundry:
 
 ```bash
 cast send "$MINI_GENESIS_STREAM_ADDRESS" \
   "contribute()" \
-  --value 1ether --private-key "$CONTRIBUTOR_PRIVATE_KEY" --rpc-url "$RPC_URL"
+  --value 1ether \
+  --private-key "$CONTRIBUTOR_PRIVATE_KEY" \
+  --rpc-url "$RPC_URL"
 ```
-
-MINI entitlement continues to be calculated from each contributor account's DOT contributions.
-Lucky Credit identity resolution occurs only when the contributor later prepares a claim.
 
 ## Documentation
 
-- [Accounting](docs/ACCOUNTING.md)
-- [Build](docs/BUILD.md)
-- [Deployment](docs/DEPLOYMENT.md)
-- [Security](docs/SECURITY.md)
-- [TestNet checklist](docs/TESTNET_CHECKLIST.md)
-- [Mainnet checklist](docs/MAINNET_CHECKLIST.md)
-
-## Development
-
-Requirements: Foundry, Slither, Git, and Bash.
-
-```bash
-forge install
-make check
-```
-
-## Standalone Web (M1)
-
-The browser dApp lives in [`packages/web`](packages/web) and uses only an
-injected EIP-1193 wallet. It reads the fixed Polkadot Hub TestNet manifest,
-uses 18-decimal EVM native values, and refuses template or mismatched runtime
-configuration. No checked-in manifest contains deployable addresses.
-
-```bash
-cd packages/web
-pnpm install
-VITE_DEPLOYMENT_ENV=local pnpm dev
-pnpm typecheck
-pnpm test
-VITE_DEPLOYMENT_ENV=local pnpm build
-```
-
-M1 does not deploy contracts or broadcast transactions. Lucky Credit Claim
-endpoints are consumed only when the selected manifest provides a fixed
-Backend URL; Backend implementation is a later milestone.
-
-Dependencies are pinned as Git submodules.
+* [Accounting](docs/ACCOUNTING.md)
+* [Build](docs/BUILD.md)
+* [Security](docs/SECURITY.md)
+* [TestNet checklist](docs/TESTNET_CHECKLIST.md)
+* [Mainnet checklist](docs/MAINNET_CHECKLIST.md)
