@@ -43,7 +43,14 @@ jobs:
         env:
           VITE_DEPLOYMENT_ENV: staging
           VITE_DEMO_MODE: "false"
-        run: pnpm --dir packages/web build -- --base=/mini-genesis/
+          VITE_REOWN_PROJECT_ID: ${{ vars.VITE_REOWN_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${VITE_REOWN_PROJECT_ID:-}" ]]; then
+            echo "::error::Repository variable VITE_REOWN_PROJECT_ID is not configured."
+            exit 1
+          fi
+          pnpm --dir packages/web build -- --base=/mini-genesis/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

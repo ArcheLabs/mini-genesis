@@ -9,5 +9,6 @@ deployments/*
 !deployments/production.json
 .env.*
 .env
+!packages/web/.env.example
 packages/web/node_modules/
 packages/web/dist/

@@ -96,11 +96,18 @@ jobs:
 
           assert(
             Array.isArray(manifest.source?.rpcHttpUrls) &&
-              manifest.source.rpcHttpUrls.length > 0 &&
+              manifest.source.rpcHttpUrls.length >= 2 &&
               manifest.source.rpcHttpUrls.every(
                 (url) => typeof url === "string" && /^https:\/\//.test(url),
               ),
-            "at least one public HTTPS RPC URL is required",
+            "at least two public HTTPS RPC URLs are required",
+          );
+
+          assert(
+            manifest.source.rpcHttpUrls.every(
+              (url) => !url.toLowerCase().includes("testnet"),
+            ),
+            "production RPC URLs must not point to testnet",
           );
 
           assert(
@@ -179,7 +186,6 @@ jobs:
 
           MANIFEST="deployments/production.json"
 
-          RPC_URL="$(jq -r '.source.rpcHttpUrls[0]' "$MANIFEST")"
           CONTRACT="$(jq -r '.source.contract' "$MANIFEST")"
           EXPECTED_CODE_HASH="$(jq -r '.source.runtimeCodeHash' "$MANIFEST")"
 
@@ -190,12 +196,21 @@ jobs:
           EXPECTED_FIRST_MINIMUM="$(jq -r '.source.contractConfig.firstContributionMinimum' "$MANIFEST")"
           EXPECTED_LATER_MINIMUM="$(jq -r '.source.contractConfig.subsequentContributionMinimumExclusive' "$MANIFEST")"
 
-          ACTUAL_CHAIN_ID="$(cast chain-id --rpc-url "$RPC_URL" | awk '{print $1}')"
+          RPC_URL=""
+          while IFS= read -r candidate; do
+            chain_id="$(cast chain-id --rpc-url "$candidate" 2>/dev/null | awk '{print $1}' || true)"
+            if [[ "$chain_id" == "420420419" ]]; then
+              RPC_URL="$candidate"
+              break
+            fi
+          done < <(jq -r '.source.rpcHttpUrls[]' "$MANIFEST")
 
-          if [[ "$ACTUAL_CHAIN_ID" != "420420419" ]]; then
-            echo "::error::RPC returned unexpected Chain ID: $ACTUAL_CHAIN_ID"
+          if [[ -z "$RPC_URL" ]]; then
+            echo "::error::No production RPC endpoint is available."
             exit 1
           fi
+
+          ACTUAL_CHAIN_ID="$(cast chain-id --rpc-url "$RPC_URL" | awk '{print $1}')"
 
           RUNTIME_CODE="$(cast code "$CONTRACT" --rpc-url "$RPC_URL")"
 
@@ -278,9 +293,14 @@ jobs:
         env:
           VITE_DEPLOYMENT_ENV: production
           VITE_DEMO_MODE: "false"
+          VITE_REOWN_PROJECT_ID: ${{ vars.VITE_REOWN_PROJECT_ID }}
           BASE_PATH: ${{ inputs.base_path }}
         run: |
           set -euo pipefail
+          if [[ -z "${VITE_REOWN_PROJECT_ID:-}" ]]; then
+            echo "::error::Repository variable VITE_REOWN_PROJECT_ID is not configured."
+            exit 1
+          fi
           pnpm --dir packages/web build -- --base="$BASE_PATH"
 
       - name: Add no-Jekyll marker

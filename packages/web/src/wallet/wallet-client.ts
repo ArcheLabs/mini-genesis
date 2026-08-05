@@ -1,7 +1,7 @@
 import { createWalletClient, custom, type WalletClient, type Address } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
 import { genesisChain } from "../config/chain";
-import type { Eip1193Provider } from "./provider";
+import type { Eip1193Provider } from "./eip1193";
 
 export function walletClient(provider: Eip1193Provider, manifest: DeploymentManifest): WalletClient {
   return createWalletClient({ chain: genesisChain(manifest), transport: custom(provider) });

@@ -91,6 +91,7 @@ export const deploymentManifests = {
       "currencySymbol": "DOT",
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
+        "https://eth-rpc.polkadot.io/",
         "https://services.polkadothub-rpc.com/mainnet/"
       ],
       "explorerUrl": "https://blockscout.polkadot.io/",
