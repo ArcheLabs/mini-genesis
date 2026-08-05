@@ -293,14 +293,9 @@ jobs:
         env:
           VITE_DEPLOYMENT_ENV: production
           VITE_DEMO_MODE: "false"
-          VITE_REOWN_PROJECT_ID: ${{ vars.VITE_REOWN_PROJECT_ID }}
           BASE_PATH: ${{ inputs.base_path }}
         run: |
           set -euo pipefail
-          if [[ -z "${VITE_REOWN_PROJECT_ID:-}" ]]; then
-            echo "::error::Repository variable VITE_REOWN_PROJECT_ID is not configured."
-            exit 1
-          fi
           pnpm --dir packages/web build -- --base="$BASE_PATH"
 
       - name: Add no-Jekyll marker

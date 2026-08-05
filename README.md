@@ -11,12 +11,6 @@ Users contribute DOT and accumulate MINI through block-by-block distribution. Th
 
 ## Requirements
 
-For local frontend wallet connections, copy `packages/web/.env.example` to `packages/web/.env.local` and set `VITE_REOWN_PROJECT_ID`. The local file is ignored by Git.
-
-```env
-VITE_REOWN_PROJECT_ID=replace-with-reown-project-id
-```
-
 * Git
 * Foundry `v0.3.0`
 * Node.js `24`

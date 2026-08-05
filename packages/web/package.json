@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node ../../scripts/check-reown-project-id.mjs && node ../../scripts/generate-web-abi.mjs && node ../../scripts/generate-deployment-config.mjs",
+    "prebuild": "node ../../scripts/generate-web-abi.mjs && node ../../scripts/generate-deployment-config.mjs",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",

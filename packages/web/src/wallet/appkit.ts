@@ -2,18 +2,13 @@ import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { QueryClient } from "@tanstack/react-query";
 import { defineChain } from "viem";
-import { getManifest, selectedEnvironment } from "../config/manifest";
 import { DOT_DECIMALS, DOT_SYMBOL } from "../config/assets";
+import { getManifest, selectedEnvironment } from "../config/manifest";
+import { resolveReownProjectId } from "../config/reown";
 
 const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
 const manifest = getManifest(selectedEnvironment(import.meta.env.MODE, import.meta.env.VITE_DEPLOYMENT_ENV));
-const projectId = import.meta.env.VITE_REOWN_PROJECT_ID?.trim();
-
-if (!demoMode && !projectId) {
-  throw new Error("VITE_REOWN_PROJECT_ID is required for production wallet connections.");
-}
-
-const effectiveProjectId = projectId || "demo-project-id";
+const projectId = resolveReownProjectId(import.meta.env);
 const chainId = Number(manifest?.source.chainId ?? 420420419);
 const rpcHttpUrls = manifest?.source.rpcHttpUrls.filter(Boolean) ?? [];
 const polkadotHubNetwork = defineChain({
@@ -30,7 +25,7 @@ const customRpcUrls = {
 
 export const wagmiAdapter = new WagmiAdapter({
   networks: [polkadotHubNetwork],
-  projectId: effectiveProjectId,
+  projectId,
   customRpcUrls,
   ssr: false,
 });
@@ -38,7 +33,7 @@ export const wagmiAdapter = new WagmiAdapter({
 export const appKit = createAppKit({
   adapters: [wagmiAdapter],
   networks: [polkadotHubNetwork],
-  projectId: effectiveProjectId,
+  projectId: projectId,
   metadata: {
     name: "MINI Genesis",
     description: "MINI Genesis on Polkadot Hub",
