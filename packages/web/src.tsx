@@ -21,6 +21,7 @@ import { SystemBanner } from "./src/feedback/SystemBanner";
 import { useFeedback } from "./src/feedback/use-feedback";
 import type { FeedbackContext, NormalizedFeedback } from "./src/feedback/types";
 import { AccountSwitchMenuItem, walletAccountMenuText } from "./src/wallet/account-switch-menu";
+import { getRetryAfterMs, isRateLimitError } from "./src/rpc/error";
 import "./style.css";
 import "./src/interaction-overrides.css";
 
@@ -111,9 +112,33 @@ function App() {
 
   const calculateMax = useCallback(async (targetAccount: Address, nextDynamic: GenesisDynamic): Promise<bigint | null> => { if (demoMode || !publicClient || !manifest || !staticState) return null; const value = await safeMaxAmount(publicClient, { account: targetAccount, contract: manifest.source.contract, phase: nextDynamic.phase, firstContributionMinimum: staticState.firstContributionMinimum, subsequentContributionMinimumExclusive: staticState.subsequentContributionMinimumExclusive }); setMaxAmount(value); return value; }, [manifest, publicClient, staticState]);
   const presentGlobalError = useCallback((error: unknown) => { const message = error instanceof Error ? error.message : String(error); if ((typeof navigator !== "undefined" && !navigator.onLine) || /http request failed|failed to fetch|fetch|timeout|rpc|network|gateway|connection/i.test(message)) feedback.presentCode("RPC_UNAVAILABLE", context("load-global")); else feedback.presentError(error, context("load-global")); }, [context, feedback.presentCode, feedback.presentError]);
-  const refreshDynamic = useCallback(async () => { if (demoMode || !publicClient || !manifest || dynamicRunning.current) return; dynamicRunning.current = true; try { const next = await readGlobalDynamic(publicClient, manifest); setDynamicState(next); feedback.clearCode("RPC_UNAVAILABLE"); feedback.clearCode("GLOBAL_DATA_UNAVAILABLE"); } catch (error) { presentGlobalError(error); } finally { dynamicRunning.current = false; } }, [feedback.clearCode, manifest, presentGlobalError, publicClient]);
+  const refreshDynamic = useCallback(async () => {
+    if (demoMode || !publicClient || !manifest || dynamicRunning.current) return { status: "error" } as const;
+    dynamicRunning.current = true;
+    try {
+      const next = await readGlobalDynamic(publicClient, manifest);
+      setDynamicState(next);
+      feedback.clearCode("RPC_UNAVAILABLE");
+      feedback.clearCode("GLOBAL_DATA_UNAVAILABLE");
+      return { status: "success" } as const;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));
+        return { status: "error" } as const;
+      }
+      if (isRateLimitError(error) || /429|Too Many Requests/i.test(message)) {
+        feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));
+        return { status: "rate_limited", retryAfterMs: getRetryAfterMs(error) ?? 60_000 } as const;
+      }
+      presentGlobalError(error);
+      return { status: "error" } as const;
+    } finally {
+      dynamicRunning.current = false;
+    }
+  }, [context, feedback.clearCode, feedback.presentCode, manifest, presentGlobalError, publicClient]);
   useEffect(() => { if (demoMode || !publicClient || !manifest) return; let disposed = false; void readGlobalStatic(publicClient, manifest).then((next) => { if (!disposed) setStaticState(next); }).catch((error) => { if (!disposed) presentGlobalError(error); }); return () => { disposed = true; }; }, [manifest, presentGlobalError, publicClient]);
-  useEffect(() => { if (demoMode || !publicClient || !manifest) return; return startVisiblePolling(refreshDynamic); }, [manifest, publicClient, refreshDynamic]);
+  useEffect(() => { if (demoMode || !publicClient || !manifest) return; return startVisiblePolling(async () => refreshDynamic()); }, [manifest, publicClient, refreshDynamic]);
   useEffect(() => {
     if (demoMode) return;
     const handleOffline = () => feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));

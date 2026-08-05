@@ -15,5 +15,5 @@ export function genesisChain(manifest: DeploymentManifest): Chain {
 export function publicTransport(manifest: DeploymentManifest): Transport {
   const urls = manifest.source.rpcHttpUrls.filter(Boolean);
   if (!urls.length) throw new Error("RPC_UNAVAILABLE");
-  return fallback(urls.map((url) => http(url)));
+  return fallback(urls.map((url) => http(url, { retryCount: 0, timeout: 10_000 })));
 }
