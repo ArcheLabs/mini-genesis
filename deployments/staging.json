@@ -11,14 +11,14 @@
       "https://eth-rpc-testnet.polkadot.io/"
     ],
     "explorerUrl": "https://blockscout-testnet.polkadot.io/",
-    "contract": "0xf7466cb3253bb58b779f960aafbc53cedd469a76",
-    "runtimeCodeHash": "0x6adb1284694004fe7478cb220c20df32b2d5ca52e7d1f6dbd0f87f6b2096dc6e",
-    "deploymentBlock": "11832857",
+    "contract": "0x01db9b035e3a6a21b84f1052a827d6f7dd6e1b75",
+    "runtimeCodeHash": "0x12888f56c556c74d1925672c2b9c22a0a0c1981873545b103d1914b45e08c248",
+    "deploymentBlock": "11833823",
     "contractConfig": {
       "treasury": "0x2A8E2fFc8d10e04a477623252026F4378d210b3A",
       "genesisAllocation": "10000000000000000000000000",
-      "contributionBlocks": "97222",
-      "protectionBlocks": "27778",
+      "contributionBlocks": "100000",
+      "protectionBlocks": "25000",
       "firstContributionMinimum": "1000000000000000000",
       "subsequentContributionMinimumExclusive": "9999999999999999"
     }
