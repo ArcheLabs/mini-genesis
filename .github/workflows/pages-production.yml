@@ -149,13 +149,13 @@ jobs:
           );
 
           assert(
-            String(config.contributionBlocks) === "100000",
-            "contributionBlocks must equal 100000",
+            String(config.contributionBlocks) === "320000",
+            "contributionBlocks must equal 320000",
           );
 
           assert(
-            String(config.protectionBlocks) === "25000",
-            "protectionBlocks must equal 25000",
+            String(config.protectionBlocks) === "80000",
+            "protectionBlocks must equal 80000",
           );
 
           assert(
@@ -248,8 +248,8 @@ jobs:
             exit 1
           }
 
-          [[ "$ACTUAL_TOTAL_BLOCKS" == "125000" ]] || {
-            echo "::error::Total emission blocks must equal 125000."
+          [[ "$ACTUAL_TOTAL_BLOCKS" == "400000" ]] || {
+            echo "::error::Total emission blocks must equal 400000."
             exit 1
           }
 

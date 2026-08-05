@@ -1,0 +1,59 @@
+[1mdiff --git a/.github/workflows/pages-production.yml b/.github/workflows/pages-production.yml[m
+[1mindex 0d38975..af984c6 100644[m
+[1m--- a/.github/workflows/pages-production.yml[m
+[1m+++ b/.github/workflows/pages-production.yml[m
+[36m@@ -149,13 +149,13 @@[m [mjobs:[m
+           );[m
+ [m
+           assert([m
+[31m-            String(config.contributionBlocks) === "100000",[m
+[31m-            "contributionBlocks must equal 100000",[m
+[32m+[m[32m            String(config.contributionBlocks) === "320000",[m
+[32m+[m[32m            "contributionBlocks must equal 320000",[m
+           );[m
+ [m
+           assert([m
+[31m-            String(config.protectionBlocks) === "25000",[m
+[31m-            "protectionBlocks must equal 25000",[m
+[32m+[m[32m            String(config.protectionBlocks) === "80000",[m
+[32m+[m[32m            "protectionBlocks must equal 80000",[m
+           );[m
+ [m
+           assert([m
+[36m@@ -248,8 +248,8 @@[m [mjobs:[m
+             exit 1[m
+           }[m
+ [m
+[31m-          [[ "$ACTUAL_TOTAL_BLOCKS" == "125000" ]] || {[m
+[31m-            echo "::error::Total emission blocks must equal 125000."[m
+[32m+[m[32m          [[ "$ACTUAL_TOTAL_BLOCKS" == "400000" ]] || {[m
+[32m+[m[32m            echo "::error::Total emission blocks must equal 400000."[m
+             exit 1[m
+           }[m
+ [m
+[1mdiff --git a/deployments/production.json b/deployments/production.json[m
+[1mindex f4d6789..9395143 100644[m
+[1m--- a/deployments/production.json[m
+[1m+++ b/deployments/production.json[m
+[36m@@ -10,7 +10,7 @@[m
+     "rpcHttpUrls": [[m
+       "https://services.polkadothub-rpc.com/mainnet/"[m
+     ],[m
+[31m-    "explorerUrl": "https://blockscout-testnet.polkadot.io/",[m
+[32m+[m[32m    "explorerUrl": "https://blockscout.polkadot.io/",[m
+     "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",[m
+     "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",[m
+     "deploymentBlock": "19083827",[m
+[1mdiff --git a/packages/web/src/generated/deployment-manifests.ts b/packages/web/src/generated/deployment-manifests.ts[m
+[1mindex 0383757..d28a555 100644[m
+[1m--- a/packages/web/src/generated/deployment-manifests.ts[m
+[1m+++ b/packages/web/src/generated/deployment-manifests.ts[m
+[36m@@ -93,7 +93,7 @@[m [mexport const deploymentManifests = {[m
+       "rpcHttpUrls": [[m
+         "https://services.polkadothub-rpc.com/mainnet/"[m
+       ],[m
+[31m-      "explorerUrl": "https://blockscout-testnet.polkadot.io/",[m
+[32m+[m[32m      "explorerUrl": "https://blockscout.polkadot.io/",[m
+       "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",[m
+       "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",[m
+       "deploymentBlock": "19083827",[m

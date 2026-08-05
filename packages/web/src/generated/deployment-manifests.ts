@@ -93,7 +93,7 @@ export const deploymentManifests = {
       "rpcHttpUrls": [
         "https://services.polkadothub-rpc.com/mainnet/"
       ],
-      "explorerUrl": "https://blockscout-testnet.polkadot.io/",
+      "explorerUrl": "https://blockscout.polkadot.io/",
       "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",
       "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",
       "deploymentBlock": "19083827",
