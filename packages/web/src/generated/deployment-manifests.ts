@@ -83,25 +83,27 @@ export const deploymentManifests = {
   },
   "production": {
     "environment": "production",
-    "status": "template",
+    "status": "deployed",
     "evmNativeDecimals": 18,
     "source": {
-      "chainId": "0",
+      "chainId": "420420419",
       "name": "Polkadot Hub",
       "currencySymbol": "DOT",
       "evmNativeDecimals": 18,
-      "rpcHttpUrls": [],
+      "rpcHttpUrls": [
+        "https://services.polkadothub-rpc.com/mainnet/"
+      ],
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
-      "contract": "0x0000000000000000000000000000000000000000",
-      "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-      "deploymentBlock": "0",
+      "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",
+      "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",
+      "deploymentBlock": "19083827",
       "contractConfig": {
-        "treasury": "0x0000000000000000000000000000000000000000",
-        "genesisAllocation": "0",
-        "contributionBlocks": "0",
-        "protectionBlocks": "0",
-        "firstContributionMinimum": "0",
-        "subsequentContributionMinimumExclusive": "0"
+        "treasury": "0x2A8E2fFc8d10e04a477623252026F4378d210b3A",
+        "genesisAllocation": "10000000000000000000000000",
+        "contributionBlocks": "320000",
+        "protectionBlocks": "80000",
+        "firstContributionMinimum": "1000000000000000000",
+        "subsequentContributionMinimumExclusive": "9999999999999999"
       }
     },
     "destination": {
