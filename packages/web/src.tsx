@@ -7,7 +7,7 @@ import { walletClient } from "./src/wallet/wallet-client";
 import { GenesisWalletProvider } from "./src/wallet/AppKitProvider";
 import { useGenesisWallet } from "./src/wallet/use-genesis-wallet";
 import { readContributionHistory, type ContributionHistoryItem } from "./src/genesis/history";
-import { startVisiblePolling } from "./src/genesis/polling";
+import { startVisiblePolling, type PollController } from "./src/genesis/polling";
 import { readGlobalDynamic, readGlobalStatic, readUser, type GenesisDynamic, type GenesisStatic, type GenesisUser } from "./src/genesis/reads";
 import { calculateStartPriceX18 } from "./src/genesis/start-price";
 import { contribute, type ContributionState } from "./src/genesis/contribution";
@@ -98,6 +98,7 @@ function App() {
   const languageWrapRef = useRef<HTMLDivElement | null>(null);
   const dynamicRunning = useRef(false);
   const dynamicStateRef = useRef<GenesisDynamic | null>(dynamicState);
+  const globalPollingRef = useRef<PollController | null>(null);
   const previousWalletStatus = useRef(status);
   const context = useCallback((operation: FeedbackContext["operation"], params?: FeedbackContext["params"]): FeedbackContext => ({ operation, locale: language, params }), [language]);
 
@@ -138,15 +139,30 @@ function App() {
     }
   }, [context, feedback.clearCode, feedback.presentCode, manifest, presentGlobalError, publicClient]);
   useEffect(() => { if (demoMode || !publicClient || !manifest) return; let disposed = false; void readGlobalStatic(publicClient, manifest).then((next) => { if (!disposed) setStaticState(next); }).catch((error) => { if (!disposed) presentGlobalError(error); }); return () => { disposed = true; }; }, [manifest, presentGlobalError, publicClient]);
-  useEffect(() => { if (demoMode || !publicClient || !manifest) return; return startVisiblePolling(async () => refreshDynamic(), 30_000); }, [manifest, publicClient, refreshDynamic]);
+  useEffect(() => {
+    if (demoMode || !publicClient || !manifest) return;
+
+    const controller = startVisiblePolling(async () => refreshDynamic());
+    globalPollingRef.current = controller;
+
+    return () => {
+      controller();
+      if (globalPollingRef.current === controller) {
+        globalPollingRef.current = null;
+      }
+    };
+  }, [manifest, publicClient, refreshDynamic]);
   useEffect(() => {
     if (demoMode) return;
+
     const handleOffline = () => feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));
-    const handleOnline = () => { feedback.clearCode("RPC_UNAVAILABLE"); void refreshDynamic(); };
+
     window.addEventListener("offline", handleOffline);
-    window.addEventListener("online", handleOnline);
-    return () => { window.removeEventListener("offline", handleOffline); window.removeEventListener("online", handleOnline); };
-  }, [context, feedback.clearCode, feedback.presentCode, refreshDynamic]);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [context, feedback.presentCode]);
 
   const loadUser = useCallback(async (targetAccount: Address) => { if (demoMode || !publicClient || !manifest) return; try { setUser(await readUser(publicClient, manifest, targetAccount)); feedback.clearCode("USER_DATA_UNAVAILABLE"); } catch (error) { feedback.presentError(error, context("load-user")); } }, [context, feedback.clearCode, feedback.presentError, manifest, publicClient]);
   const loadHistory = useCallback(async (targetAccount: Address) => { if (demoMode || !publicClient || !manifest) return; try { const finalized = await publicClient.request({ method: "eth_getBlockByNumber", params: ["finalized", false] } as any) as { number?: string } | null; if (finalized?.number) setHistory(await readContributionHistory(publicClient, manifest, targetAccount, BigInt(finalized.number))); feedback.clearCode("HISTORY_UNAVAILABLE"); } catch (error) { feedback.presentError(error, context("load-history")); } }, [context, feedback.clearCode, feedback.presentError, manifest, publicClient]);
@@ -172,8 +188,13 @@ function App() {
   }, [clearUser, context, correctChain, feedback.clearCode, feedback.presentCode, isConnected, manifest]);
   useEffect(() => {
     if (!walletReady || !account || demoMode) return;
+    if (route === "assets") {
+      void loadUser(account);
+      void loadHistory(account);
+      return;
+    }
     void loadUser(account);
-  }, [account, chainId, demoMode, loadUser, walletReady]);
+  }, [account, chainId, demoMode, loadHistory, loadUser, route, walletReady]);
   useEffect(() => {
     if (!walletReady || !account || !dynamicState || !staticState) return;
     const key = `${account}:${chainId}`;
@@ -181,12 +202,6 @@ function App() {
     maxRefreshKey.current = key;
     void calculateMax(account, dynamicState);
   }, [account, calculateMax, chainId, dynamicState, staticState, walletReady]);
-  useEffect(() => {
-    if (!account || !walletReady || demoMode) return;
-    if (route !== "assets") return;
-    void loadUser(account);
-    void loadHistory(account);
-  }, [account, chainId, demoMode, loadHistory, loadUser, route, walletReady]);
   const displayedEmittedMini = dynamicState?.emittedMini ?? 0n;
   const displayedProgress = staticState?.genesisAllocation ? Number(displayedEmittedMini * 10_000n / staticState.genesisAllocation) / 100 : 0;
   const startPriceX18 = staticState && dynamicState ? calculateStartPriceX18({ totalRaisedDot: dynamicState.totalRaisedDot, lastSettledBlock: dynamicState.lastSettledBlock, startBlock: dynamicState.startBlock, genesisAllocation: staticState.genesisAllocation, totalEmissionBlocks: staticState.totalEmissionBlocks }) : null;
@@ -196,7 +211,7 @@ function App() {
   const onAmountChange = (next: string) => { setAmount(next); setAmountFeedback(null); };
   const stepAmount = (delta: number) => { if (!contributionBusy) onAmountChange(String(Math.max(0, Number(amount || 0) + delta))); };
   const walletLabel = account ? shortHash(account) : text.connect;
-  const handleFeedbackAction = (item: NormalizedFeedback) => { if (item.action === "connect-wallet") void connect(); else if (item.action === "switch-network" && manifest) void switchToGenesisChain().then(() => feedback.clearCode("WRONG_CHAIN")).catch((error) => feedback.presentError(error, context("switch-network", { networkName: manifest.source.name }))); else if (item.action === "retry-global-data") void refreshDynamic(); else if (item.action === "view-transaction" && item.transactionHash && item.explorerUrl) window.open(`${item.explorerUrl.replace(/\/$/, "")}/tx/${item.transactionHash}`, "_blank", "noopener,noreferrer"); };
+  const handleFeedbackAction = (item: NormalizedFeedback) => { if (item.action === "connect-wallet") void connect(); else if (item.action === "switch-network" && manifest) void switchToGenesisChain().then(() => feedback.clearCode("WRONG_CHAIN")).catch((error) => feedback.presentError(error, context("switch-network", { networkName: manifest.source.name }))); else if (item.action === "retry-global-data") { const controller = globalPollingRef.current; if (controller) { controller.retryNow(); } else { void refreshDynamic(); } } else if (item.action === "view-transaction" && item.transactionHash && item.explorerUrl) window.open(`${item.explorerUrl.replace(/\/$/, "")}/tx/${item.transactionHash}`, "_blank", "noopener,noreferrer"); };
 
   const icons = {
     rocket: <svg className="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 15c-1.5 1.2-2 5-2 5s3.8-.5 5-2" /><path d="M9 15l-2-2c.8-3.2 2.7-6.6 6-8 2.8-1.2 6-1 6-1s.2 3.2-1 6c-1.4 3.3-4.8 5.2-8 6l-1-1Z" /><circle cx="14.5" cy="9.5" r="1.6" /></svg>,

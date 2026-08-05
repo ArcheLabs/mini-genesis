@@ -107,7 +107,9 @@ export function startVisiblePolling(task: PollTask, intervalMs = 30_000, isHidde
     if (disposed) return;
     paused = false;
     consecutiveRateLimitCount = 0;
-    if (!isHidden()) schedule(0);
+    clearTimer();
+    if (inFlight || isHidden()) return;
+    schedule(0);
   };
 
   void poll();

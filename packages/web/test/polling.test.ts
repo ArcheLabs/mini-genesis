@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { startVisiblePolling, type PollOutcome } from "../src/genesis/polling";
 
@@ -15,6 +17,21 @@ describe("visible polling", () => {
     await vi.advanceTimersByTimeAsync(29_999);
     expect(task).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
+    expect(task).toHaveBeenCalledTimes(2);
+    stop();
+  });
+
+  it("retryNow clears the pause and triggers an immediate retry", async () => {
+    const task = vi.fn<() => Promise<PollOutcome>>()
+      .mockResolvedValueOnce({ status: "rate_limited", retryAfterMs: 60_000 })
+      .mockResolvedValue({ status: "success" });
+    const stop = startVisiblePolling(task, 30_000, () => false);
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(task).toHaveBeenCalledTimes(1);
+
+    stop.retryNow();
+    await vi.advanceTimersByTimeAsync(0);
     expect(task).toHaveBeenCalledTimes(2);
     stop();
   });
@@ -106,5 +123,16 @@ describe("visible polling", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(task).toHaveBeenCalledTimes(1);
     stop();
+  });
+
+  it("app source keeps the 30s global poll and removes the fixed asset timer", () => {
+    const src = readFileSync(resolve(__dirname, "../src.tsx"), "utf8");
+
+    expect(src).toMatch(/startVisiblePolling\s*\(\s*async\s*\(\)\s*=>\s*refreshDynamic\(\)\s*\)/);
+    expect(src).toContain("globalPollingRef");
+    expect(src).toContain("controller.retryNow();");
+    expect(src).not.toMatch(/setInterval\s*\(\s*\(\)\s*=>\s*void\s*loadUser\s*\(account\)/);
+    expect(src).toContain("void loadUser(account);");
+    expect(src).toContain("void loadHistory(account);");
   });
 });
