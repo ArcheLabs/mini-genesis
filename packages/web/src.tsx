@@ -38,18 +38,43 @@ const copy = {
   },
 } as const;
 
+const ruleCopy = {
+  "zh-CN": {
+    ruleTitles: ["创世启动", "社交分发", "流动性引导", "正式上线", "代币经济学"],
+    ruleDescs: ["投入 DOT，累计获得流式分发的 MINI。", "把 MINI 带给互相信任的好友。", "以创世价格为起点，启动后续绑定曲线。", "完成 Root 绑定曲线和初始流动性建立后，MINI 将进入正式使用阶段。", "了解 MINI 的初始供应量、分配方式、流动性和长期激励。"],
+    ruleDetails: [
+      "投入 DOT，累计获得流式分发的 MINI。\n\n创世启动共分发 10,000,000 MINI。\n\n- 总释放周期为 125,000 个区块，按照约 6 秒一个区块计算，约为 8 天 16 小时\n- 每个区块固定释放 80 MINI\n- 每个区块释放的 MINI，按照释放时 Pool 中已有 DOT 的占比分配\n- 投入开放持续 100,000 个区块，约为 6 天 22 小时\n- 进入保护期时，累计释放 8,000,000 MINI\n- 随后进入 25,000 个区块的保护期，不再接受新的投入，继续释放剩余的 2,000,000 MINI\n- 创世阶段记录用户获得的 MINI 权益，并在初始流动性建立后开放领取\n\n越早投入 DOT，越早开始参与分发，并能够覆盖更多后续区块。",
+      "把 MINI 带给互相信任的好友。\n\n社交分发最多覆盖 10,000,000 MINI。\n\n- 在创世启动的前 100,000 个投入区块中，每个区块产生 50 MINI 的初始社交额度\n- 无投入区块产生的额度，将累计到下一个有投入的区块\n- 初始社交额度共计 5,000,000 MINI\n- 每个区块可分配的额度，只按照该区块新投入的 DOT 占比分配，不按照 Pool 中的 DOT 总量分配\n- 获得额度后，用户可以通过 Polkadot App 将其封装为随机红包，分享给互相信任的好友\n- 好友领取多少，就获得等额的 vMINI，即未来可领取 MINI 的权益\n- 每次领取时，领取者还会获得领取金额 50% 的新额度，并可以继续分享给自己的可信好友\n- vMINI 将在初始流动性建立后开放领取\n\n这使 MINI 能够沿着 Polkadot App 中真实的可信关系不断传播，让早期分发不只取决于投入金额，也能更公平地触达真实用户。",
+      "以创世价格为起点，启动后续绑定曲线。\n\n创世阶段用于完成早期分发和价格发现。创世结束后，将以参与者实际形成的最高有效持仓成本作为初始价格，启动 DOT / MINI Root 绑定曲线。",
+      "完成 Root 绑定曲线和初始流动性建立后，MINI 将进入正式使用阶段。\n\n届时，创世启动和社交分发形成的 MINI 权益将开放领取，MINI 将开放正式交易，并逐步用于 MiniJAM 网络及其生态应用。",
+      "了解 MINI 的初始供应量、分配方式、流动性和长期激励。\n\nMINI 的初始供应量为 1,000,000,000 MINI。各阶段的分配比例、流动性安排和长期激励规则将保持公开，并按照协议和治理决策执行。\n\n你可以在这里了解完整的代币经济学：\nhttps://docs.minijam.xyz/docs/ecosystem/tokenomics",
+    ],
+  },
+  en: {
+    ruleTitles: ["Genesis Launch", "Social Distribution", "Liquidity Bootstrapping", "Official Launch", "Tokenomics"],
+    ruleDescs: ["Contribute DOT and accumulate MINI through continuous, block-by-block distribution.", "Bring MINI to friends who trust one another.", "Use the Genesis price as the starting point for the subsequent bonding curve.", "After the Root bonding curve is completed and initial liquidity is established, MINI will enter its official usage phase.", "Learn about MINI’s initial supply, allocation, liquidity, and long-term incentives."],
+    ruleDetails: [
+      "Contribute DOT and accumulate MINI through continuous, block-by-block distribution.\n\nA total of 10,000,000 MINI will be distributed during Genesis.\n\n- The full distribution lasts 125,000 blocks, or approximately 8 days and 16 hours at an average block time of 6 seconds\n- Each block releases a fixed 80 MINI\n- The MINI released in each block is distributed according to each participant’s share of the DOT already in the Pool at the time of release\n- Contributions remain open for 100,000 blocks, or approximately 6 days and 22 hours\n- By the time the Protection Phase begins, a total of 8,000,000 MINI will have been released\n- The following 25,000 blocks form the Protection Phase, during which no new contributions are accepted and the remaining 2,000,000 MINI continue to be distributed\n- During Genesis, each user’s MINI entitlement is recorded and becomes claimable after the initial liquidity has been established\n\nThe earlier you contribute DOT, the earlier you begin participating in the distribution and the more subsequent blocks you can cover.",
+      "Bring MINI to friends who trust one another.\n\nSocial distribution can cover up to 10,000,000 MINI.\n\n- During the first 100,000 contribution blocks of Genesis, each block generates an initial social allocation of 50 MINI\n- Allocations generated in blocks with no new contributions accumulate and are carried forward to the next block containing contributions\n- The initial social allocation totals 5,000,000 MINI\n- The allocation available in each block is distributed only according to each participant’s share of the DOT newly contributed in that block, not their share of the total DOT in the Pool\n- After receiving an allocation, users can package it into randomized Lucky Packets through the Polkadot App and share them with mutually trusted friends\n- When a friend claims an amount, they receive an equal amount of vMINI, representing a future claim on MINI\n- Each recipient also receives a new allocation equal to 50% of the amount claimed, which they can continue sharing with their own trusted friends\n- vMINI becomes claimable after the initial liquidity has been established\n\nThis allows MINI to continuously spread through real trusted relationships within the Polkadot App, making early distribution depend on more than contribution size and helping MINI reach genuine users more fairly.",
+      "Use the Genesis price as the starting point for the subsequent bonding curve.\n\nGenesis provides early distribution and price discovery. Once Genesis ends, the maximum effective cost basis actually formed by participants will become the initial price of the DOT / MINI Root bonding curve.",
+      "After the Root bonding curve is completed and the initial liquidity has been established, MINI will enter its official usage phase.\n\nAt that point, MINI entitlements created through Genesis and social distribution will become claimable. MINI will open for public trading and gradually be integrated into the MiniJAM network and its ecosystem applications.",
+      "Learn about MINI’s initial supply, allocation, liquidity, and long-term incentives.\n\nMINI has an initial supply of 1,000,000,000 MINI. Allocation percentages, liquidity arrangements, and long-term incentive rules for each stage will remain public and will be executed according to the protocol and governance decisions.\n\nRead the complete tokenomics here:\nhttps://docs.minijam.xyz/docs/ecosystem/tokenomics",
+    ],
+  },
+} as const;
+
 function routeFromHash(): AppRoute { return window.location.hash === "#/assets" ? "assets" : window.location.hash === "#/rules" ? "rules" : "genesis"; }
 function hashForRoute(route: AppRoute): string { return route === "assets" ? "#/assets" : route === "rules" ? "#/rules" : "#/"; }
 function scrollToRoute(route: AppRoute, behavior: ScrollBehavior = "smooth"): void { const target = route === "rules" ? document.getElementById("rules") : route === "genesis" ? document.getElementById("genesis") : null; target?.scrollIntoView({ behavior }); }
 function shortHash(value: string): string { return value.length > 14 ? `${value.slice(0, 8)}…${value.slice(-6)}` : value; }
 function formatAmount(value: bigint | null | undefined, digits = 2): string { return value == null ? "—" : Number(value / 10n ** 18n).toLocaleString(undefined, { maximumFractionDigits: digits }); }
-function phaseLabel(phase: number, text: typeof copy[Language]): string { return phase === 0 ? text.waiting : phase === 1 ? text.contributionPhase : phase === 2 ? text.protection : text.ended; }
-function stateLabel(state: UiContributionState, text: typeof copy[Language]): string { return state === "demo_processing" ? text.states.simulating : state === "idle" ? "" : text.states[state as keyof typeof text.states] || state; }
+function phaseLabel(phase: number, text: { waiting: string; contributionPhase: string; protection: string; ended: string }): string { return phase === 0 ? text.waiting : phase === 1 ? text.contributionPhase : phase === 2 ? text.protection : text.ended; }
+function stateLabel(state: UiContributionState, text: { states: Record<string, string> }): string { return state === "demo_processing" ? text.states.simulating : state === "idle" ? "" : text.states[state] || state; }
 
 function App() {
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem("mini-genesis-language") as Language) || "en");
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("mini-genesis-theme") as Theme) || "light");
-  const text = copy[language];
+  const text = { ...copy[language], ...ruleCopy[language] };
   const feedback = useFeedback();
   const [route, setRoute] = useState<AppRoute>(() => routeFromHash());
   const [account, setAccount] = useState<Address | null>(null);
