@@ -1,0 +1,315 @@
+name: deploy production pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type DEPLOY_PRODUCTION to confirm"
+        required: true
+        type: string
+      base_path:
+        description: "GitHub Pages base path"
+        required: true
+        default: "/mini-genesis/"
+        type: choice
+        options:
+          - "/mini-genesis/"
+          - "/"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Validate and build production frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Production deployment guard
+        env:
+          CONFIRMATION: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Production Pages may only be deployed from main."
+            exit 1
+          fi
+
+          if [[ "$CONFIRMATION" != "DEPLOY_PRODUCTION" ]]; then
+            echo "::error::Confirmation must exactly equal DEPLOY_PRODUCTION."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: packages/web/pnpm-lock.yaml
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@b00af27efadbc7b4ca8b82abbd903b17cc874d2a # v1
+        with:
+          version: v0.3.0
+
+      - name: Validate production manifest
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const path = "deployments/production.json";
+          const manifest = JSON.parse(fs.readFileSync(path, "utf8"));
+
+          const zeroAddress = /^0x0{40}$/i;
+          const zeroHash = /^0x0{64}$/i;
+
+          function assert(condition, message) {
+            if (!condition) {
+              console.error(`Production manifest validation failed: ${message}`);
+              process.exit(1);
+            }
+          }
+
+          assert(manifest.environment === "production", "environment must be production");
+          assert(manifest.status === "deployed", "status must be deployed");
+
+          assert(
+            String(manifest.source?.chainId) === "420420419",
+            "source.chainId must be Polkadot Hub Mainnet: 420420419",
+          );
+
+          assert(
+            Array.isArray(manifest.source?.rpcHttpUrls) &&
+              manifest.source.rpcHttpUrls.length > 0 &&
+              manifest.source.rpcHttpUrls.every(
+                (url) => typeof url === "string" && /^https:\/\//.test(url),
+              ),
+            "at least one public HTTPS RPC URL is required",
+          );
+
+          assert(
+            typeof manifest.source?.explorerUrl === "string" &&
+              /^https:\/\//.test(manifest.source.explorerUrl),
+            "a public HTTPS explorer URL is required",
+          );
+
+          assert(
+            !manifest.source.explorerUrl.toLowerCase().includes("testnet"),
+            "production explorer URL must not point to testnet",
+          );
+
+          assert(
+            typeof manifest.source?.contract === "string" &&
+              /^0x[0-9a-f]{40}$/i.test(manifest.source.contract) &&
+              !zeroAddress.test(manifest.source.contract),
+            "production contract address is missing",
+          );
+
+          assert(
+            typeof manifest.source?.runtimeCodeHash === "string" &&
+              /^0x[0-9a-f]{64}$/i.test(manifest.source.runtimeCodeHash) &&
+              !zeroHash.test(manifest.source.runtimeCodeHash),
+            "runtime code hash is missing",
+          );
+
+          assert(
+            BigInt(manifest.source?.deploymentBlock ?? "0") > 0n,
+            "deployment block must be greater than zero",
+          );
+
+          const config = manifest.source?.contractConfig ?? {};
+
+          assert(
+            typeof config.treasury === "string" &&
+              /^0x[0-9a-f]{40}$/i.test(config.treasury) &&
+              !zeroAddress.test(config.treasury),
+            "treasury address is missing",
+          );
+
+          assert(
+            String(config.genesisAllocation) ===
+              "10000000000000000000000000",
+            "genesisAllocation must equal 10,000,000 MINI",
+          );
+
+          assert(
+            String(config.contributionBlocks) === "100000",
+            "contributionBlocks must equal 100000",
+          );
+
+          assert(
+            String(config.protectionBlocks) === "25000",
+            "protectionBlocks must equal 25000",
+          );
+
+          assert(
+            String(config.firstContributionMinimum) ===
+              "1000000000000000000",
+            "firstContributionMinimum must equal 1 DOT",
+          );
+
+          assert(
+            String(config.subsequentContributionMinimumExclusive) ===
+              "9999999999999999",
+            "subsequentContributionMinimumExclusive is incorrect",
+          );
+
+          console.log("Production manifest validation passed.");
+          NODE
+
+      - name: Verify production contract on chain
+        run: |
+          set -euo pipefail
+
+          MANIFEST="deployments/production.json"
+
+          RPC_URL="$(jq -r '.source.rpcHttpUrls[0]' "$MANIFEST")"
+          CONTRACT="$(jq -r '.source.contract' "$MANIFEST")"
+          EXPECTED_CODE_HASH="$(jq -r '.source.runtimeCodeHash' "$MANIFEST")"
+
+          EXPECTED_TREASURY="$(jq -r '.source.contractConfig.treasury' "$MANIFEST")"
+          EXPECTED_ALLOCATION="$(jq -r '.source.contractConfig.genesisAllocation' "$MANIFEST")"
+          EXPECTED_CONTRIBUTION_BLOCKS="$(jq -r '.source.contractConfig.contributionBlocks' "$MANIFEST")"
+          EXPECTED_PROTECTION_BLOCKS="$(jq -r '.source.contractConfig.protectionBlocks' "$MANIFEST")"
+          EXPECTED_FIRST_MINIMUM="$(jq -r '.source.contractConfig.firstContributionMinimum' "$MANIFEST")"
+          EXPECTED_LATER_MINIMUM="$(jq -r '.source.contractConfig.subsequentContributionMinimumExclusive' "$MANIFEST")"
+
+          ACTUAL_CHAIN_ID="$(cast chain-id --rpc-url "$RPC_URL" | awk '{print $1}')"
+
+          if [[ "$ACTUAL_CHAIN_ID" != "420420419" ]]; then
+            echo "::error::RPC returned unexpected Chain ID: $ACTUAL_CHAIN_ID"
+            exit 1
+          fi
+
+          RUNTIME_CODE="$(cast code "$CONTRACT" --rpc-url "$RPC_URL")"
+
+          if [[ -z "$RUNTIME_CODE" || "$RUNTIME_CODE" == "0x" ]]; then
+            echo "::error::Production contract has no runtime bytecode."
+            exit 1
+          fi
+
+          ACTUAL_CODE_HASH="$(cast keccak "$RUNTIME_CODE")"
+
+          if [[ "${ACTUAL_CODE_HASH,,}" != "${EXPECTED_CODE_HASH,,}" ]]; then
+            echo "::error::Runtime code hash does not match production manifest."
+            exit 1
+          fi
+
+          read_uint() {
+            cast call "$CONTRACT" "$1" --rpc-url "$RPC_URL" | awk '{print $1}'
+          }
+
+          ACTUAL_TREASURY="$(
+            cast call "$CONTRACT" "treasury()(address)" \
+              --rpc-url "$RPC_URL" |
+              awk '{print $1}'
+          )"
+
+          ACTUAL_ALLOCATION="$(read_uint 'genesisAllocation()(uint256)')"
+          ACTUAL_CONTRIBUTION_BLOCKS="$(read_uint 'contributionBlocks()(uint256)')"
+          ACTUAL_PROTECTION_BLOCKS="$(read_uint 'protectionBlocks()(uint256)')"
+          ACTUAL_TOTAL_BLOCKS="$(read_uint 'totalEmissionBlocks()(uint256)')"
+          ACTUAL_FIRST_MINIMUM="$(read_uint 'firstContributionMinimum()(uint256)')"
+          ACTUAL_LATER_MINIMUM="$(read_uint 'subsequentContributionMinimumExclusive()(uint256)')"
+
+          [[ "${ACTUAL_TREASURY,,}" == "${EXPECTED_TREASURY,,}" ]] || {
+            echo "::error::Treasury does not match production manifest."
+            exit 1
+          }
+
+          [[ "$ACTUAL_ALLOCATION" == "$EXPECTED_ALLOCATION" ]] || {
+            echo "::error::Genesis allocation mismatch."
+            exit 1
+          }
+
+          [[ "$ACTUAL_CONTRIBUTION_BLOCKS" == "$EXPECTED_CONTRIBUTION_BLOCKS" ]] || {
+            echo "::error::Contribution block count mismatch."
+            exit 1
+          }
+
+          [[ "$ACTUAL_PROTECTION_BLOCKS" == "$EXPECTED_PROTECTION_BLOCKS" ]] || {
+            echo "::error::Protection block count mismatch."
+            exit 1
+          }
+
+          [[ "$ACTUAL_TOTAL_BLOCKS" == "125000" ]] || {
+            echo "::error::Total emission blocks must equal 125000."
+            exit 1
+          }
+
+          [[ "$ACTUAL_FIRST_MINIMUM" == "$EXPECTED_FIRST_MINIMUM" ]] || {
+            echo "::error::First contribution minimum mismatch."
+            exit 1
+          }
+
+          [[ "$ACTUAL_LATER_MINIMUM" == "$EXPECTED_LATER_MINIMUM" ]] || {
+            echo "::error::Later contribution minimum mismatch."
+            exit 1
+          }
+
+          echo "Production contract verification passed."
+          echo "Chain ID: $ACTUAL_CHAIN_ID"
+          echo "Contract: $CONTRACT"
+          echo "Runtime code hash: $ACTUAL_CODE_HASH"
+
+      - name: Install frontend dependencies
+        run: pnpm --dir packages/web install --frozen-lockfile
+
+      - name: Run frontend tests
+        run: pnpm --dir packages/web test
+
+      - name: Build production frontend
+        env:
+          VITE_DEPLOYMENT_ENV: production
+          VITE_DEMO_MODE: "false"
+          BASE_PATH: ${{ inputs.base_path }}
+        run: |
+          set -euo pipefail
+          pnpm --dir packages/web build -- --base="$BASE_PATH"
+
+      - name: Add no-Jekyll marker
+        run: touch packages/web/dist/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload production Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: packages/web/dist
+          retention-days: 1
+
+  deploy:
+    name: Deploy production frontend
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy production frontend
+        id: deployment
+        uses: actions/deploy-pages@v4
