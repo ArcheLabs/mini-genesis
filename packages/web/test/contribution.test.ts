@@ -8,7 +8,7 @@ function clients(logs: any[], finality = true) {
 }
 const wallet = { writeContract: vi.fn().mockResolvedValue(`0x${"ab".repeat(32)}`) } as any;
 describe("contribution protocol", () => {
-  it("validates receipt and event before finality", async () => { const updates: string[] = []; const c = clients([contributedLog(ACCOUNT, 10n ** 18n)]); await contribute(c, wallet, manifest(), ACCOUNT, "1", 0, 10n ** 18n, 1n, (u) => updates.push(u.state)); expect(updates).toEqual(["validating", "simulating", "awaiting_signature", "submitted", "included", "finalizing", "finalized"]); });
+  it("validates receipt and event without waiting for finality", async () => { const updates: string[] = []; const c = clients([contributedLog(ACCOUNT, 10n ** 18n)]); const result = await contribute(c, wallet, manifest(), ACCOUNT, "1", 0, 10n ** 18n, 1n, (u) => updates.push(u.state)); expect(updates).toEqual(["validating", "simulating", "awaiting_signature", "submitted", "included"]); expect(result.blockNumber).toBe(8n); });
   it.each([
     ["missing", []], ["duplicate", [contributedLog(ACCOUNT, 10n ** 18n), contributedLog(ACCOUNT, 10n ** 18n)]], ["wrong contributor", [contributedLog(SOURCE_CONTRACT, 10n ** 18n)]], ["wrong amount", [contributedLog(ACCOUNT, 2n ** 18n)]],
   ])("rejects %s event", async (_name, logs) => { const updates: string[] = []; await expect(contribute(clients(logs), wallet, manifest(), ACCOUNT, "1", 0, 10n ** 18n, 1n, (u) => updates.push(`${u.state}:${u.error ?? ""}`))).rejects.toThrow("CONTRIBUTED_EVENT_MISMATCH"); expect(updates.some((v) => v.startsWith("included:"))).toBe(false); });
