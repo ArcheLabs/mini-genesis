@@ -8,9 +8,11 @@
 .input-status a{text-decoration:underline;text-underline-offset:3px}
 .global-status{margin:10px 0 0;color:var(--protocol);font:12px var(--font-mono);text-align:center}
 @media(max-width:640px){
-  .stats-strip{grid-template-columns:repeat(3,1fr)}
-  .stats-strip div:nth-child(2n){border-right:1px solid var(--line)}
-  .stats-strip div:last-child{border-right:0}
+  .stats-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats-strip div:nth-child(2n){border-right:0}
+}
+@media (max-width: 420px){
+  .stats-strip{grid-template-columns:1fr}
 }
 .notification-center{position:fixed;z-index:100;top:88px;right:20px;width:min(380px,calc(100vw - 40px));display:grid;gap:10px}
 .notification{display:flex;gap:12px;padding:15px 14px;border:1px solid var(--line-strong);border-radius:14px;background:var(--panel-strong);box-shadow:var(--shadow);animation:feedback-in 180ms ease}
