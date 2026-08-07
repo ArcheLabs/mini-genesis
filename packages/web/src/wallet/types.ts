@@ -1,7 +1,7 @@
 import type { Address } from "viem";
 import type { PolkadotSigner } from "polkadot-api/pjs-signer";
 
-export type MappingState = "checking" | "unmapped" | "mapping" | "mapped" | "failed";
+export type MappingState = "checking" | "unmapped" | "mapping" | "mapped" | "conflict" | "failed";
 
 export type EvmGenesisWallet = {
   kind: "evm";

@@ -10,15 +10,15 @@ export type ContributionContext = {
   subsequentExclusive: bigint;
   contractAddress: Address;
 };
-export type ContributionState = "idle" | "validating" | "checking_mapping" | "simulating" | "awaiting_signature" | "submitted" | "included" | "finalized" | "failed";
+export type ContributionState = "idle" | "validating" | "checking_mapping" | "mapping_required" | "awaiting_mapping_signature" | "mapping_submitted" | "mapping_finalized" | "verifying_mapping" | "simulating" | "awaiting_signature" | "submitted" | "included" | "finalized" | "verifying_event" | "success" | "failed";
 export type ContributionUpdate = { state: ContributionState; hash?: Hash | `0x${string}`; error?: string };
 export type ContributionResult = {
   execution: ContributionExecution;
   blockNumber: bigint;
   amount: ParsedDotAmount;
   contributorH160: Address;
-  evmTxHash?: Hash;
-  substrateTxHash?: `0x${string}`;
+  evmTransactionHash?: Hash;
+  substrateTransactionHash?: `0x${string}`;
 };
 
 export interface GenesisExecutionAdapter {

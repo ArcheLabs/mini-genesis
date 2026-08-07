@@ -11,7 +11,7 @@ export function createEvmExecutionAdapter(client: PublicClient, wallet: WalletCl
     async getBalance() { return { available: await client.getBalance({ address: account }), decimals: manifest.source.evmNativeDecimals }; },
     async contribute(input, context, onUpdate = () => {}, signal) {
       const result = await contribute(client, wallet, manifest, account, input, context.phase, context.firstMinimum, context.subsequentExclusive, onUpdate as any, signal);
-      return { execution: "evm", blockNumber: result.blockNumber, amount: result.amount, contributorH160: account, evmTxHash: result.hash };
+      return { execution: "evm", blockNumber: result.blockNumber, amount: result.amount, contributorH160: account, evmTransactionHash: result.hash };
     },
     async safeMax() {
       const phase = await client.readContract({ address: manifest.source.contract, abi: genesisAbi, functionName: "phase" } as any).catch(() => 3);

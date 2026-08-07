@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Address } from "viem";
 import { useAppKit, useAppKitAccount, useAppKitNetwork, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
 import type { DeploymentManifest } from "../config/manifest";
 import { polkadotHubNetwork } from "./appkit";
 import type { Eip1193Provider } from "./eip1193";
-import { deriveContractAddress } from "./substrate/account";
+import { resolveContractAddress } from "./substrate/account";
 import { readNativeBalance } from "./substrate/balance";
 import { getSubstrateApi } from "./substrate/client";
 import { checkAccountMapping } from "./substrate/mapping";
@@ -26,6 +27,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null) {
   const [substrateAccounts, setSubstrateAccounts] = useState<SubstrateWalletAccount[]>([]);
   const [substrateAccount, setSubstrateAccount] = useState<SubstrateWalletAccount | null>(null);
   const [substrateApi, setSubstrateApi] = useState<any>(null);
+  const [substrateContractAddress, setSubstrateContractAddress] = useState<Address | null>(null);
   const [mappingState, setMappingState] = useState<MappingState>("checking");
   const [nativeBalance, setNativeBalance] = useState<bigint | null>(null);
 
@@ -45,6 +47,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null) {
     setSubstrateExtension(extension);
     setSubstrateAccounts(accounts);
     setSubstrateAccount(selected);
+    setSubstrateContractAddress(null);
     setSubstrateApi(getSubstrateApi(manifest));
     setMappingState("checking");
     return selected.address;
@@ -52,32 +55,40 @@ export function useGenesisWallet(manifest: DeploymentManifest | null) {
 
   const selectPolkadotAccount = useCallback((address: string) => {
     const selected = substrateAccounts.find((candidate) => candidate.address === address);
-    if (selected) { setSubstrateAccount(selected); setMappingState("checking"); setNativeBalance(null); }
+    if (selected) { setSubstrateAccount(selected); setSubstrateContractAddress(null); setMappingState("checking"); setNativeBalance(null); }
   }, [substrateAccounts]);
 
   const disconnectPolkadot = useCallback(() => {
     substrateExtension?.disconnect();
-    setSubstrateExtension(null); setSubstrateAccounts([]); setSubstrateAccount(null); setSubstrateApi(null); setNativeBalance(null); setMappingState("checking");
+    setSubstrateExtension(null); setSubstrateAccounts([]); setSubstrateAccount(null); setSubstrateApi(null); setSubstrateContractAddress(null); setNativeBalance(null); setMappingState("checking");
   }, [substrateExtension]);
 
   const refreshNativeBalance = useCallback(async () => {
     if (!substrateApi || !substrateAccount) return;
     const balance = await readNativeBalance(substrateApi, substrateAccount.address);
     setNativeBalance(balance.spendable);
-  }, [substrateAccount, substrateApi]);
+    if (substrateContractAddress) {
+      const mapping = await checkAccountMapping(substrateApi, substrateContractAddress, substrateAccount.address);
+      setMappingState(mapping);
+    }
+  }, [substrateAccount, substrateApi, substrateContractAddress]);
 
   useEffect(() => {
     if (!substrateApi || !substrateAccount || !manifest) return;
     let disposed = false;
-    const contractAddress = deriveContractAddress(substrateAccount.address);
-    void Promise.all([
-      checkAccountMapping(substrateApi, contractAddress, substrateAccount.address),
-      refreshNativeBalance(),
-    ]).then(([mapped]) => { if (!disposed) setMappingState(mapped); }).catch(() => { if (!disposed) setMappingState("failed"); });
+    void resolveContractAddress(substrateApi, substrateAccount.address).then(async (resolution) => {
+      if (disposed) return;
+      setSubstrateContractAddress(resolution.h160);
+      const [mapped] = await Promise.all([
+        checkAccountMapping(substrateApi, resolution.h160, substrateAccount.address),
+        refreshNativeBalance(),
+      ]);
+      if (!disposed) setMappingState(mapped);
+    }).catch(() => { if (!disposed) setMappingState("failed"); });
     return () => { disposed = true; };
   }, [manifest, refreshNativeBalance, substrateAccount, substrateApi]);
 
-  const substrateReady = Boolean(substrateAccount && substrateApi && mappingState !== "failed");
+  const substrateReady = Boolean(substrateAccount && substrateApi && substrateContractAddress && mappingState !== "failed" && mappingState !== "conflict");
   return {
     ...walletState,
     isConnected, status, chainId, provider,
@@ -85,7 +96,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null) {
     connectPolkadot, disconnectPolkadot,
     selectPolkadotAccount, substrateAccounts, substrateAccount, substrateSigner: substrateAccount?.polkadotSigner ?? null, substrateApi,
     substrateExtensionName: substrateExtension?.name ?? null,
-    substrateContractAddress: substrateAccount ? deriveContractAddress(substrateAccount.address) : null,
+    substrateContractAddress,
     mappingState, nativeBalance,
     refreshNativeBalance,
     paymentKind: substrateReady ? "substrate" as const : walletState.walletReady ? "evm" as const : null,

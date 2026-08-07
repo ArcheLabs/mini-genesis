@@ -5,7 +5,9 @@ import { sameSubstrateAccount } from "./account";
 export async function checkAccountMapping(api: any, contractAddress: Address, account: string): Promise<MappingState> {
   try {
     const original = await api.query.Revive.OriginalAccount.getValue(contractAddress);
-    return original && sameSubstrateAccount(original, account) ? "mapped" : "unmapped";
+    if (!original) return "unmapped";
+    if (sameSubstrateAccount(original, account)) return "mapped";
+    return "conflict";
   } catch {
     return "failed";
   }
