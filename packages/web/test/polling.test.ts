@@ -132,7 +132,7 @@ describe("visible polling", () => {
     expect(src).toContain("globalPollingRef");
     expect(src).toContain("controller.retryNow();");
     expect(src).not.toMatch(/setInterval\s*\(\s*\(\)\s*=>\s*void\s*loadUser\s*\(account\)/);
-    expect(src).toContain("void loadUser(selectedContractAddress);");
-    expect(src).toContain("void loadHistory(account);");
+    expect(src).toContain("void loadUser(selectedContractAddress, selectedPaymentSource?.id ?? \"\");");
+    expect(src).toContain("void loadHistory(selectedContractAddress, selectedPaymentSource?.id ?? \"\");");
   });
 });

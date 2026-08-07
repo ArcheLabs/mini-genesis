@@ -38,9 +38,17 @@ function resultFailureCode(result: Simulation["result"]): "REVIVE_DRY_RUN_FAILED
   return /revert|contract/i.test(description) ? "REVIVE_CONTRACT_REVERTED" : "REVIVE_DRY_RUN_FAILED";
 }
 
+function isAccountUnmappedError(error: unknown): boolean {
+  const description = error instanceof Error ? error.message : typeof error === "string" ? error : (() => { try { return JSON.stringify(error ?? ""); } catch { return ""; } })();
+  return /account.?unmapped|unmapped.?account|original.?account/i.test(description);
+}
+
 function validateSimulation(simulation: Simulation): void {
   if (!simulation || !simulation.result) throw new Error("REVIVE_DRY_RUN_FAILED");
-  if (simulation.result.success !== true) throw new Error(resultFailureCode(simulation.result));
+  if (simulation.result.success !== true) {
+    if (isAccountUnmappedError(simulation.result.value ?? simulation.result.error)) throw new Error("ACCOUNT_UNMAPPED");
+    throw new Error(resultFailureCode(simulation.result));
+  }
   const value = simulation.result.value as { flags?: unknown; type?: unknown } | undefined;
   if ((typeof value?.flags === "number" && (value.flags & 1) !== 0) || /revert/i.test(String(value?.type ?? ""))) throw new Error("REVIVE_CONTRACT_REVERTED");
 }
@@ -50,7 +58,8 @@ export async function simulateNativeContribution(api: any, account: string, cont
   let simulation: Simulation;
   try {
     simulation = await api.apis.ReviveApi.call(account, contractAddress, amount.planck, undefined, undefined, hexToBytes(data));
-  } catch {
+  } catch (error) {
+    if (isAccountUnmappedError(error)) throw new Error("ACCOUNT_UNMAPPED");
     throw new Error("REVIVE_DRY_RUN_FAILED");
   }
   validateSimulation(simulation);
@@ -66,7 +75,6 @@ export async function estimateNativeMax(api: any, account: string, manifest: Dep
   if (phase >= 2) return 0n;
   try {
     const resolution = await resolveContractAddress(api, account);
-    if (await checkAccountMapping(api, resolution.h160, account) !== "mapped") return null;
     const balance = await readNativeBalance(api, account);
     const probeEvmWei = phase === 0 ? firstMinimum : subsequentExclusive + 1n;
     const probe = { planck: ceilPlanckFromEvmWei(probeEvmWei), evmWei: ceilPlanckFromEvmWei(probeEvmWei) * NATIVE_TO_EVM_RATIO };
@@ -129,22 +137,30 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
         if (balance.spendable < amount.planck) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
         const resolution = canonicalContractAddress ? { h160: canonicalContractAddress } : await resolveContractAddress(api, account);
         const contributorH160 = resolution.h160;
-        onUpdate({ state: "checking_mapping" });
-        const mapping = await checkAccountMapping(api, contributorH160, account);
-        if (mapping === "failed") throw new Error("ACCOUNT_MAPPING_FAILED");
-        if (mapping === "conflict") throw new Error("ACCOUNT_MAPPING_CONFLICT");
-        if (mapping === "unmapped") {
-          onUpdate({ state: "mapping_required" });
-          await mapAccount(api, signer, account, (state) => onUpdate({ state: state === "mapping" ? "awaiting_mapping_signature" : "mapping_submitted" }));
-          onUpdate({ state: "mapping_finalized" });
-          onUpdate({ state: "verifying_mapping" });
-          const refreshed = await checkAccountMapping(api, contributorH160, account);
-          if (refreshed === "conflict") throw new Error("ACCOUNT_MAPPING_CONFLICT");
-          if (refreshed !== "mapped") throw new Error("ACCOUNT_MAPPING_VERIFICATION_FAILED");
-          balance = await readNativeBalance(api, account);
-        }
         onUpdate({ state: "simulating" });
-        const limits = await simulateNativeContribution(api, account, contractAddress, amount); checkCancelled(signal);
+        let limits;
+        try {
+          limits = await simulateNativeContribution(api, account, contractAddress, amount);
+        } catch (error) {
+          if (error instanceof Error && error.message === "ACCOUNT_UNMAPPED") {
+            onUpdate({ state: "checking_mapping" });
+            const mapping = await checkAccountMapping(api, contributorH160, account);
+            if (mapping === "conflict") throw new Error("ACCOUNT_MAPPING_CONFLICT");
+            if (mapping === "failed") throw new Error("ACCOUNT_MAPPING_FAILED");
+            if (mapping === "unmapped") {
+              onUpdate({ state: "mapping_required" });
+              await mapAccount(api, signer, account, (state) => onUpdate({ state: state === "mapping" ? "awaiting_mapping_signature" : "mapping_submitted" }));
+              onUpdate({ state: "mapping_finalized" });
+              onUpdate({ state: "verifying_mapping" });
+              const refreshed = await checkAccountMapping(api, contributorH160, account);
+              if (refreshed === "conflict") throw new Error("ACCOUNT_MAPPING_CONFLICT");
+              if (refreshed !== "mapped") throw new Error("ACCOUNT_MAPPING_VERIFICATION_FAILED");
+              balance = await readNativeBalance(api, account);
+            }
+            limits = await simulateNativeContribution(api, account, contractAddress, amount);
+          } else throw error;
+        }
+        checkCancelled(signal);
         const data = encodeFunctionData({ abi: genesisAbi, functionName: "contribute" });
         const tx = api.tx.Revive.call({ dest: contractAddress, value: amount.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) });
         let fee: bigint;

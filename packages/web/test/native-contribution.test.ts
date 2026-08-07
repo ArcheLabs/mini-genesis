@@ -47,34 +47,34 @@ describe("native contribution adapter", () => {
     await expect(adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT })).rejects.toThrow("REVIVE_DRY_RUN_FAILED");
     expect(tx.signAndSubmit).not.toHaveBeenCalled();
   });
-  it("maps an unmapped account before submitting the contribution", async () => {
+  it("does not require map_account when runtime AutoMap handles the contribution", async () => {
     const { api, tx } = nativeApi();
-    api.query.Revive.OriginalAccount.getValue.mockResolvedValueOnce(null).mockResolvedValueOnce(NATIVE_ACCOUNT);
+    api.query.Revive.OriginalAccount.getValue.mockResolvedValue(null);
     const mapSubmit = vi.fn().mockResolvedValue({ ok: true });
     api.tx.Revive.map_account.mockReturnValue({ signAndSubmit: mapSubmit });
     const adapter = createSubstrateExecutionAdapter(api, {}, NATIVE_ACCOUNT, manifest());
     await adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT });
-    expect(mapSubmit).toHaveBeenCalled();
+    expect(mapSubmit).not.toHaveBeenCalled();
     expect(tx.signAndSubmit).toHaveBeenCalled();
   });
-  it("fails closed on a conflicting authoritative mapping", async () => {
+  it("does not block a contribution on a stale mapping query", async () => {
     const { api, tx } = nativeApi();
     api.query.Revive.OriginalAccount.getValue.mockResolvedValue("1mkmXsb3yPEMYPTnfvCnTJXMTxEsh5sRfD21tgmryszueHv");
     const adapter = createSubstrateExecutionAdapter(api, {}, NATIVE_ACCOUNT, manifest());
-    await expect(adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT })).rejects.toThrow("ACCOUNT_MAPPING_CONFLICT");
-    expect(tx.signAndSubmit).not.toHaveBeenCalled();
+    await adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT });
+    expect(tx.signAndSubmit).toHaveBeenCalled();
   });
   it("does not accept a matching event from another extrinsic", () => {
     const amount = parseDotAmount("1");
     const log = contributedLog(H160, amount.evmWei);
     expect(() => validateNativeEvents([{ type: "ContractEmitted", value: { contract: SOURCE_CONTRACT, data: hexToBytes(log.data), topics: log.topics }, phase: { type: "ApplyExtrinsic", value: 3 } }], SOURCE_CONTRACT, H160, amount, 4)).toThrow("CONTRIBUTED_EVENT_MISMATCH");
   });
-  it("calculates native max only for mapped accounts using fee and max storage deposit", async () => {
+  it("calculates native max without a blocking mapping lookup", async () => {
     const { api } = nativeApi();
     const value = await estimateNativeMax(api, NATIVE_ACCOUNT, manifest(), 0, 10n ** 18n, 9_999_999_999_999_999n);
     expect(value).toBe((20_000_000_000n - 7n) * 100_000_000n);
     api.query.Revive.OriginalAccount.getValue.mockResolvedValue(null);
-    await expect(estimateNativeMax(api, NATIVE_ACCOUNT, manifest(), 0, 10n ** 18n, 9_999_999_999_999_999n)).resolves.toBeNull();
+    await expect(estimateNativeMax(api, NATIVE_ACCOUNT, manifest(), 0, 10n ** 18n, 9_999_999_999_999_999n)).resolves.toBe((20_000_000_000n - 7n) * 100_000_000n);
     api.query.Revive.OriginalAccount.getValue.mockResolvedValue(NATIVE_ACCOUNT);
     api.tx.Revive.call.mockReturnValueOnce({ getEstimatedFees: vi.fn().mockRejectedValue(new Error("fee unavailable")) });
     await expect(estimateNativeMax(api, NATIVE_ACCOUNT, manifest(), 0, 10n ** 18n, 9_999_999_999_999_999n)).resolves.toBeNull();
