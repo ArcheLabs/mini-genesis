@@ -20,8 +20,11 @@ export type DeploymentManifest = {
     chainId: string;
     name: string;
     currencySymbol?: string;
+    nativeDecimals: number;
     evmNativeDecimals: number;
     rpcHttpUrls: string[];
+    substrateWsUrls: string[];
+    ss58Prefix: number;
     explorerUrl: string;
     contract: Address;
     deploymentBlock: string;
@@ -37,6 +40,7 @@ export type RuntimeErrorCode =
   | "MANIFEST_NOT_FOUND"
   | "TEMPLATE_MANIFEST_NOT_RUNTIME_READY"
   | "CONFIGURATION_MISMATCH"
+  | "SUBSTRATE_RPC_UNAVAILABLE"
   | "RPC_UNAVAILABLE";
 
 export type RuntimeDiagnostic = {
@@ -60,7 +64,9 @@ export function getManifest(environment: DeploymentEnvironment | null): Deployme
 export function assertManifestRuntime(manifest: DeploymentManifest): void {
   if (manifest.status !== "deployed") throw new Error("TEMPLATE_MANIFEST_NOT_RUNTIME_READY");
   if (manifest.evmNativeDecimals !== 18 || manifest.source.evmNativeDecimals !== 18) throw new Error("CONFIGURATION_MISMATCH");
+  if (manifest.source.nativeDecimals !== 10 || manifest.source.ss58Prefix !== 0) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.rpcHttpUrls.length || manifest.source.rpcHttpUrls.some((url) => !url)) throw new Error("CONFIGURATION_MISMATCH");
+  if (!manifest.source.substrateWsUrls.length || manifest.source.substrateWsUrls.some((url) => !url)) throw new Error("CONFIGURATION_MISMATCH");
   if (!isAddress(manifest.source.contract) || /^0x0+$/i.test(manifest.source.contract)) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.runtimeCodeHash || /^0x0+$/i.test(manifest.source.runtimeCodeHash)) throw new Error("CONFIGURATION_MISMATCH");
   if (manifest.source.deploymentBlock === "0") throw new Error("CONFIGURATION_MISMATCH");

@@ -1,20 +1,36 @@
-import { formatEther, parseEther, type Address, type PublicClient } from "viem";
+import { formatUnits, type Address, type PublicClient } from "viem";
 import { genesisAbi } from "./abi";
 
-const STRICT_AMOUNT = /^(?:0|[1-9]\d*)(?:\.\d{1,18})?$/;
-export class AmountError extends Error { constructor(public readonly code: "INVALID_AMOUNT" | "FIRST_CONTRIBUTION_TOO_SMALL" | "CONTRIBUTION_TOO_SMALL" | "CONTRIBUTION_CLOSED") { super(code); } }
-export function parseNativeAmount(input: string): bigint {
+export const DOT_NATIVE_DECIMALS = 10;
+export const EVM_NATIVE_DECIMALS = 18;
+export const NATIVE_TO_EVM_RATIO = 100_000_000n;
+
+const STRICT_AMOUNT = /^(?:0|[1-9]\d*)(?:\.\d{1,10})?$/;
+export type AmountErrorCode = "INVALID_AMOUNT" | "FIRST_CONTRIBUTION_TOO_SMALL" | "CONTRIBUTION_TOO_SMALL" | "CONTRIBUTION_CLOSED";
+export class AmountError extends Error { constructor(public readonly code: AmountErrorCode) { super(code); } }
+
+export type ParsedDotAmount = { planck: bigint; evmWei: bigint };
+
+export function parseDotAmount(input: string): ParsedDotAmount {
   if (!STRICT_AMOUNT.test(input) || input === "0" || /^0\.0+$/.test(input)) throw new AmountError("INVALID_AMOUNT");
-  try { return parseEther(input); } catch { throw new AmountError("INVALID_AMOUNT"); }
+  const [whole, fraction = ""] = input.split(".");
+  const planck = BigInt(whole) * 10n ** BigInt(DOT_NATIVE_DECIMALS) + BigInt(fraction.padEnd(DOT_NATIVE_DECIMALS, "0") || "0");
+  if (planck <= 0n) throw new AmountError("INVALID_AMOUNT");
+  return { planck, evmWei: planck * NATIVE_TO_EVM_RATIO };
 }
-export function validateContributionAmount(input: string, phase: number, firstMinimum: bigint, subsequentExclusive: bigint): bigint {
-  const amount = parseNativeAmount(input);
+
+/** @deprecated Use parseDotAmount(input).evmWei or .planck explicitly. */
+export function parseNativeAmount(input: string): bigint { return parseDotAmount(input).evmWei; }
+
+export function validateContributionAmount(input: string, phase: number, firstMinimum: bigint, subsequentExclusive: bigint): ParsedDotAmount {
+  const amount = parseDotAmount(input);
   if (phase >= 2) throw new AmountError("CONTRIBUTION_CLOSED");
-  if (phase === 0 && amount < firstMinimum) throw new AmountError("FIRST_CONTRIBUTION_TOO_SMALL");
-  if (phase === 1 && amount <= subsequentExclusive) throw new AmountError("CONTRIBUTION_TOO_SMALL");
+  if (phase === 0 && amount.evmWei < firstMinimum) throw new AmountError("FIRST_CONTRIBUTION_TOO_SMALL");
+  if (phase === 1 && amount.evmWei <= subsequentExclusive) throw new AmountError("CONTRIBUTION_TOO_SMALL");
   return amount;
 }
-export function formatNative(value: bigint): string { return formatEther(value); }
+export function formatNative(value: bigint): string { return formatUnits(value, EVM_NATIVE_DECIMALS); }
+export function formatPlanck(value: bigint): string { return formatUnits(value, DOT_NATIVE_DECIMALS); }
 export type SafeMaxAmountInput = {
   account: Address;
   contract: Address;

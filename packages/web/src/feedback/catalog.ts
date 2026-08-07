@@ -5,7 +5,7 @@ export type FeedbackCopy = { title: string; message: string; actionLabel?: strin
 const minimumText = (params: FeedbackParams) => params.minimum ?? "—";
 const networkText = (params: FeedbackParams) => params.networkName ?? "the configured network";
 const catalog: Record<FeedbackCode, { zh: FeedbackCopy; en: FeedbackCopy }> = {
-  INVALID_AMOUNT: { zh: { title: "金额格式不正确", message: "请输入大于 0 的数字，最多支持 18 位小数。" }, en: { title: "Invalid amount", message: "Enter a number greater than zero with no more than 18 decimal places." } },
+  INVALID_AMOUNT: { zh: { title: "金额格式不正确", message: "请输入大于 0 的数字，最多支持 10 位小数。" }, en: { title: "Invalid amount", message: "Enter a number greater than zero with no more than 10 decimal places." } },
   FIRST_CONTRIBUTION_TOO_SMALL: { zh: { title: "未达到首笔投入要求", message: "首笔投入至少需要 {minimum} DOT。" }, en: { title: "Below the initial minimum", message: "The first contribution must be at least {minimum} DOT." } },
   CONTRIBUTION_TOO_SMALL: { zh: { title: "投入金额过低", message: "本次投入必须大于 {minimum} DOT。" }, en: { title: "Amount is too small", message: "This contribution must be greater than {minimum} DOT." } },
   CONTRIBUTION_CLOSED: { zh: { title: "当前阶段已结束", message: "Genesis 当前阶段已经停止接受新的投入。" }, en: { title: "Contributions are closed", message: "The current Genesis phase no longer accepts contributions." } },
@@ -27,6 +27,18 @@ const catalog: Record<FeedbackCode, { zh: FeedbackCopy; en: FeedbackCopy }> = {
   TRANSACTION_INCLUDED: { zh: { title: "交易已上链", message: "你的投入已经成功写入区块，页面数据可能需要几秒更新。" }, en: { title: "Transaction included", message: "Your contribution was successfully included in a block. The page may take a few seconds to update." } },
   TEMPLATE_MANIFEST_NOT_RUNTIME_READY: { zh: { title: "当前页面尚未配置", message: "当前前端版本没有可用的链上部署配置。" }, en: { title: "Frontend is not configured", message: "This frontend build does not contain an active on-chain deployment." } },
   CONFIGURATION_MISMATCH: { zh: { title: "页面配置不匹配", message: "当前页面配置与链上合约不一致，请刷新页面或联系维护者。" }, en: { title: "Configuration mismatch", message: "The frontend configuration does not match the deployed contract." } },
+  ACCOUNT_MAPPING_REQUIRED: { zh: { title: "需要准备账户", message: "首次使用需要在钱包中完成一次账户设置。" }, en: { title: "Account setup required", message: "Your wallet needs a one-time account setup before contributing." } },
+  ACCOUNT_MAPPING_FAILED: { zh: { title: "账户准备失败", message: "无法准备该 Polkadot 账户，请重试。" }, en: { title: "Account setup failed", message: "This Polkadot account could not be prepared. Try again." } },
+  USER_REJECTED_MAPPING: { zh: { title: "账户设置已取消", message: "你取消了账户设置，未发起投入。" }, en: { title: "Account setup cancelled", message: "You cancelled account setup. No contribution was submitted." } },
+  SUBSTRATE_RPC_UNAVAILABLE: { zh: { title: "Polkadot 网络暂时不可用", message: "当前无法连接 Polkadot 网络，请稍后重试。" }, en: { title: "Polkadot network unavailable", message: "The Polkadot network could not be reached. Try again shortly." } },
+  SUBSTRATE_WALLET_NOT_FOUND: { zh: { title: "未检测到 Polkadot 钱包", message: "请安装并解锁支持 Polkadot injected extension 的钱包。" }, en: { title: "Polkadot wallet not found", message: "Install and unlock a wallet that supports a Polkadot injected extension." } },
+  SUBSTRATE_ACCOUNT_NOT_SELECTED: { zh: { title: "未选择 Polkadot 账户", message: "请在钱包中选择一个 Polkadot 账户后重试。" }, en: { title: "No Polkadot account selected", message: "Select a Polkadot account in your wallet and try again." } },
+  NATIVE_INSUFFICIENT_BALANCE: { zh: { title: "DOT 余额不足", message: "DOT 余额不足，请保留少量 DOT 用于网络费用。" }, en: { title: "Insufficient DOT", message: "Your DOT balance is too low. Keep some DOT for network fees." } },
+  REVIVE_DRY_RUN_FAILED: { zh: { title: "无法模拟投入", message: "当前无法确认投入是否可执行，请稍后重试。" }, en: { title: "Contribution simulation failed", message: "The contribution could not be simulated. Try again shortly." } },
+  REVIVE_WEIGHT_LIMIT: { zh: { title: "无法估算网络资源", message: "当前无法估算这笔投入所需的网络资源。" }, en: { title: "Network resource estimate failed", message: "The network resources for this contribution could not be estimated." } },
+  REVIVE_STORAGE_DEPOSIT_LIMIT: { zh: { title: "无法估算账户存储费用", message: "当前无法估算账户设置所需费用。" }, en: { title: "Storage deposit estimate failed", message: "The required storage deposit could not be estimated." } },
+  REVIVE_CONTRACT_REVERTED: { zh: { title: "投入无法执行", message: "当前投入无法执行，请检查金额后重试。" }, en: { title: "Contribution reverted", message: "This contribution cannot be executed. Check the amount and try again." } },
+  DECIMAL_PRECISION_LOSS: { zh: { title: "金额精度不支持", message: "DOT 金额最多支持 10 位小数。" }, en: { title: "Unsupported decimal precision", message: "DOT amounts support up to 10 decimal places." } },
   OPERATION_CANCELLED: { zh: { title: "", message: "" }, en: { title: "", message: "" } },
   UNKNOWN_ERROR: { zh: { title: "操作未完成", message: "发生了暂时无法识别的问题，请稍后重试。" }, en: { title: "Operation not completed", message: "An unexpected problem occurred. Try again shortly." } },
 };

@@ -27,7 +27,7 @@ export type GenesisDynamic = {
   observedBlockNumber: bigint;
 };
 
-export type GenesisUser = { nativeBalance: bigint; contributedDot: bigint; pendingMini: bigint };
+export type GenesisUser = { contributedDot: bigint; pendingMini: bigint; nativeBalance?: bigint };
 
 const read = (client: PublicClient, address: Address, functionName: string, args?: readonly unknown[]) =>
   client.readContract({ address, abi: genesisAbi, functionName, args } as any) as Promise<any>;
@@ -54,11 +54,13 @@ export async function readGlobalDynamic(client: PublicClient, manifest: Deployme
   return { phase: Number(rawPhase), phaseName: phaseName(rawPhase), startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, emittedMini, observedBlockNumber };
 }
 
-export async function readUser(client: PublicClient, manifest: DeploymentManifest, account: Address): Promise<GenesisUser> {
-  const [nativeBalance, userInfo, pendingMini] = await Promise.all([
-    client.getBalance({ address: account }),
-    read(client, manifest.source.contract, "userInfo", [account]),
-    read(client, manifest.source.contract, "pendingMini", [account]),
+export async function readGenesisUserState(client: PublicClient, manifest: DeploymentManifest, contractAddress: Address): Promise<GenesisUser> {
+  const [userInfo, pendingMini] = await Promise.all([
+    read(client, manifest.source.contract, "userInfo", [contractAddress]),
+    read(client, manifest.source.contract, "pendingMini", [contractAddress]),
   ]);
-  return { nativeBalance, contributedDot: userInfo.contributedDot ?? userInfo[0], pendingMini };
+  return { contributedDot: userInfo.contributedDot ?? userInfo[0], pendingMini };
 }
+
+/** @deprecated Use readGenesisUserState; wallet balance belongs to the execution adapter. */
+export const readUser = readGenesisUserState;

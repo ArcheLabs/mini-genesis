@@ -1,0 +1,2 @@
+# Generated PAPI descriptors are checked into the repository so builds do not
+# depend on runtime metadata generation.

@@ -6,10 +6,16 @@
     "chainId": "420420419",
     "name": "Polkadot Hub",
     "currencySymbol": "DOT",
+    "nativeDecimals": 10,
     "evmNativeDecimals": 18,
     "rpcHttpUrls": [
+      "https://eth-rpc.polkadot.io/",
       "https://services.polkadothub-rpc.com/mainnet/"
     ],
+    "substrateWsUrls": [
+      "wss://polkadot-asset-hub-rpc.polkadot.io"
+    ],
+    "ss58Prefix": 0,
     "explorerUrl": "https://blockscout.polkadot.io/",
     "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",
     "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",

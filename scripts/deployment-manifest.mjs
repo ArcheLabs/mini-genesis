@@ -12,8 +12,11 @@ export function validateManifest(manifest, environment, options = {}) {
   check(required(source.chainId, "SOURCE_CHAIN_ID"), DECIMAL, "SOURCE_CHAIN_ID"); check(source.contract, ADDRESS, "SOURCE_CONTRACT"); check(source.runtimeCodeHash, HASH, "SOURCE_RUNTIME_CODE_HASH"); check(required(source.deploymentBlock, "SOURCE_DEPLOYMENT_BLOCK"), DECIMAL, "SOURCE_DEPLOYMENT_BLOCK");
   if (typeof source.name !== "string" || !source.name) throw new Error("MISSING_SOURCE_NAME");
   if (typeof source.currencySymbol !== "string" || !source.currencySymbol) throw new Error("MISSING_SOURCE_CURRENCY");
+  if (source.nativeDecimals !== 10) throw new Error("INVALID_SOURCE_NATIVE_DECIMALS");
   if (source.evmNativeDecimals !== 18) throw new Error("INVALID_SOURCE_EVM_NATIVE_DECIMALS");
+  if (source.ss58Prefix !== 0) throw new Error("INVALID_SOURCE_SS58_PREFIX");
   if (!Array.isArray(source.rpcHttpUrls) || source.rpcHttpUrls.some((url) => typeof url !== "string" || (url && !/^https:\/\//.test(url)))) throw new Error("INVALID_SOURCE_RPC_URLS");
+  if (!Array.isArray(source.substrateWsUrls) || source.substrateWsUrls.some((url) => typeof url !== "string" || (url && !/^wss:\/\//.test(url)))) throw new Error("INVALID_SOURCE_SUBSTRATE_WS_URLS");
   if (typeof source.explorerUrl !== "string" || (source.explorerUrl && !/^https:\/\//.test(source.explorerUrl))) throw new Error("INVALID_SOURCE_EXPLORER_URL");
   check(required(destination.chainId, "DESTINATION_CHAIN_ID"), DECIMAL, "DESTINATION_CHAIN_ID"); check(destination.genesisHash, HASH, "DESTINATION_GENESIS_HASH"); check(destination.miniLucky, ADDRESS, "DESTINATION_MINI_LUCKY"); check(destination.trustGraph, ADDRESS, "DESTINATION_TRUST_GRAPH"); check(destination.personhoodPrecompile, ADDRESS, "PERSONHOOD_PRECOMPILE"); check(required(destination.deploymentBlock, "DESTINATION_DEPLOYMENT_BLOCK"), DECIMAL, "DESTINATION_DEPLOYMENT_BLOCK");
   if (environment === "local") { if (product !== null) throw new Error("LOCAL_PRODUCT_MUST_BE_NULL"); } else { if (!product || product.dotName !== (environment === "staging" ? "mini-lucky-dev.dot" : "mini-lucky.dot")) throw new Error(`INVALID_${environment.toUpperCase()}_PRODUCT`); check(product.ownerH160, ADDRESS, "PRODUCT_OWNER_H160"); }

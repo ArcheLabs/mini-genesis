@@ -8,11 +8,16 @@ export const deploymentManifests = {
       "chainId": "420420417",
       "name": "Polkadot Hub TestNet",
       "currencySymbol": "DOT",
+      "nativeDecimals": 10,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
         "https://eth-rpc-testnet.polkadot.io/",
         "https://services.polkadothub-rpc.com/testnet/"
       ],
+      "substrateWsUrls": [
+        "wss://asset-hub-paseo-rpc.n.dwellir.com"
+      ],
+      "ss58Prefix": 0,
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -47,10 +52,15 @@ export const deploymentManifests = {
       "chainId": "420420417",
       "name": "Polkadot Hub Staging",
       "currencySymbol": "DOT",
+      "nativeDecimals": 10,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
         "https://eth-rpc-testnet.polkadot.io/"
       ],
+      "substrateWsUrls": [
+        "wss://asset-hub-paseo-rpc.n.dwellir.com"
+      ],
+      "ss58Prefix": 0,
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "contract": "0x95670bc033a87e7e87f4cb7dd556a075de09fb10",
       "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",
@@ -89,10 +99,16 @@ export const deploymentManifests = {
       "chainId": "420420419",
       "name": "Polkadot Hub",
       "currencySymbol": "DOT",
+      "nativeDecimals": 10,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
+        "https://eth-rpc.polkadot.io/",
         "https://services.polkadothub-rpc.com/mainnet/"
       ],
+      "substrateWsUrls": [
+        "wss://polkadot-asset-hub-rpc.polkadot.io"
+      ],
+      "ss58Prefix": 0,
       "explorerUrl": "https://blockscout.polkadot.io/",
       "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",
       "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",

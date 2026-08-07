@@ -140,7 +140,9 @@ async function deploy() {
   manifest.evmNativeDecimals = 18;
   manifest.source.chainId = chainId;
   manifest.source.currencySymbol = "DOT";
+  manifest.source.nativeDecimals = 10;
   manifest.source.evmNativeDecimals = 18;
+  manifest.source.ss58Prefix = 0;
   const publicRpcUrl = process.env.PUBLIC_RPC_URL?.trim();
   if (publicRpcUrl) {
     manifest.source.rpcHttpUrls = [publicRpcUrl];
