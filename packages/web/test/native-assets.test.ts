@@ -19,6 +19,7 @@ describe("wallet-specific My Assets", () => {
     expect(src).toContain("native-assets-grid");
     expect(src).toContain("const miniAssetCard");
     expect(src).toContain("const ecosystemAssetCard");
+    expect(src).toContain('<button className="claim-button" type="button" disabled>Claim</button>');
     expect(src).toContain("const contributedAssetCard");
     expect(src).toContain("text.contributed");
     expect(src).toContain("${formatAmount(nativeAssets.contributedDot)} ${nativeSymbol}");
