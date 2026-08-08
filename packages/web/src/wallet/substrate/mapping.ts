@@ -20,7 +20,12 @@ export async function mapAccount(api: any, signer: any, account: string, onUpdat
     if (!result.ok) throw new Error("ACCOUNT_MAPPING_FAILED");
     onUpdate("mapped");
   } catch (error) {
-    if (String(error).toLowerCase().includes("reject")) throw new Error("USER_REJECTED_MAPPING");
+    const description = error instanceof Error ? error.message : String(error);
+    if (import.meta.env.DEV && /signed.?extension|authorize.?value|pjs.?signer/i.test(description)) {
+      console.error("[MINI Genesis] LEGACY_PJS_SIGNER_PATH_USED", error);
+      throw new Error("LEGACY_PJS_SIGNER_PATH_USED");
+    }
+    if (description.toLowerCase().includes("reject")) throw new Error("USER_REJECTED_MAPPING");
     onUpdate("failed");
     throw error instanceof Error ? error : new Error("ACCOUNT_MAPPING_FAILED");
   }

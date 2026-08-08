@@ -5,6 +5,7 @@ import { NATIVE_TO_EVM_RATIO, parseDotAmount, validateContributionAmount, type P
 import { checkAccountMapping, mapAccount } from "../../wallet/substrate/mapping";
 import { accountId32FromSs58, resolveContractAddress } from "../../wallet/substrate/account";
 import { readNativeBalance } from "../../wallet/substrate/balance";
+import { NativeTransactionError, submitNativeReviveCall, type NativeSignerDiagnosticPatch } from "../../wallet/substrate/injected-transaction";
 import type { GenesisExecutionAdapter, ContributionContext, ContributionResult } from "./types";
 
 type Weight = { ref_time: bigint; proof_size: bigint };
@@ -27,6 +28,15 @@ type NativeDiagnostic = {
   dryRunError: string | null;
   txBuildError: string | null;
   feeEstimateError: string | null;
+  polkadotJsRuntimeVersion: { specVersion: string; transactionVersion: string } | null;
+  signedExtensions: string[] | null;
+  injectorSource: string | null;
+  injectorVersion: string | null;
+  signingError: string | null;
+  signingStarted: boolean;
+  walletPopupReached: boolean;
+  txStatus: string | null;
+  dispatchError: unknown;
   error: string | null;
 };
 
@@ -39,7 +49,7 @@ function errorDescription(error: unknown): string {
 function createNativeDiagnostic(account: string): NativeDiagnostic {
   let accountId32: string | null = null;
   try { accountId32 = bytesToHex(accountId32FromSs58(account)); } catch { /* Keep the diagnostic usable for malformed accounts. */ }
-  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, error: null };
+  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, error: null };
 }
 
 function emitNativeDiagnostic(manifest: DeploymentManifest, diagnostic: NativeDiagnostic): void {
@@ -51,6 +61,10 @@ function recordNativeBalance(diagnostic: NativeDiagnostic, balance: Awaited<Retu
   diagnostic.frozen = balance.frozen;
   diagnostic.existentialDeposit = balance.existentialDeposit;
   diagnostic.spendable = balance.spendable;
+}
+
+function applySignerDiagnostic(diagnostic: NativeDiagnostic, patch: NativeSignerDiagnosticPatch): void {
+  Object.assign(diagnostic, patch);
 }
 
 function checkCancelled(signal?: AbortSignal): void { if (signal?.aborted) throw new Error("OPERATION_CANCELLED"); }
@@ -168,6 +182,33 @@ export function validateNativeEvents(events: any[], contractAddress: Address, co
   if (matches !== 1) throw new Error("CONTRIBUTED_EVENT_MISMATCH");
 }
 
+function polkadotJsEventValue(event: any): { section: string; method: string; value: any } {
+  const record = event?.event ?? event;
+  const section = String(record?.section ?? "");
+  const method = String(record?.method ?? "");
+  const raw = record?.data?.toJSON ? record.data.toJSON() : record?.data;
+  if ((section.toLowerCase() === "revive" || section.toLowerCase() === "palletrevive") && method === "ContractEmitted") {
+    if (Array.isArray(raw)) return { section, method, value: { contract: raw[0], data: raw[1], topics: raw[2] } };
+    return { section, method, value: raw };
+  }
+  return { section, method, value: raw };
+}
+
+export function validatePolkadotJsNativeEvents(events: any[], contractAddress: Address, contributorH160: Address, amount: ParsedDotAmount): void {
+  const currentEvents = events.map(polkadotJsEventValue);
+  if (currentEvents.some(({ section, method }) => section.toLowerCase() === "system" && method === "ExtrinsicFailed")) throw new Error("NATIVE_SUBMISSION_FAILED");
+  if (!currentEvents.some(({ section, method }) => section.toLowerCase() === "system" && method === "ExtrinsicSuccess")) throw new Error("NATIVE_SUBMISSION_FAILED");
+  const logs = currentEvents.filter(({ section, method, value }) => (section.toLowerCase() === "revive" || section.toLowerCase() === "palletrevive") && method === "ContractEmitted" && value && String(value.contract).toLowerCase() === contractAddress.toLowerCase()).map(({ value }) => value);
+  let matches = 0;
+  for (const log of logs) {
+    try {
+      const decoded = decodeEventLog({ abi: genesisAbi, data: typeof log.data === "string" ? log.data : bytesToHex(log.data), topics: (log.topics ?? []).map((topic: unknown) => typeof topic === "string" ? topic : bytesToHex(topic as Uint8Array)) as [`0x${string}`, ...`0x${string}`[]] });
+      if (decoded.eventName === "Contributed" && String((decoded.args as any).contributor).toLowerCase() === contributorH160.toLowerCase() && (decoded.args as any).amount === amount.evmWei) matches += 1;
+    } catch { /* Ignore unrelated contract events. */ }
+  }
+  if (matches !== 1) throw new Error("CONTRIBUTED_EVENT_MISMATCH");
+}
+
 export function createSubstrateExecutionAdapter(api: any, signer: any, account: string, manifest: DeploymentManifest, canonicalContractAddress?: Address): GenesisExecutionAdapter {
   const contractAddress = manifest.source.contract;
   return {
@@ -209,22 +250,29 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
         }
         checkCancelled(signal);
         const data = encodeFunctionData({ abi: genesisAbi, functionName: "contribute" });
-        let tx;
-        try { tx = api.tx.Revive.call({ dest: contractAddress, value: amount.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) }); } catch (error) { diagnostic.txBuildError = errorDescription(error); throw error; }
+        let submission;
         let fee: bigint;
-        try { fee = BigInt(await tx.getEstimatedFees(account)); } catch (error) { diagnostic.feeEstimateError = errorDescription(error); throw new Error("NATIVE_FEE_ESTIMATE_UNAVAILABLE"); }
+        try {
+          const feeTx = api.tx.Revive.call({ dest: contractAddress, value: amount.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) });
+          fee = BigInt(await feeTx.getEstimatedFees(account));
+        } catch (error) {
+          diagnostic.feeEstimateError = errorDescription(error);
+          throw new Error("NATIVE_FEE_ESTIMATE_UNAVAILABLE");
+        }
         if (balance.spendable < amount.planck + fee + limits.storageDepositLimit) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
         onUpdate({ state: "awaiting_signature" });
-        const finalized = await tx.signAndSubmit(signer); checkCancelled(signal);
-        if (finalized.ok === false) throw new Error("REVIVE_CONTRACT_REVERTED");
-        onUpdate({ state: "finalized", hash: finalized.txHash as `0x${string}` });
+        try {
+          submission = await submitNativeReviveCall({ manifest, address: account, contractAddress, value: amount.planck, weightLimit: { refTime: limits.weightLimit.ref_time, proofSize: limits.weightLimit.proof_size }, storageDepositLimit: limits.storageDepositLimit, data: data as `0x${string}`, signal, onDiagnostic: (patch) => applySignerDiagnostic(diagnostic, patch), onStatus: (status) => { if (status === "broadcast") onUpdate({ state: "submitted" }); if (status === "inBlock") onUpdate({ state: "included" }); if (status === "finalized") onUpdate({ state: "finalized" }); } });
+        } catch (error) { throw error; }
+        checkCancelled(signal);
+        onUpdate({ state: "finalized", hash: submission.txHash });
         onUpdate({ state: "verifying_event" });
-        validateNativeEvents(finalized.events, contractAddress, contributorH160, amount, finalized.block?.index);
-        onUpdate({ state: "success", hash: finalized.txHash as `0x${string}` });
-        return { execution: "substrate", blockNumber: BigInt(finalized.block.number), amount, contributorH160, substrateTransactionHash: finalized.txHash as `0x${string}` };
+        validatePolkadotJsNativeEvents(submission.events, contractAddress, contributorH160, amount);
+        onUpdate({ state: "success", hash: submission.txHash });
+        return { execution: "substrate", blockNumber: submission.blockNumber, amount, contributorH160, substrateTransactionHash: submission.txHash };
       } catch (error) {
         const code = error instanceof Error ? error.message : "REVIVE_DRY_RUN_FAILED";
-        diagnostic.error = code;
+        diagnostic.error = error instanceof NativeTransactionError ? `${code}: ${error.detail}` : code;
         emitNativeDiagnostic(manifest, diagnostic);
         if (code !== "OPERATION_CANCELLED") onUpdate({ state: "failed", error: code });
         throw new Error(code);
