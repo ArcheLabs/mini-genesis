@@ -104,7 +104,6 @@ export const deploymentManifests = {
       "nativeDecimals": 10,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
-        "https://eth-rpc.polkadot.io/",
         "https://services.polkadothub-rpc.com/mainnet/"
       ],
       "substrateWsUrls": [
