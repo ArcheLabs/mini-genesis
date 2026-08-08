@@ -5,6 +5,12 @@ import { parseDotAmount } from "../src/genesis/amount";
 import { readNativeBalance } from "../src/wallet/substrate/balance";
 import { ACCOUNT, contributedLog, manifest, SOURCE_CONTRACT } from "./helpers";
 
+const mocks = vi.hoisted(() => ({ submitNativeReviveCall: vi.fn() }));
+vi.mock("../src/wallet/substrate/injected-transaction", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../src/wallet/substrate/injected-transaction")>()),
+  submitNativeReviveCall: mocks.submitNativeReviveCall,
+}));
+
 const NATIVE_ACCOUNT = "111111111111111111111111111111111HC1";
 const H160 = "0x88386fc84ba6bc95484008f6362f93160ef3e563" as Address;
 
@@ -20,6 +26,10 @@ function nativeApi() {
     query: { System: { Account: { getValue: vi.fn().mockResolvedValue({ data: { free: 20_000_000_000n, frozen: 0n } }) } }, Revive: { OriginalAccount: { getValue: vi.fn().mockResolvedValue(NATIVE_ACCOUNT) } } },
     tx: { Revive: { call: vi.fn().mockReturnValue(tx), map_account: vi.fn() } },
   };
+  mocks.submitNativeReviveCall.mockResolvedValue({ txHash: `0x${"ab".repeat(32)}`, blockHash: `0x${"cd".repeat(32)}`, blockNumber: 9n, events: [
+    { event: { section: "system", method: "ExtrinsicSuccess", data: { toJSON: () => [] } } },
+    { event: { section: "revive", method: "ContractEmitted", data: { toJSON: () => [SOURCE_CONTRACT, log.data, log.topics] } } },
+  ] });
   return { api, tx, call };
 }
 
@@ -35,7 +45,11 @@ describe("native contribution adapter", () => {
     const result = await adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT });
     expect(api.tx.Revive.call).toHaveBeenCalledWith(expect.objectContaining({ value: 10_000_000_000n, weight_limit: { ref_time: 100n, proof_size: 10n }, storage_deposit_limit: 5n }));
     expect(api.tx.Revive.call.mock.calls[0][0].value).not.toBe(10n ** 18n);
-    expect(tx.signAndSubmit).toHaveBeenCalledWith(signer);
+    expect(mocks.submitNativeReviveCall).toHaveBeenCalledWith(expect.objectContaining({
+      address: NATIVE_ACCOUNT, contractAddress: SOURCE_CONTRACT, value: 10_000_000_000n,
+      weightLimit: { refTime: 100n, proofSize: 10n }, storageDepositLimit: 5n,
+    }));
+    expect(tx.signAndSubmit).not.toHaveBeenCalled();
     expect(result.amount.evmWei).toBe(10n ** 18n);
     expect(result.execution).toBe("substrate");
   });
@@ -61,24 +75,26 @@ describe("native contribution adapter", () => {
     const adapter = createSubstrateExecutionAdapter(api, {}, NATIVE_ACCOUNT, manifest());
     await adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT });
     expect(mapSubmit).not.toHaveBeenCalled();
-    expect(tx.signAndSubmit).toHaveBeenCalled();
+    expect(mocks.submitNativeReviveCall).toHaveBeenCalled();
   });
   it("does not block a contribution on a stale mapping query", async () => {
     const { api, tx } = nativeApi();
     api.query.Revive.OriginalAccount.getValue.mockResolvedValue("1mkmXsb3yPEMYPTnfvCnTJXMTxEsh5sRfD21tgmryszueHv");
     const adapter = createSubstrateExecutionAdapter(api, {}, NATIVE_ACCOUNT, manifest());
     await adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT });
-    expect(tx.signAndSubmit).toHaveBeenCalled();
+    expect(mocks.submitNativeReviveCall).toHaveBeenCalled();
   });
-  it("classifies a raw wallet rejection as NATIVE_SIGNING_FAILED", async () => {
-    const { api, tx } = nativeApi();
-    tx.signAndSubmit.mockRejectedValueOnce(Object.assign(new Error("User rejected the request"), { code: 4001 }));
+  it("preserves a standard injected wallet rejection as NATIVE_SIGNING_REJECTED", async () => {
+    const { api } = nativeApi();
+    const { NativeTransactionError } = await import("../src/wallet/substrate/injected-transaction");
+    mocks.submitNativeReviveCall.mockRejectedValueOnce(new NativeTransactionError("NATIVE_SIGNING_REJECTED", "User rejected the request"));
     const adapter = createSubstrateExecutionAdapter(api, {}, NATIVE_ACCOUNT, manifest());
-    await expect(adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT })).rejects.toThrow("NATIVE_SIGNING_FAILED");
+    await expect(adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT })).rejects.toThrow("NATIVE_SIGNING_REJECTED");
   });
-  it("classifies a raw transaction rejection as NATIVE_SUBMISSION_FAILED", async () => {
-    const { api, tx } = nativeApi();
-    tx.signAndSubmit.mockRejectedValueOnce(new Error("1010: Invalid Transaction"));
+  it("preserves a standard transaction rejection as NATIVE_SUBMISSION_FAILED", async () => {
+    const { api } = nativeApi();
+    const { NativeTransactionError } = await import("../src/wallet/substrate/injected-transaction");
+    mocks.submitNativeReviveCall.mockRejectedValueOnce(new NativeTransactionError("NATIVE_SUBMISSION_FAILED", "1010: Invalid Transaction"));
     const adapter = createSubstrateExecutionAdapter(api, {}, NATIVE_ACCOUNT, manifest());
     await expect(adapter.contribute("1", { manifest: manifest(), phase: 0, firstMinimum: 10n ** 18n, subsequentExclusive: 9_999_999_999_999_999n, contractAddress: SOURCE_CONTRACT })).rejects.toThrow("NATIVE_SUBMISSION_FAILED");
   });

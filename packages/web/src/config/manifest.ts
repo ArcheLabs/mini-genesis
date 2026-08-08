@@ -24,6 +24,7 @@ export type DeploymentManifest = {
     evmNativeDecimals: number;
     rpcHttpUrls: string[];
     substrateWsUrls: string[];
+    substrateGenesisHash: Hex;
     ss58Prefix: number;
     explorerUrl: string;
     contract: Address;
@@ -67,6 +68,7 @@ export function assertManifestRuntime(manifest: DeploymentManifest): void {
   if (manifest.source.nativeDecimals !== 10 || manifest.source.ss58Prefix !== 0) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.rpcHttpUrls.length || manifest.source.rpcHttpUrls.some((url) => !url)) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.substrateWsUrls.length || manifest.source.substrateWsUrls.some((url) => !url)) throw new Error("CONFIGURATION_MISMATCH");
+  if (!manifest.source.substrateGenesisHash || /^0x0+$/i.test(manifest.source.substrateGenesisHash)) throw new Error("CONFIGURATION_MISMATCH");
   if (!isAddress(manifest.source.contract) || /^0x0+$/i.test(manifest.source.contract)) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.runtimeCodeHash || /^0x0+$/i.test(manifest.source.runtimeCodeHash)) throw new Error("CONFIGURATION_MISMATCH");
   if (manifest.source.deploymentBlock === "0") throw new Error("CONFIGURATION_MISMATCH");

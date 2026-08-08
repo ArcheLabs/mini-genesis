@@ -12,7 +12,7 @@ function descriptorFor(manifest: DeploymentManifest): typeof polkadot_asset_hub 
 export function getSubstrateApi(manifest: DeploymentManifest): any {
   const wsUrl = manifest.source.substrateWsUrls[0];
   if (!wsUrl) throw new Error("SUBSTRATE_RPC_UNAVAILABLE");
-  const key = `${manifest.source.chainId}:${wsUrl}`;
+  const key = `${manifest.source.substrateGenesisHash}:${manifest.source.substrateWsUrls.join(",")}`;
   const existing = clients.get(key);
   if (existing) return existing.api;
   try {

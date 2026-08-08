@@ -82,3 +82,16 @@ footer{border-top-color:var(--line-strong)}
 .brand-mark{background:var(--panel-strong) url("/assets/minijam.svg") center/contain no-repeat;color:transparent;transform:none;box-shadow:none;border-radius:0}
 .wallet-button:has(.wallet-dot[hidden]) .chevron-icon{display:none}
 .smoke-page{min-height:calc(100vh - 72px);padding:52px 24px}.smoke-card{max-width:720px;margin:0 auto;padding:28px;border:1px solid var(--line-strong);border-radius:18px;background:var(--panel);box-shadow:var(--shadow)}.smoke-card h1{margin:8px 0 10px;font-family:var(--font-display);font-size:clamp(30px,5vw,52px);letter-spacing:-.04em}.smoke-card>p:not(.section-index){color:var(--muted);line-height:1.6}.smoke-card code{font-family:var(--font-mono);font-size:.9em}.smoke-card dl{display:grid;grid-template-columns:150px 1fr;gap:10px 18px;margin:28px 0;font:13px var(--font-mono)}.smoke-card dt{color:var(--subtle)}.smoke-card dd{margin:0;overflow-wrap:anywhere}.smoke-actions{display:flex;flex-wrap:wrap;gap:10px}.smoke-status{margin:18px 0 10px;font:600 13px var(--font-mono)}.smoke-card pre{max-height:420px;overflow:auto;margin:0;padding:16px;border-radius:12px;background:var(--ink);color:#d9e2e7;font:11px/1.6 var(--font-mono);white-space:pre-wrap}@media (max-width:600px){.smoke-page{padding:28px 16px}.smoke-card{padding:22px}.smoke-card dl{grid-template-columns:1fr;gap:4px;margin:20px 0}.smoke-card dt{margin-top:8px}}
+html.native-mainnet-override body::before {
+  content: "NATIVE NETWORK: POLKADOT MAINNET";
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0.55rem 1rem;
+  background: #f5b700;
+  color: #161616;
+  font: 700 0.78rem/1.2 monospace;
+  letter-spacing: 0.08em;
+  text-align: center;
+}

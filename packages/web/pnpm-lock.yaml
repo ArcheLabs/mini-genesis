@@ -11,9 +11,6 @@ importers:
       '@polkadot-api/descriptors':
         specifier: file:.papi/descriptors
         version: file:.papi/descriptors(polkadot-api@2.2.2(esbuild@0.28.1)(rxjs@7.8.2))
-      '@polkadot-api/signer':
-        specifier: ^0.3.3
-        version: 0.3.3
       '@polkadot-api/substrate-bindings':
         specifier: ^0.20.3
         version: 0.20.3

@@ -5,6 +5,7 @@ import { NATIVE_TO_EVM_RATIO, parseDotAmount, validateContributionAmount, type P
 import { checkAccountMapping, mapAccount } from "../../wallet/substrate/mapping";
 import { accountId32FromSs58, resolveContractAddress } from "../../wallet/substrate/account";
 import { readNativeBalance } from "../../wallet/substrate/balance";
+import { NativeTransactionError, submitNativeReviveCall } from "../../wallet/substrate/injected-transaction";
 import type { GenesisExecutionAdapter, ContributionContext, ContributionResult } from "./types";
 
 type Weight = { ref_time: bigint; proof_size: bigint };
@@ -41,7 +42,9 @@ type NativeDiagnostic = {
   walletPopupReached: boolean;
   txStatus: string | null;
   dispatchError: unknown;
-  signerPath: "papi-raw" | null;
+  signerPath: "injected-signPayload" | null;
+  network: "paseo" | "polkadot-mainnet" | null;
+  reviveCall: unknown;
   error: string | null;
 };
 
@@ -51,24 +54,14 @@ function errorDescription(error: unknown): string {
   try { return JSON.stringify(error ?? ""); } catch { return String(error); }
 }
 
-function diagnosticError(error: unknown): { description: string; raw: unknown } {
-  return { description: errorDescription(error), raw: error };
-}
-
-function isWalletSigningRejection(error: unknown): boolean {
-  const code = typeof error === "object" && error !== null && "code" in error ? Number((error as { code?: unknown }).code) : Number.NaN;
-  if (code === 4001) return true;
-  return /user.*(reject|cancel|den)|reject.*user|declin|cancelled by user|denied by user/i.test(errorDescription(error));
-}
-
 function createNativeDiagnostic(account: string): NativeDiagnostic {
   let accountId32: string | null = null;
   try { accountId32 = bytesToHex(accountId32FromSs58(account)); } catch { /* Keep the diagnostic usable for malformed accounts. */ }
-  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, chainGenesisHash: null, injectorMetadataKnown: null, injectorMetadataProvided: null, injectorMetadataError: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, submissionError: null, signerPath: null, error: null };
+  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, chainGenesisHash: null, injectorMetadataKnown: null, injectorMetadataProvided: null, injectorMetadataError: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, submissionError: null, signerPath: null, network: null, reviveCall: null, error: null };
 }
 
 function emitNativeDiagnostic(manifest: DeploymentManifest, diagnostic: NativeDiagnostic): void {
-  if (manifest.environment === "staging") console.error("[MINI Genesis][Native diagnostic]", diagnostic);
+  if (manifest.environment === "staging" || import.meta.env.VITE_DEPLOYMENT_ENV === "staging") console.error("[MINI Genesis][Native diagnostic]", diagnostic);
 }
 
 function recordNativeBalance(diagnostic: NativeDiagnostic, balance: Awaited<ReturnType<typeof readNativeBalance>>): void {
@@ -281,38 +274,38 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
         }
         if (balance.spendable < amount.planck + fee + limits.storageDepositLimit) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
         onUpdate({ state: "awaiting_signature" });
-        diagnostic.signerPath = "papi-raw";
+        diagnostic.signerPath = "injected-signPayload";
         diagnostic.signingStarted = true;
         diagnostic.walletPopupReached = true;
         let finalized;
         try {
-          finalized = await tx.signAndSubmit(signer);
+          finalized = await submitNativeReviveCall({
+            manifest,
+            address: account,
+            contractAddress,
+            value: amount.planck,
+            weightLimit: { refTime: limits.weightLimit.ref_time, proofSize: limits.weightLimit.proof_size },
+            storageDepositLimit: limits.storageDepositLimit,
+            data,
+            signal,
+            onStatus: (status) => {
+              if (status === "broadcast") onUpdate({ state: "submitted" });
+              if (status === "inBlock") onUpdate({ state: "included" });
+              if (status === "finalized") onUpdate({ state: "finalized" });
+            },
+            onDiagnostic: (patch) => Object.assign(diagnostic, patch),
+          });
         } catch (error) {
-          const legacyPath = /PJS does not support this signed-extension/i.test(errorDescription(error));
-          const signerUnavailable = /NATIVE_RAW_SIGNER_UNAVAILABLE|web3FromAddress/i.test(errorDescription(error));
-          if (import.meta.env.DEV && legacyPath) console.error("[MINI Genesis] LEGACY_PJS_SIGNER_PATH_USED", error);
-          if (signerUnavailable) {
-            diagnostic.signingError = diagnosticError(error);
-            throw new Error("NATIVE_SIGNER_UNAVAILABLE");
-          }
-          if (isWalletSigningRejection(error) || legacyPath) {
-            diagnostic.signingError = diagnosticError(error);
-            throw new Error("NATIVE_SIGNING_FAILED");
-          }
-          diagnostic.submissionError = diagnosticError(error);
-          throw new Error("NATIVE_SUBMISSION_FAILED");
+          if (error instanceof NativeTransactionError) throw new Error(error.code);
+          throw error;
         }
         checkCancelled(signal);
-        if (finalized.ok === false) {
-          diagnostic.dispatchError = finalized;
-          throw new Error("NATIVE_SUBMISSION_FAILED");
-        }
         diagnostic.txStatus = "finalized";
-        onUpdate({ state: "finalized", hash: finalized.txHash as `0x${string}` });
+        onUpdate({ state: "finalized", hash: finalized.txHash });
         onUpdate({ state: "verifying_event" });
-        validateNativeEvents(finalized.events, contractAddress, contributorH160, amount, finalized.block?.index);
-        onUpdate({ state: "success", hash: finalized.txHash as `0x${string}` });
-        return { execution: "substrate", blockNumber: BigInt(finalized.block.number), amount, contributorH160, substrateTransactionHash: finalized.txHash as `0x${string}` };
+        validatePolkadotJsNativeEvents(finalized.events, contractAddress, contributorH160, amount);
+        onUpdate({ state: "success", hash: finalized.txHash });
+        return { execution: "substrate", blockNumber: finalized.blockNumber, amount, contributorH160, substrateTransactionHash: finalized.txHash };
       } catch (error) {
         const code = error instanceof Error ? error.message : "REVIVE_DRY_RUN_FAILED";
         diagnostic.error = code;

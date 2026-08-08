@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createPublicClient, formatUnits, type Address, type PublicClient } from "viem";
 import { genesisChain, publicTransport } from "./src/config/chain";
 import { getManifest, selectedEnvironment, type DeploymentManifest } from "./src/config/manifest";
+import { nativeNetworkOverride, resolveNativeManifest } from "./src/config/native-network";
 import { walletClient } from "./src/wallet/wallet-client";
 import { GenesisWalletProvider } from "./src/wallet/AppKitProvider";
 import { useGenesisWallet } from "./src/wallet/use-genesis-wallet";
@@ -34,6 +35,9 @@ type UiContributionState = ContributionState | "demo_processing";
 const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
 const SHOW_GENESIS_STATS = false;
 const NATIVE_SMOKE_ENABLED = import.meta.env.MODE === "development" || import.meta.env.VITE_DEPLOYMENT_ENV === "staging";
+const NATIVE_MAINNET_UI = import.meta.env.VITE_NATIVE_NETWORK_OVERRIDE === "polkadot-mainnet"
+  && import.meta.env.VITE_DEPLOYMENT_ENV !== "production"
+  && (import.meta.env.MODE === "development" || import.meta.env.VITE_DEPLOYMENT_ENV === "staging");
 
 const copy = {
   "zh-CN": {
@@ -83,12 +87,14 @@ function stateLabel(state: UiContributionState, text: { states: Record<string, s
 function App() {
   const [language, setLanguage] = useState<Language>(() => (localStorage.getItem("mini-genesis-language") as Language) || "en");
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("mini-genesis-theme") as Theme) || "light");
-  const text = { ...copy[language], ...ruleCopy[language] };
+  const text = { ...copy[language], ...ruleCopy[language], ...(NATIVE_MAINNET_UI ? { join: "Join Pool · Mainnet" } : {}) };
   const feedback = useFeedback();
   const [route, setRoute] = useState<AppRoute>(() => routeFromHash());
   const [manifest] = useState<DeploymentManifest | null>(() => getManifest(selectedEnvironment(import.meta.env.MODE, import.meta.env.VITE_DEPLOYMENT_ENV)));
+  const nativeManifest = useMemo(() => manifest ? resolveNativeManifest(manifest, import.meta.env.MODE) : null, [manifest]);
+  const nativeMainnetOverride = Boolean(manifest && nativeNetworkOverride(manifest.environment, import.meta.env.MODE) === "polkadot-mainnet");
   const publicClient = useMemo<PublicClient | null>(() => demoMode || !manifest || manifest.status !== "deployed" ? null : createPublicClient({ chain: genesisChain(manifest), transport: publicTransport(manifest) }), [manifest]);
-  const { session, walletReady, connectEvm, connectPolkadot, availablePolkadotWallets, openAccount, selectPolkadotAccount, switchToGenesisChain, disconnect, refreshNativeBalance, isConnected, status } = useGenesisWallet(manifest, publicClient);
+  const { session, walletReady, connectEvm, connectPolkadot, availablePolkadotWallets, openAccount, selectPolkadotAccount, switchToGenesisChain, disconnect, refreshNativeBalance, isConnected, status } = useGenesisWallet(manifest, publicClient, nativeManifest);
   const paymentReady = walletReady;
   const account = session?.kind === "evm" ? session.address : null;
   const provider = session?.kind === "evm" ? session.provider : null;
@@ -96,7 +102,7 @@ function App() {
   const chainId = session?.kind === "evm" ? session.chainId : null;
   const selectedContractAddress = session?.kind === "evm" ? session.address : session?.kind === "polkadot" ? session.contractIdentity : null;
   const selectedAccountAddress = session?.kind === "polkadot" ? session.selectedAccountAddress : account;
-  const nativeSymbol = manifest?.source.currencySymbol ?? DOT_SYMBOL;
+  const nativeSymbol = (session?.kind === "polkadot" ? nativeManifest : manifest)?.source.currencySymbol ?? DOT_SYMBOL;
   const [staticState, setStaticState] = useState<GenesisStatic | null>(demoMode ? demoStatic : null);
   const [dynamicState, setDynamicState] = useState<GenesisDynamic | null>(demoMode ? demoDynamic : null);
   const [user, setUser] = useState<GenesisUser | null>(demoMode ? demoUser : null);
@@ -123,6 +129,7 @@ function App() {
   const context = useCallback((operation: FeedbackContext["operation"], params?: FeedbackContext["params"]): FeedbackContext => ({ operation, locale: language, params }), [language]);
 
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem("mini-genesis-theme", theme); }, [theme]);
+  useEffect(() => { document.documentElement.classList.toggle("native-mainnet-override", nativeMainnetOverride); }, [nativeMainnetOverride]);
   useEffect(() => { localStorage.setItem("mini-genesis-language", language); }, [language]);
   useEffect(() => { dynamicStateRef.current = dynamicState; }, [dynamicState]);
   useEffect(() => { if (!demoMode && previousWalletStatus.current === "connecting" && status === "disconnected") feedback.presentCode("WALLET_CONNECTION_REJECTED", context("connect-wallet")); previousWalletStatus.current = status; }, [context, feedback.presentCode, status]);
@@ -132,7 +139,7 @@ function App() {
   const navigate = useCallback((nextRoute: AppRoute) => { setWalletMenu(false); const nextHash = hashForRoute(nextRoute); if (window.location.hash !== nextHash) window.location.hash = nextHash; else { setRoute(nextRoute); window.requestAnimationFrame(() => scrollToRoute(nextRoute)); } }, []);
 
   const calculateMax = useCallback(async (targetAccount: Address, nextDynamic: GenesisDynamic): Promise<bigint | null> => { const requestedKey = sessionKey; if (demoMode || session?.kind !== "evm" || !publicClient || !manifest || !staticState || !requestedKey) return null; const value = await safeMaxAmount(publicClient, { account: targetAccount, contract: manifest.source.contract, phase: nextDynamic.phase, firstContributionMinimum: staticState.firstContributionMinimum, subsequentContributionMinimumExclusive: staticState.subsequentContributionMinimumExclusive }); if (sessionKeyRef.current !== requestedKey) return null; setMaxAmount(value); return value; }, [demoMode, manifest, publicClient, session, sessionKey, staticState]);
-  const calculateNativeMax = useCallback(async (nextDynamic: GenesisDynamic): Promise<bigint | null> => { const requestedKey = sessionKey; if (demoMode || session?.kind !== "polkadot" || !session.api || !manifest || !staticState || !requestedKey) { setNativeMaxAmount(null); return null; } const value = await estimateNativeMax(session.api, session.selectedAccountAddress, manifest, nextDynamic.phase, staticState.firstContributionMinimum, staticState.subsequentContributionMinimumExclusive); if (sessionKeyRef.current !== requestedKey) return null; setNativeMaxAmount(value); return value; }, [demoMode, manifest, session, sessionKey, staticState]);
+  const calculateNativeMax = useCallback(async (nextDynamic: GenesisDynamic): Promise<bigint | null> => { const requestedKey = sessionKey; if (demoMode || session?.kind !== "polkadot" || !session.api || !nativeManifest || !staticState || !requestedKey) { setNativeMaxAmount(null); return null; } const value = await estimateNativeMax(session.api, session.selectedAccountAddress, nativeManifest, nextDynamic.phase, staticState.firstContributionMinimum, staticState.subsequentContributionMinimumExclusive); if (sessionKeyRef.current !== requestedKey) return null; setNativeMaxAmount(value); return value; }, [demoMode, nativeManifest, session, sessionKey, staticState]);
   const presentGlobalError = useCallback((error: unknown) => { const message = error instanceof Error ? error.message : String(error); if ((typeof navigator !== "undefined" && !navigator.onLine) || /http request failed|failed to fetch|fetch|timeout|rpc|network|gateway|connection/i.test(message)) feedback.presentCode("RPC_UNAVAILABLE", context("load-global")); else feedback.presentError(error, context("load-global")); }, [context, feedback.presentCode, feedback.presentError]);
   const refreshDynamic = useCallback(async () => {
     if (demoMode || !publicClient || !manifest || dynamicRunning.current) return { status: "error" } as const;
@@ -246,11 +253,13 @@ function App() {
     if (!amount || !manifest || !dynamicState || !staticState || !publicClient || !sessionKey) return;
     const minimum = dynamicState.phase === 0 ? staticState.firstContributionMinimum : staticState.subsequentContributionMinimumExclusive;
     try {
-      const contextValue = { manifest, phase: dynamicState.phase, firstMinimum: staticState.firstContributionMinimum, subsequentExclusive: staticState.subsequentContributionMinimumExclusive, contractAddress: manifest.source.contract };
+      const executionManifest = session.kind === "polkadot" ? nativeManifest : manifest;
+      if (!executionManifest) throw new Error("CONFIGURATION_MISMATCH");
+      const contextValue = { manifest: executionManifest, phase: dynamicState.phase, firstMinimum: staticState.firstContributionMinimum, subsequentExclusive: staticState.subsequentContributionMinimumExclusive, contractAddress: executionManifest.source.contract };
       const adapter = session.kind === "evm"
         ? createEvmExecutionAdapter(publicClient, walletClient(session.provider, manifest), manifest, session.address)
         : session.api && session.contractIdentity
-          ? createSubstrateExecutionAdapter(session.api, session.accounts.find((accountItem) => accountItem.address === session.selectedAccountAddress)!.signer, session.selectedAccountAddress, manifest, session.contractIdentity)
+          ? createSubstrateExecutionAdapter(session.api, session.accounts.find((accountItem) => accountItem.address === session.selectedAccountAddress)!.signer, session.selectedAccountAddress, executionManifest, session.contractIdentity)
           : null;
       if (!adapter) throw new Error(session.kind === "polkadot" ? "SUBSTRATE_RPC_UNAVAILABLE" : "EVM_SIGNER_UNAVAILABLE");
       if (session.kind === "evm" && !session.correctChain) await switchToGenesisChain();

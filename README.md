@@ -79,6 +79,14 @@ Build the local frontend:
 VITE_DEPLOYMENT_ENV=local pnpm --dir packages/web build
 ```
 
+For an explicit staging/development-only Native verification against Polkadot Hub Mainnet:
+
+```bash
+VITE_DEPLOYMENT_ENV=staging VITE_NATIVE_NETWORK_OVERRIDE=polkadot-mainnet pnpm --dir packages/web dev
+```
+
+This override changes only the SS58 Native query and transaction path. Production ignores it.
+
 The generated site is written to:
 
 ```text

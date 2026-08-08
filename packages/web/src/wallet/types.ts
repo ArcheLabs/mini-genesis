@@ -1,8 +1,7 @@
 import type { Address } from "viem";
-import type { PolkadotSigner } from "@polkadot-api/signer";
+import type { PolkadotSigner } from "polkadot-api";
 import type { Eip1193Provider } from "./eip1193";
 
-/** Kept for the lazy compatibility fallback in the native execution adapter. */
 export type MappingState = "checking" | "unmapped" | "mapping" | "mapped" | "conflict" | "failed";
 
 export type PolkadotAccount = {

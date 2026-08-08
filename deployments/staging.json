@@ -14,6 +14,7 @@
     "substrateWsUrls": [
       "wss://asset-hub-paseo-rpc.n.dwellir.com"
     ],
+    "substrateGenesisHash": "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2",
     "ss58Prefix": 0,
     "explorerUrl": "https://blockscout-testnet.polkadot.io/",
     "contract": "0x95670bc033a87e7e87f4cb7dd556a075de09fb10",

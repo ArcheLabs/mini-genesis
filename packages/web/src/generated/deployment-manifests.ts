@@ -17,6 +17,7 @@ export const deploymentManifests = {
       "substrateWsUrls": [
         "wss://asset-hub-paseo-rpc.n.dwellir.com"
       ],
+      "substrateGenesisHash": "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2",
       "ss58Prefix": 0,
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "contract": "0x0000000000000000000000000000000000000000",
@@ -60,6 +61,7 @@ export const deploymentManifests = {
       "substrateWsUrls": [
         "wss://asset-hub-paseo-rpc.n.dwellir.com"
       ],
+      "substrateGenesisHash": "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2",
       "ss58Prefix": 0,
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "contract": "0x95670bc033a87e7e87f4cb7dd556a075de09fb10",
@@ -108,6 +110,7 @@ export const deploymentManifests = {
       "substrateWsUrls": [
         "wss://polkadot-asset-hub-rpc.polkadot.io"
       ],
+      "substrateGenesisHash": "0x68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f",
       "ss58Prefix": 0,
       "explorerUrl": "https://blockscout.polkadot.io/",
       "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",

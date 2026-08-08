@@ -20,6 +20,8 @@ export type NativeSignerDiagnosticPatch = {
   txBuildError?: string;
   signingError?: unknown;
   submissionError?: unknown;
+  reviveCall?: { dest: string; value: string; weightLimit: { refTime: string; proofSize: string }; storageDepositLimit: string; data: string };
+  network?: "paseo" | "polkadot-mainnet";
 };
 export type NativeSubmissionResult = {
   txHash: `0x${string}`;
@@ -43,7 +45,7 @@ export type SubmitNativeReviveParams = {
 };
 
 export class NativeTransactionError extends Error {
-  constructor(public readonly code: "NATIVE_SIGNER_UNAVAILABLE" | "NATIVE_SIGNING_FAILED" | "NATIVE_SUBMISSION_FAILED", public readonly detail: string, public readonly rawError?: unknown) {
+  constructor(public readonly code: "NATIVE_SIGNER_UNAVAILABLE" | "NATIVE_SIGNING_REJECTED" | "NATIVE_SUBMISSION_FAILED" | "NATIVE_NETWORK_MISMATCH" | "NATIVE_RUNTIME_INCOMPATIBLE", public readonly detail: string, public readonly rawError?: unknown) {
     super(code);
     this.name = "NativeTransactionError";
     this.cause = detail;
@@ -70,6 +72,12 @@ function isWalletSigningRejection(error: unknown): boolean {
 
 function isWalletMetadataError(error: unknown): boolean {
   return /unable to find metadata for chain|chain metadata.*not found|unknown chain metadata/i.test(errorDescription(error));
+}
+
+function isRuntimeIncompatibility(error: unknown, signedExtensions: string[]): boolean {
+  const description = errorDescription(error);
+  return /unknown signed extension|unsupported extension|custom transaction extension/i.test(description)
+    || (signedExtensions.includes("AuthorizeValueTransfer") && /BadProof|bad proof/i.test(description));
 }
 
 async function ensureInjectedMetadata(api: ApiPromise, injector: any, manifest: DeploymentManifest, onDiagnostic: (patch: NativeSignerDiagnosticPatch) => void): Promise<void> {
@@ -117,8 +125,13 @@ export async function submitNativeReviveCall(params: SubmitNativeReviveParams): 
   let api: ApiPromise;
   try {
     api = await getPolkadotJsApi(manifest);
-    onDiagnostic({ polkadotJsRuntimeVersion: { specVersion: api.runtimeVersion.specVersion.toString(), transactionVersion: api.runtimeVersion.transactionVersion.toString() }, signedExtensions: [...api.registry.signedExtensions] });
+    const genesisHash = api.genesisHash.toHex();
+    onDiagnostic({ chainGenesisHash: genesisHash, network: manifest.source.chainId === "420420419" ? "polkadot-mainnet" : "paseo", polkadotJsRuntimeVersion: { specVersion: api.runtimeVersion.specVersion.toString(), transactionVersion: api.runtimeVersion.transactionVersion.toString() }, signedExtensions: [...api.registry.signedExtensions] });
+    if (genesisHash.toLowerCase() !== manifest.source.substrateGenesisHash.toLowerCase()) {
+      throw new NativeTransactionError("NATIVE_NETWORK_MISMATCH", `Expected ${manifest.source.substrateGenesisHash}, received ${genesisHash}`);
+    }
   } catch (error) {
+    if (error instanceof NativeTransactionError) throw error;
     throw new NativeTransactionError("NATIVE_SIGNER_UNAVAILABLE", errorDescription(error), error);
   }
 
@@ -135,13 +148,21 @@ export async function submitNativeReviveCall(params: SubmitNativeReviveParams): 
   }
 
   let tx: any;
+  const reviveCall = {
+    dest: contractAddress,
+    value: value.toString(),
+    weightLimit: { refTime: weightLimit.refTime.toString(), proofSize: weightLimit.proofSize.toString() },
+    storageDepositLimit: storageDepositLimit.toString(),
+    data,
+  };
+  onDiagnostic({ reviveCall });
   try {
     tx = api.tx.revive.call(
-      contractAddress,
-      value.toString(),
-      { refTime: weightLimit.refTime.toString(), proofSize: weightLimit.proofSize.toString() },
-      storageDepositLimit.toString(),
-      data,
+      reviveCall.dest,
+      reviveCall.value,
+      reviveCall.weightLimit,
+      reviveCall.storageDepositLimit,
+      reviveCall.data,
     );
   } catch (error) {
     onDiagnostic({ txBuildError: errorDescription(error) });
@@ -190,7 +211,7 @@ export async function submitNativeReviveCall(params: SubmitNativeReviveParams): 
       } catch (error) {
         const description = errorDescription(error);
         onDiagnostic({ signingError: errorDiagnostic(error) });
-        finishError(new NativeTransactionError("NATIVE_SIGNING_FAILED", description, error));
+        finishError(new NativeTransactionError(isWalletSigningRejection(error) ? "NATIVE_SIGNING_REJECTED" : "NATIVE_SUBMISSION_FAILED", description, error));
         return;
       }
       void sendResult.then((stop: (() => void) | undefined) => { unsubscribe = stop; if (settled) stop?.(); }).catch((error: unknown) => {
@@ -202,15 +223,16 @@ export async function submitNativeReviveCall(params: SubmitNativeReviveParams): 
         }
         if (isWalletSigningRejection(error)) {
           onDiagnostic({ signingError: errorDiagnostic(error) });
-          finishError(new NativeTransactionError("NATIVE_SIGNING_FAILED", description, error));
+          finishError(new NativeTransactionError("NATIVE_SIGNING_REJECTED", description, error));
           return;
         }
         onDiagnostic({ submissionError: errorDiagnostic(error) });
-        finishError(new NativeTransactionError("NATIVE_SUBMISSION_FAILED", description, error));
+        const code = isRuntimeIncompatibility(error, [...api.registry.signedExtensions]) ? "NATIVE_RUNTIME_INCOMPATIBLE" : "NATIVE_SUBMISSION_FAILED";
+        finishError(new NativeTransactionError(code, description, error));
       });
     });
   } catch (error) {
     if (error instanceof NativeTransactionError) throw error;
-    throw new NativeTransactionError("NATIVE_SIGNING_FAILED", errorDescription(error), error);
+    throw new NativeTransactionError(isWalletSigningRejection(error) ? "NATIVE_SIGNING_REJECTED" : "NATIVE_SUBMISSION_FAILED", errorDescription(error), error);
   }
 }

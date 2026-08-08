@@ -6,7 +6,7 @@ const clients = new Map<string, Promise<ApiPromise>>();
 export function getPolkadotJsApi(manifest: DeploymentManifest): Promise<ApiPromise> {
   const endpoints = manifest.source.substrateWsUrls.filter(Boolean);
   if (!endpoints.length) return Promise.reject(new Error("SUBSTRATE_RPC_UNAVAILABLE"));
-  const key = `${manifest.source.chainId}:${endpoints.join(",")}`;
+  const key = `${manifest.source.substrateGenesisHash}:${endpoints.join(",")}`;
   const existing = clients.get(key);
   if (existing) return existing;
   const promise = ApiPromise.create({ provider: new WsProvider(endpoints) }).catch((error) => {

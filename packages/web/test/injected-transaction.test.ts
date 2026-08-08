@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { submitNativeReviveCall } from "../src/wallet/substrate/injected-transaction";
 import { manifest, SOURCE_CONTRACT } from "./helpers";
 
@@ -36,6 +36,7 @@ const finalized = {
 };
 
 describe("injected Native transaction", () => {
+  beforeEach(() => vi.clearAllMocks());
   it("builds revive.call with native units and signs with the selected SS58 account", async () => {
     const { api, tx } = nativeJsApi(finalized);
     const signer = { signPayload: vi.fn() };
@@ -87,7 +88,7 @@ describe("injected Native transaction", () => {
     expect(diagnostics.signingError).toBeUndefined();
   });
 
-  it("keeps an explicit wallet rejection as NATIVE_SIGNING_FAILED", async () => {
+  it("keeps an explicit wallet rejection as NATIVE_SIGNING_REJECTED", async () => {
     const { api, tx } = nativeJsApi(finalized);
     const walletError = Object.assign(new Error("User rejected the request"), { code: 4001 });
     tx.signAndSend.mockImplementationOnce(() => Promise.reject(walletError));
@@ -100,7 +101,7 @@ describe("injected Native transaction", () => {
       manifest: manifest(), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
       weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
       onDiagnostic: (patch) => Object.assign(diagnostics, patch),
-    })).rejects.toThrow("NATIVE_SIGNING_FAILED");
+    })).rejects.toThrow("NATIVE_SIGNING_REJECTED");
 
     expect(diagnostics.signingError).toEqual({ description: walletError.message, raw: walletError });
     expect(diagnostics.submissionError).toBeUndefined();
@@ -109,10 +110,10 @@ describe("injected Native transaction", () => {
   it("refreshes current runtime metadata even when the injected wallet reports the chain as known", async () => {
     const { api, tx } = nativeJsApi(finalized);
     Object.assign(api, {
-      genesisHash: { toHex: () => `0x${"66".repeat(32)}` },
+      genesisHash: { toHex: () => `0x${"11".repeat(32)}` },
       runtimeMetadata: { toHex: () => "0x1234" },
     });
-    const metadata = { get: vi.fn().mockResolvedValue([{ genesisHash: `0x${"66".repeat(32)}`, specVersion: 77 }]), provide: vi.fn().mockResolvedValue(true) };
+    const metadata = { get: vi.fn().mockResolvedValue([{ genesisHash: `0x${"11".repeat(32)}`, specVersion: 77 }]), provide: vi.fn().mockResolvedValue(true) };
     mocks.getApi.mockResolvedValueOnce(api);
     mocks.web3Enable.mockResolvedValueOnce([{}]);
     mocks.web3FromAddress.mockResolvedValueOnce({ name: "talisman", version: "3.8.0", signer: {}, metadata });
@@ -126,7 +127,7 @@ describe("injected Native transaction", () => {
 
     expect(metadata.provide).toHaveBeenCalledWith(expect.objectContaining({
       chain: manifest().source.name,
-      genesisHash: `0x${"66".repeat(32)}`,
+      genesisHash: `0x${"11".repeat(32)}`,
       specVersion: 77,
       tokenDecimals: 10,
       tokenSymbol: "DOT",
@@ -135,5 +136,32 @@ describe("injected Native transaction", () => {
     expect(diagnostics.injectorMetadataKnown).toBe(true);
     expect(diagnostics.injectorMetadataProvided).toBe(true);
     expect(tx.signAndSend).toHaveBeenCalled();
+  });
+
+  it("rejects a genesis mismatch before requesting the wallet", async () => {
+    const { api } = nativeJsApi(finalized);
+    api.genesisHash = { toHex: () => `0x${"99".repeat(32)}` };
+    mocks.getApi.mockResolvedValueOnce(api);
+
+    await expect(submitNativeReviveCall({
+      manifest: manifest(), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
+      weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
+    })).rejects.toThrow("NATIVE_NETWORK_MISMATCH");
+
+    expect(mocks.web3Enable).not.toHaveBeenCalled();
+  });
+
+  it("classifies Paseo AuthorizeValueTransfer BadProof as runtime incompatible", async () => {
+    const { api, tx } = nativeJsApi(finalized);
+    api.registry.signedExtensions = ["AuthorizeValueTransfer", "CheckNonce"];
+    tx.signAndSend.mockImplementationOnce(() => Promise.reject(new Error('{"type":"Invalid","value":{"type":"BadProof"}}')));
+    mocks.getApi.mockResolvedValueOnce(api);
+    mocks.web3Enable.mockResolvedValueOnce([{}]);
+    mocks.web3FromAddress.mockResolvedValueOnce({ signer: { signPayload: vi.fn() } });
+
+    await expect(submitNativeReviveCall({
+      manifest: manifest(), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
+      weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
+    })).rejects.toThrow("NATIVE_RUNTIME_INCOMPATIBLE");
   });
 });

@@ -15,6 +15,7 @@
     "substrateWsUrls": [
       "wss://polkadot-asset-hub-rpc.polkadot.io"
     ],
+    "substrateGenesisHash": "0x68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f",
     "ss58Prefix": 0,
     "explorerUrl": "https://blockscout.polkadot.io/",
     "contract": "0xa6618752b2ef1bcef5b9372d5427ffeb58ab830a",
