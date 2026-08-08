@@ -17,9 +17,9 @@
     "substrateGenesisHash": "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2",
     "ss58Prefix": 0,
     "explorerUrl": "https://blockscout-testnet.polkadot.io/",
-    "contract": "0x95670bc033a87e7e87f4cb7dd556a075de09fb10",
+    "contract": "0xcd2cdc847bd096f05b63ed4ea1dbc3fc3ad065fc",
     "runtimeCodeHash": "0xa82a6fe441862fb5ea02cc0f5cb2fb5b39f0cf9623077e1617821cd297e3f586",
-    "deploymentBlock": "11835928",
+    "deploymentBlock": "11973384",
     "contractConfig": {
       "treasury": "0x2A8E2fFc8d10e04a477623252026F4378d210b3A",
       "genesisAllocation": "10000000000000000000000000",
