@@ -26,4 +26,5 @@
 .native-assets-grid .mini-asset{grid-column:1 / -1}
 .unavailable-asset .asset-value{font-size:0}
 .unavailable-asset .asset-value::after{content:"????.??";font:700 34px var(--font-mono);letter-spacing:-.05em;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;background-clip:text;color:transparent}
+.wallet-menu .danger .icon{color:var(--protocol)}
 @media(max-width:640px){.footer-links{order:3;gap:14px}}

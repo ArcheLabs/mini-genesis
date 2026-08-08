@@ -16,6 +16,9 @@ describe("mobile responsive layout", () => {
 
   it("adds an overflow-safe wallet label for narrow headers", () => {
     expect(appSource).toContain('<span className="wallet-label">{walletLabel}</span>');
+    expect(appSource).toContain("selectedPolkadotAccount?.name || shortHash(session.selectedAccountAddress)");
+    expect(appSource).toContain("copySelectedPolkadotAddress");
+    expect(appSource).toContain("{icons.switchAccount}{text.switchAccount}");
     expect(styleCss).toContain(".wallet-label");
     expect(styleCss).toMatch(/text-overflow\s*:\s*ellipsis/);
   });

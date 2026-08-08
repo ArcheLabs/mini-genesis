@@ -23,6 +23,10 @@ describe("native wallet session persistence", () => {
     expect(samePolkadotAccounts([account("A")], [account("A")])).toBe(true);
     expect(samePolkadotAccounts([account("A")], [account("B")])).toBe(false);
   });
+
+  it("keeps the Polkadot account name available for the Header", () => {
+    expect(account("A", "Treasury").name).toBe("Treasury");
+  });
 });
 
 describe("native contribution reconciliation", () => {
