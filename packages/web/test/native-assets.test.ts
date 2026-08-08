@@ -15,10 +15,19 @@ describe("wallet-specific My Assets", () => {
 
   it("renders Native contributed state without the Transaction details section", () => {
     const src = readFileSync(resolve(__dirname, "../src.tsx"), "utf8");
-    expect(src).toContain("isNativeAssets && <article className=\"asset-card\"");
+    const styles = readFileSync(resolve(__dirname, "../src/interaction-overrides.css"), "utf8");
+    expect(src).toContain("native-assets-grid");
+    expect(src).toContain("const miniAssetCard");
+    expect(src).toContain("const ecosystemAssetCard");
+    expect(src).toContain("const contributedAssetCard");
     expect(src).toContain("text.contributed");
+    expect(src).toContain("${formatAmount(nativeAssets.contributedDot)} ${nativeSymbol}");
+    expect(src).toContain("const miniTradingNote = language === \"zh-CN\" ? \"暂未开放交易\" : \"Trading is not available yet\"");
     expect(src).toContain("!isNativeAssets && <article className=\"history-card\"");
     expect(src).toContain("if (shouldLoadContributionHistory(session?.kind ?? null)) void loadHistory(genesisIdentity, sessionKey);");
     expect(src).not.toContain("void loadHistory(committedIdentity, sessionKey);");
+    expect(styles).toContain(".native-assets-grid .mini-asset{grid-column:1 / -1}");
+    expect(styles).toContain(".unavailable-asset .asset-value::after{content:\"????.??\"");
+    expect(styles).not.toContain(".my-grid .asset-card:nth-child(2)");
   });
 });
