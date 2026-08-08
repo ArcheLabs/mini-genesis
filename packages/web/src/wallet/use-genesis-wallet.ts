@@ -7,6 +7,7 @@ import type { Eip1193Provider } from "./eip1193";
 import { accountId32FromSs58, resolveContractAddress } from "./substrate/account";
 import { readNativeBalance } from "./substrate/balance";
 import { getSubstrateApi } from "./substrate/client";
+import { createRawInjectedSigner } from "./substrate/raw-injected-signer";
 import { connectInjectedExtension, getInjectedExtensions, type InjectedExtension, type InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
 import type { EvmWalletSession, PolkadotAccount, PolkadotWalletDescriptor, PolkadotWalletSession, WalletSession } from "./types";
 
@@ -32,7 +33,7 @@ export function toPolkadotAccount(account: InjectedPolkadotAccount): PolkadotAcc
   try {
     const accountId32 = accountId32FromSs58(account.address);
     if (accountId32.length !== 32) return null;
-    return { address: account.address, name: account.name, signer: account.polkadotSigner, accountId32 };
+    return { address: account.address, name: account.name, signer: createRawInjectedSigner(account), accountId32 };
   } catch {
     return null;
   }

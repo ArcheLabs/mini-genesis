@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { PolkadotSigner } from "polkadot-api/pjs-signer";
+import type { PolkadotSigner } from "@polkadot-api/signer";
 import type { Eip1193Provider } from "./eip1193";
 
 /** Kept for the lazy compatibility fallback in the native execution adapter. */
