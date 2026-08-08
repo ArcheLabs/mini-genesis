@@ -29,7 +29,7 @@ html[data-theme=dark] .site-header{box-shadow:0 1px 0 var(--line),0 14px 40px -2
 .progress-fill{background:linear-gradient(90deg,var(--accent-strong),var(--accent) 55%,#4fd1ff);box-shadow:0 0 24px color-mix(in srgb,var(--accent) 45%,transparent)}
 .progress-top strong{font-size:19px;background:linear-gradient(135deg,var(--accent-strong),#2bbdf5);-webkit-background-clip:text;background-clip:text;color:transparent}
 .status-row{border-bottom-color:var(--line-strong)}
-.price-number{font-weight:700}
+.price-number{font-weight:700; margin-right:5px}
 .tx-row{transition:background 140ms ease}.tx-row:hover{background:var(--panel-muted)}
 .tx-status{color:var(--success);font-weight:600}
 footer{border-top-color:var(--line-strong)}
