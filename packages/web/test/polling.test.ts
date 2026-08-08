@@ -133,7 +133,7 @@ describe("visible polling", () => {
     expect(src).toContain("controller.retryNow();");
     expect(src).not.toMatch(/setInterval\s*\(\s*\(\)\s*=>\s*void\s*loadUser\s*\(account\)/);
     expect(src).toContain("void loadUser(genesisIdentity, sessionKey);");
-    expect(src).toContain("void loadHistory(genesisIdentity, sessionKey);");
+    expect(src).toContain("if (shouldLoadContributionHistory(session?.kind ?? null)) void loadHistory(genesisIdentity, sessionKey);");
     expect(src).toContain("result.contributorH160");
     expect(src).toContain("reconcileGenesisUserState");
     expect(src).not.toContain("balance-source-wrap");
