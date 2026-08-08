@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { reconcileGenesisUserState } from "../src/genesis/reconcile";
 import { POLKADOT_SESSION_STORAGE_KEY, clearStoredPolkadotSession, readStoredPolkadotSession, samePolkadotAccounts, storePolkadotSession, type StoredPolkadotSession } from "../src/wallet/use-genesis-wallet";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 const stored: StoredPolkadotSession = { version: 1, extensionId: "subwallet-js", accountId32: "0xb0d127ae0cb6572bd7f2eead1cf9176034c80b88ba6a78d927d9a1dbff21b16d" };
 const account = (address: string, name = "Primary") => ({ address, name, accountId32: new Uint8Array(32).fill(address === "A" ? 1 : 2), signer: {} as any });
@@ -26,6 +28,12 @@ describe("native wallet session persistence", () => {
 
   it("keeps the Polkadot account name available for the Header", () => {
     expect(account("A", "Treasury").name).toBe("Treasury");
+  });
+
+  it("highlights the active account without a checkmark", () => {
+    const styles = readFileSync(resolve(process.cwd(), "src/interaction-overrides.css"), "utf8");
+    expect(styles).toContain(".wallet-menu button.selected{color:var(--accent)");
+    expect(styles).toContain(".account-menu-address");
   });
 });
 

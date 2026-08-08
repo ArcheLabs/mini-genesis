@@ -27,4 +27,8 @@
 .unavailable-asset .asset-value{font-size:0}
 .unavailable-asset .asset-value::after{content:"????.??";font:700 34px var(--font-mono);letter-spacing:-.05em;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;background-clip:text;color:transparent}
 .wallet-menu .danger .icon{color:var(--protocol)}
+.wallet-menu button.selected{color:var(--accent);background:var(--accent-soft)}
+.wallet-menu .account-menu-name,.wallet-menu .account-menu-address{display:block}
+.wallet-menu .account-menu-address{margin-top:3px;color:var(--subtle);font-size:11px;font-weight:400;font-family:var(--font-mono)}
+.wallet-menu button.selected .account-menu-address{color:var(--accent)}
 @media(max-width:640px){.footer-links{order:3;gap:14px}}

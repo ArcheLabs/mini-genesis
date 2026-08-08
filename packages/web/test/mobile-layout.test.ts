@@ -19,6 +19,9 @@ describe("mobile responsive layout", () => {
     expect(appSource).toContain("selectedPolkadotAccount?.name || shortHash(session.selectedAccountAddress)");
     expect(appSource).toContain("copySelectedPolkadotAddress");
     expect(appSource).toContain("{icons.switchAccount}{text.switchAccount}");
+    expect(appSource).toContain("{!session && icons.wallet}");
+    expect(appSource).toContain('className="account-menu-name"');
+    expect(appSource).toContain('className="account-menu-address"');
     expect(styleCss).toContain(".wallet-label");
     expect(styleCss).toMatch(/text-overflow\s*:\s*ellipsis/);
   });
