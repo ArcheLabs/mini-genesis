@@ -156,7 +156,11 @@ export async function estimateNativeMax(api: any, account: string, manifest: Dep
     return maxPlanck >= probe.planck ? maxPlanck * NATIVE_TO_EVM_RATIO : 0n;
   } catch (error) {
     diagnostic.error = errorDescription(error);
-    emitNativeDiagnostic(manifest, diagnostic);
+    // Max is probed when an account is selected. An unmapped or empty account
+    // is a normal wallet state at this point, not a failed Join attempt.
+    if (!/ACCOUNT_UNMAPPED|NATIVE_INSUFFICIENT_BALANCE/.test(diagnostic.error)) {
+      emitNativeDiagnostic(manifest, diagnostic);
+    }
     return null;
   }
 }

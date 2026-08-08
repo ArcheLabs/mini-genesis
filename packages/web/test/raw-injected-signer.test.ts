@@ -27,6 +27,6 @@ describe("raw injected signer bridge", () => {
     const rawSign = mocks.getPolkadotSigner.mock.calls[0][2] as (payload: Uint8Array) => Promise<Uint8Array>;
     const payload = new Uint8Array([1, 2, 3]);
     await expect(rawSign(payload)).resolves.toEqual(new Uint8Array(64).fill(9));
-    expect(signRaw).toHaveBeenCalledWith({ address: "selected-account", data: "0x010203", type: "payload" });
+    expect(signRaw).toHaveBeenCalledWith({ address: "selected-account", data: "0x010203", type: "bytes" });
   });
 });

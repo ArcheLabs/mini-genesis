@@ -19,7 +19,10 @@ export function createRawInjectedSigner(account: InjectedPolkadotAccount): Polka
       if (!enabled.length) throw new Error("NATIVE_RAW_SIGNER_UNAVAILABLE");
       const injector = await web3FromAddress(account.address);
       if (!injector.signer.signRaw) throw new Error("NATIVE_RAW_SIGNER_UNAVAILABLE");
-      const result = await injector.signer.signRaw({ address: account.address, data: bytesToHex(payload), type: "payload" });
+      // Injected signRaw is the bytes-signing API. `payload` is reserved for
+      // signPayload-style transaction requests in some wallets and is not part
+      // of the pjs SignRaw contract.
+      const result = await injector.signer.signRaw({ address: account.address, data: bytesToHex(payload), type: "bytes" });
       return hexToBytes(result.signature);
     },
   );
