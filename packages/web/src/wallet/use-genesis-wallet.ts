@@ -14,6 +14,33 @@ const POLKADOT_WALLET_NAMES: Record<string, string> = {
   "subwallet-js": "SubWallet",
   talisman: "Talisman",
 };
+export const POLKADOT_SESSION_STORAGE_KEY = "mini-genesis-polkadot-session-v1";
+export type StoredPolkadotSession = { version: 1; extensionId: string; accountId32: `0x${string}` };
+export type PolkadotRestoreStatus = "idle" | "restoring" | "done";
+export type WalletStatus = "disconnected" | "restoring" | "connecting" | "hydrating" | "ready" | "error";
+
+export function accountId32Hex(account: PolkadotAccount): `0x${string}` { return bytesToHex(account.accountId32).toLowerCase() as `0x${string}`; }
+export function samePolkadotAccounts(current: PolkadotAccount[], next: PolkadotAccount[]): boolean {
+  return current.length === next.length && current.every((account, index) => {
+    const candidate = next[index];
+    return candidate != null && accountId32Hex(account) === accountId32Hex(candidate) && account.address === candidate.address && account.name === candidate.name;
+  });
+}
+export function readStoredPolkadotSession(storage: Storage | null = typeof window === "undefined" ? null : window.localStorage): StoredPolkadotSession | null {
+  try {
+    const raw = storage?.getItem(POLKADOT_SESSION_STORAGE_KEY);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<StoredPolkadotSession>;
+    const accountId32 = value.accountId32;
+    return value.version === 1 && typeof value.extensionId === "string" && typeof accountId32 === "string" && /^0x[0-9a-f]{64}$/i.test(accountId32)
+      ? { version: 1, extensionId: value.extensionId, accountId32: accountId32.toLowerCase() as `0x${string}` }
+      : null;
+  } catch { return null; }
+}
+export function storePolkadotSession(session: StoredPolkadotSession, storage: Storage | null = typeof window === "undefined" ? null : window.localStorage): void {
+  storage?.setItem(POLKADOT_SESSION_STORAGE_KEY, JSON.stringify(session));
+}
+export function clearStoredPolkadotSession(storage: Storage | null = typeof window === "undefined" ? null : window.localStorage): void { storage?.removeItem(POLKADOT_SESSION_STORAGE_KEY); }
 
 export function describePolkadotWallet(extensionId: string): PolkadotWalletDescriptor {
   const known = POLKADOT_WALLET_NAMES[extensionId.toLowerCase()];
@@ -64,10 +91,13 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const [selectedPolkadotAddress, setSelectedPolkadotAddress] = useState<string | null>(null);
   const [substrateApi, setSubstrateApi] = useState<any | null>(null);
   const [nativeBalance, setNativeBalance] = useState<bigint | null>(null);
+  const [nativeBalanceStatus, setNativeBalanceStatus] = useState<PolkadotWalletSession["balanceStatus"]>("idle");
   const [substrateContractAddress, setSubstrateContractAddress] = useState<Address | null>(null);
   const [contractIdentityStatus, setContractIdentityStatus] = useState<PolkadotWalletSession["contractIdentityStatus"]>("loading");
   const [evmBalance, setEvmBalance] = useState<bigint | null>(null);
   const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions().map(describePolkadotWallet));
+  const [restoreStatus, setRestoreStatus] = useState<PolkadotRestoreStatus>(() => readStoredPolkadotSession() ? "restoring" : "idle");
+  const restorationAttempted = useRef(false);
   const selectedAddressRef = useRef<string | null>(selectedPolkadotAddress);
   selectedAddressRef.current = selectedPolkadotAddress;
 
@@ -100,15 +130,17 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       walletName: describePolkadotWallet(substrateExtension.name).displayName,
       accounts: substrateAccounts,
       selectedAccountAddress: selectedPolkadotAccount.address,
+      accountId32: accountId32Hex(selectedPolkadotAccount),
       balance: nativeBalance,
+      balanceStatus: nativeBalanceStatus,
       api: substrateApi,
       contractIdentity: substrateContractAddress,
       contractIdentityStatus,
     };
-  }, [contractIdentityStatus, nativeBalance, selectedPolkadotAccount, substrateAccounts, substrateApi, substrateContractAddress, substrateExtension]);
+  }, [contractIdentityStatus, nativeBalance, nativeBalanceStatus, selectedPolkadotAccount, substrateAccounts, substrateApi, substrateContractAddress, substrateExtension]);
 
   const session: WalletSession = substrateExtension ? polkadotSession : evmSession;
-  const sessionKey = session?.kind === "evm" ? `evm:${session.address}` : session?.kind === "polkadot" ? `polkadot:${session.selectedAccountAddress}` : null;
+  const sessionKey = session?.kind === "evm" ? `evm:${session.address}` : session?.kind === "polkadot" ? `polkadot:${session.accountId32}` : null;
 
   useEffect(() => {
     if (!substrateExtension || !nativeManifest) return;
@@ -123,32 +155,45 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       if (disposed) return;
       if (!next.length) {
         substrateExtension.disconnect();
+        clearStoredPolkadotSession();
         setSubstrateExtension(null);
         setSubstrateAccounts([]);
         setSelectedPolkadotAddress(null);
         setSubstrateApi(null);
+        setNativeBalanceStatus("idle");
         return;
       }
-      setSubstrateAccounts(next);
+      setSubstrateAccounts((current) => samePolkadotAccounts(current, next) ? current : next);
       setSelectedPolkadotAddress((current) => next.some((account) => account.address === current) ? current : next[0].address);
     };
     const stop = substrateExtension.subscribe(updateAccounts);
     return () => { disposed = true; stop(); };
   }, [substrateExtension]);
 
+  const nativeIdentityKey = selectedPolkadotAccount && nativeManifest ? `${nativeManifest.source.substrateGenesisHash}:${accountId32Hex(selectedPolkadotAccount)}` : null;
+  const nativeIdentityRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!selectedPolkadotAccount || !substrateApi) return;
+    if (!selectedPolkadotAccount || !substrateApi || !nativeIdentityKey) return;
     const requestedAddress = selectedPolkadotAccount.address;
     let disposed = false;
-    setNativeBalance(null);
-    setSubstrateContractAddress(null);
-    setContractIdentityStatus("loading");
+    const identityChanged = nativeIdentityRef.current !== nativeIdentityKey;
+    nativeIdentityRef.current = nativeIdentityKey;
+    if (identityChanged) {
+      setNativeBalance(null);
+      setSubstrateContractAddress(null);
+      setNativeBalanceStatus("loading");
+      setContractIdentityStatus("loading");
+    } else {
+      setNativeBalanceStatus((current) => current === "ready" ? "refreshing" : "loading");
+      setContractIdentityStatus((current) => current === "verified" ? current : "loading");
+    }
     void Promise.allSettled([
       readNativeBalance(substrateApi, requestedAddress),
       resolveContractAddress(substrateApi, requestedAddress),
     ]).then(([balance, resolution]) => {
       if (disposed || selectedAddressRef.current !== requestedAddress) return;
-      if (balance.status === "fulfilled") setNativeBalance(balance.value.free);
+      if (balance.status === "fulfilled") { setNativeBalance(balance.value.free); setNativeBalanceStatus("ready"); }
+      else setNativeBalanceStatus((current) => current === "ready" || current === "refreshing" ? "ready" : "error");
       if (resolution.status === "fulfilled") {
         setSubstrateContractAddress(resolution.value.h160);
         setContractIdentityStatus("verified");
@@ -157,7 +202,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       }
     });
     return () => { disposed = true; };
-  }, [selectedPolkadotAccount, substrateApi]);
+  }, [nativeIdentityKey, selectedPolkadotAddress, substrateApi]);
 
   useEffect(() => {
     if (!evmSession || !publicClient) return;
@@ -174,7 +219,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const openAccount = useCallback(() => open({ view: "Account" }), [open]);
   const switchToGenesisChain = useCallback(() => switchNetwork(polkadotHubNetwork), [switchNetwork]);
 
-  const connectPolkadot = useCallback(async (extensionId?: string) => {
+  const connectPolkadot = useCallback(async (extensionId?: string, preferredAccountId32?: `0x${string}`) => {
     if (isConnected) throw new Error("WALLET_DISCONNECT_REQUIRED");
     const name = extensionId ?? getInjectedExtensions()[0];
     if (!name) throw new Error("NO_POLKADOT_WALLET");
@@ -186,21 +231,24 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     }
     setSubstrateExtension(extension);
     setSubstrateAccounts(accounts);
-    setSelectedPolkadotAddress(accounts[0].address);
+    const selected = accounts.find((account) => accountId32Hex(account) === preferredAccountId32?.toLowerCase()) ?? accounts[0];
+    setSelectedPolkadotAddress(selected.address);
     setSubstrateApi(null);
     setNativeBalance(null);
+    setNativeBalanceStatus("loading");
     setSubstrateContractAddress(null);
     setContractIdentityStatus("loading");
-    return accounts[0].address;
+    storePolkadotSession({ version: 1, extensionId: extension.name, accountId32: accountId32Hex(selected) });
+    return selected.address;
   }, [isConnected]);
 
   const selectPolkadotAccount = useCallback((addressToSelect: string) => {
     if (!substrateAccounts.some((account) => account.address === addressToSelect)) return;
+    const selected = substrateAccounts.find((account) => account.address === addressToSelect);
+    if (!selected) return;
     setSelectedPolkadotAddress(addressToSelect);
-    setNativeBalance(null);
-    setSubstrateContractAddress(null);
-    setContractIdentityStatus("loading");
-  }, [substrateAccounts]);
+    storePolkadotSession({ version: 1, extensionId: substrateExtension?.name ?? "", accountId32: accountId32Hex(selected) });
+  }, [substrateAccounts, substrateExtension?.name]);
 
   const disconnectPolkadot = useCallback(() => {
     substrateExtension?.disconnect();
@@ -209,8 +257,11 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     setSelectedPolkadotAddress(null);
     setSubstrateApi(null);
     setNativeBalance(null);
+    setNativeBalanceStatus("idle");
     setSubstrateContractAddress(null);
     setContractIdentityStatus("loading");
+    nativeIdentityRef.current = null;
+    clearStoredPolkadotSession();
   }, [substrateExtension]);
 
   const disconnect = useCallback(() => {
@@ -221,18 +272,34 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const refreshNativeBalance = useCallback(async () => {
     if (!substrateApi || !selectedPolkadotAddress) return;
     const requestedAddress = selectedPolkadotAddress;
+    setNativeBalanceStatus((current) => current === "ready" ? "refreshing" : "loading");
     try {
       const balance = await readNativeBalance(substrateApi, requestedAddress);
-      if (selectedAddressRef.current === requestedAddress) setNativeBalance(balance.free);
-    } catch { /* Keep the connected session and let the UI show an unavailable balance. */ }
+      if (selectedAddressRef.current === requestedAddress) { setNativeBalance(balance.free); setNativeBalanceStatus("ready"); }
+    } catch { if (selectedAddressRef.current === requestedAddress) setNativeBalanceStatus((current) => current === "refreshing" ? "ready" : "error"); }
   }, [selectedPolkadotAddress, substrateApi]);
 
-  const walletReady = Boolean(session && (session.kind === "evm" ? session.provider : session.api && session.contractIdentity && session.contractIdentityStatus === "verified"));
+  useEffect(() => {
+    if (restorationAttempted.current || status === "connecting" || isConnected || substrateExtension) return;
+    restorationAttempted.current = true;
+    const stored = readStoredPolkadotSession();
+    if (!stored) { setRestoreStatus("done"); return; }
+    if (!getInjectedExtensions().includes(stored.extensionId)) { clearStoredPolkadotSession(); setRestoreStatus("done"); return; }
+    setRestoreStatus("restoring");
+    void connectPolkadot(stored.extensionId, stored.accountId32).catch(() => clearStoredPolkadotSession()).finally(() => setRestoreStatus("done"));
+  }, [connectPolkadot, isConnected, status, substrateExtension]);
+
+  const walletReady = Boolean(session && (session.kind === "evm" ? session.provider : session.api && session.contractIdentity && session.contractIdentityStatus === "verified" && (session.balanceStatus === "ready" || session.balanceStatus === "refreshing")));
+  const walletStatus: WalletStatus = restoreStatus === "restoring" ? "restoring" : status === "connecting" ? "connecting" : !session ? "disconnected" : session.kind === "polkadot" && !walletReady ? "hydrating" : walletReady ? "ready" : "error";
   return {
     session,
     sessionKey,
     walletReady,
-    walletConnecting: status === "connecting" || (!session && Boolean(substrateExtension)),
+    walletStatus,
+    walletRestoring: restoreStatus === "restoring",
+    walletHydrating: walletStatus === "hydrating",
+    nativeBalanceStatus,
+    walletConnecting: walletStatus === "connecting" || walletStatus === "restoring" || walletStatus === "hydrating",
     connectEvm,
     connectPolkadot,
     disconnect,

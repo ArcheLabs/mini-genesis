@@ -28,7 +28,9 @@ export type PolkadotWalletSession = {
   walletName: string;
   accounts: PolkadotAccount[];
   selectedAccountAddress: string;
+  accountId32: `0x${string}`;
   balance: bigint | null;
+  balanceStatus: "idle" | "loading" | "ready" | "refreshing" | "error";
   api: any | null;
   contractIdentity: Address | null;
   contractIdentityStatus: "loading" | "verified" | "error";
