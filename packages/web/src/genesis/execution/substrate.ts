@@ -3,7 +3,7 @@ import type { DeploymentManifest } from "../../config/manifest";
 import { genesisAbi } from "../abi";
 import { NATIVE_TO_EVM_RATIO, parseDotAmount, validateContributionAmount, type ParsedDotAmount } from "../amount";
 import { checkAccountMapping, mapAccount } from "../../wallet/substrate/mapping";
-import { resolveContractAddress } from "../../wallet/substrate/account";
+import { accountId32FromSs58, resolveContractAddress } from "../../wallet/substrate/account";
 import { readNativeBalance } from "../../wallet/substrate/balance";
 import type { GenesisExecutionAdapter, ContributionContext, ContributionResult } from "./types";
 
@@ -15,6 +15,43 @@ type Simulation = {
   max_storage_deposit: unknown;
   result: { success?: boolean; value?: unknown; error?: unknown };
 };
+
+type NativeDiagnostic = {
+  account: string;
+  accountId32: string | null;
+  free: bigint | null;
+  frozen: bigint | null;
+  existentialDeposit: bigint | null;
+  spendable: bigint | null;
+  dryRunResult: unknown;
+  dryRunError: string | null;
+  txBuildError: string | null;
+  feeEstimateError: string | null;
+  error: string | null;
+};
+
+function errorDescription(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  try { return JSON.stringify(error ?? ""); } catch { return String(error); }
+}
+
+function createNativeDiagnostic(account: string): NativeDiagnostic {
+  let accountId32: string | null = null;
+  try { accountId32 = bytesToHex(accountId32FromSs58(account)); } catch { /* Keep the diagnostic usable for malformed accounts. */ }
+  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, error: null };
+}
+
+function emitNativeDiagnostic(manifest: DeploymentManifest, diagnostic: NativeDiagnostic): void {
+  if (manifest.environment === "staging") console.error("[MINI Genesis][Native diagnostic]", diagnostic);
+}
+
+function recordNativeBalance(diagnostic: NativeDiagnostic, balance: Awaited<ReturnType<typeof readNativeBalance>>): void {
+  diagnostic.free = balance.free;
+  diagnostic.frozen = balance.frozen;
+  diagnostic.existentialDeposit = balance.existentialDeposit;
+  diagnostic.spendable = balance.spendable;
+}
 
 function checkCancelled(signal?: AbortSignal): void { if (signal?.aborted) throw new Error("OPERATION_CANCELLED"); }
 
@@ -53,15 +90,17 @@ function validateSimulation(simulation: Simulation): void {
   if ((typeof value?.flags === "number" && (value.flags & 1) !== 0) || /revert/i.test(String(value?.type ?? ""))) throw new Error("REVIVE_CONTRACT_REVERTED");
 }
 
-export async function simulateNativeContribution(api: any, account: string, contractAddress: Address, amount: ParsedDotAmount): Promise<{ weightLimit: Weight; storageDepositLimit: bigint; simulation: Simulation }> {
+export async function simulateNativeContribution(api: any, account: string, contractAddress: Address, amount: ParsedDotAmount, diagnostic?: NativeDiagnostic): Promise<{ weightLimit: Weight; storageDepositLimit: bigint; simulation: Simulation }> {
   const data = encodeFunctionData({ abi: genesisAbi, functionName: "contribute" });
   let simulation: Simulation;
   try {
     simulation = await api.apis.ReviveApi.call(account, contractAddress, amount.planck, undefined, undefined, hexToBytes(data));
   } catch (error) {
+    if (diagnostic) diagnostic.dryRunError = errorDescription(error);
     if (isAccountUnmappedError(error)) throw new Error("ACCOUNT_UNMAPPED");
     throw new Error("REVIVE_DRY_RUN_FAILED");
   }
+  if (diagnostic) diagnostic.dryRunResult = simulation.result;
   validateSimulation(simulation);
   const required = simulation.weight_required;
   if (!required || required.ref_time <= 0n || required.proof_size < 0n) throw new Error("REVIVE_WEIGHT_LIMIT");
@@ -73,20 +112,26 @@ function ceilPlanckFromEvmWei(value: bigint): bigint { return (value + NATIVE_TO
 /** Return EVM-denominated input for the UI, or null when a safe native max is unavailable. */
 export async function estimateNativeMax(api: any, account: string, manifest: DeploymentManifest, phase: number, firstMinimum: bigint, subsequentExclusive: bigint): Promise<bigint | null> {
   if (phase >= 2) return 0n;
+  const diagnostic = createNativeDiagnostic(account);
   try {
     const resolution = await resolveContractAddress(api, account);
     const balance = await readNativeBalance(api, account);
+    recordNativeBalance(diagnostic, balance);
     const probeEvmWei = phase === 0 ? firstMinimum : subsequentExclusive + 1n;
     const probe = { planck: ceilPlanckFromEvmWei(probeEvmWei), evmWei: ceilPlanckFromEvmWei(probeEvmWei) * NATIVE_TO_EVM_RATIO };
-    const limits = await simulateNativeContribution(api, account, manifest.source.contract, probe);
+    const limits = await simulateNativeContribution(api, account, manifest.source.contract, probe, diagnostic);
     const data = encodeFunctionData({ abi: genesisAbi, functionName: "contribute" });
-    const tx = api.tx.Revive.call({ dest: manifest.source.contract, value: probe.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) });
-    const fee = BigInt(await tx.getEstimatedFees(account));
+    let tx;
+    try { tx = api.tx.Revive.call({ dest: manifest.source.contract, value: probe.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) }); } catch (error) { diagnostic.txBuildError = errorDescription(error); throw error; }
+    let fee: bigint;
+    try { fee = BigInt(await tx.getEstimatedFees(account)); } catch (error) { diagnostic.feeEstimateError = errorDescription(error); throw error; }
     const reserve = fee + fee / 5n + limits.storageDepositLimit;
     if (balance.spendable <= reserve) return 0n;
     const maxPlanck = balance.spendable - reserve;
     return maxPlanck >= probe.planck ? maxPlanck * NATIVE_TO_EVM_RATIO : 0n;
-  } catch {
+  } catch (error) {
+    diagnostic.error = errorDescription(error);
+    emitNativeDiagnostic(manifest, diagnostic);
     return null;
   }
 }
@@ -127,20 +172,22 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
   const contractAddress = manifest.source.contract;
   return {
     kind: "substrate",
-    async getBalance() { const balance = await readNativeBalance(api, account); return { available: balance.spendable, decimals: manifest.source.nativeDecimals }; },
+    async getBalance() { const balance = await readNativeBalance(api, account); return { available: balance.free, decimals: manifest.source.nativeDecimals }; },
     async safeMax() { return null; },
     async contribute(input, context, onUpdate = () => {}, signal): Promise<ContributionResult> {
+      const diagnostic = createNativeDiagnostic(account);
       try {
         checkCancelled(signal); onUpdate({ state: "validating" });
         const amount = validateContributionAmount(input, context.phase, context.firstMinimum, context.subsequentExclusive);
         let balance = await readNativeBalance(api, account); checkCancelled(signal);
+        recordNativeBalance(diagnostic, balance);
         if (balance.spendable < amount.planck) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
         const resolution = canonicalContractAddress ? { h160: canonicalContractAddress } : await resolveContractAddress(api, account);
         const contributorH160 = resolution.h160;
         onUpdate({ state: "simulating" });
         let limits;
         try {
-          limits = await simulateNativeContribution(api, account, contractAddress, amount);
+          limits = await simulateNativeContribution(api, account, contractAddress, amount, diagnostic);
         } catch (error) {
           if (error instanceof Error && error.message === "ACCOUNT_UNMAPPED") {
             onUpdate({ state: "checking_mapping" });
@@ -157,14 +204,15 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
               if (refreshed !== "mapped") throw new Error("ACCOUNT_MAPPING_VERIFICATION_FAILED");
               balance = await readNativeBalance(api, account);
             }
-            limits = await simulateNativeContribution(api, account, contractAddress, amount);
+            limits = await simulateNativeContribution(api, account, contractAddress, amount, diagnostic);
           } else throw error;
         }
         checkCancelled(signal);
         const data = encodeFunctionData({ abi: genesisAbi, functionName: "contribute" });
-        const tx = api.tx.Revive.call({ dest: contractAddress, value: amount.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) });
+        let tx;
+        try { tx = api.tx.Revive.call({ dest: contractAddress, value: amount.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) }); } catch (error) { diagnostic.txBuildError = errorDescription(error); throw error; }
         let fee: bigint;
-        try { fee = BigInt(await tx.getEstimatedFees(account)); } catch { throw new Error("NATIVE_FEE_ESTIMATE_UNAVAILABLE"); }
+        try { fee = BigInt(await tx.getEstimatedFees(account)); } catch (error) { diagnostic.feeEstimateError = errorDescription(error); throw new Error("NATIVE_FEE_ESTIMATE_UNAVAILABLE"); }
         if (balance.spendable < amount.planck + fee + limits.storageDepositLimit) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
         onUpdate({ state: "awaiting_signature" });
         const finalized = await tx.signAndSubmit(signer); checkCancelled(signal);
@@ -176,6 +224,8 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
         return { execution: "substrate", blockNumber: BigInt(finalized.block.number), amount, contributorH160, substrateTransactionHash: finalized.txHash as `0x${string}` };
       } catch (error) {
         const code = error instanceof Error ? error.message : "REVIVE_DRY_RUN_FAILED";
+        diagnostic.error = code;
+        emitNativeDiagnostic(manifest, diagnostic);
         if (code !== "OPERATION_CANCELLED") onUpdate({ state: "failed", error: code });
         throw new Error(code);
       }

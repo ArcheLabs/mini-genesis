@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { hexToBytes, type Address } from "viem";
 import { createSubstrateExecutionAdapter, estimateNativeMax, validateNativeEvents } from "../src/genesis/execution/substrate";
 import { parseDotAmount } from "../src/genesis/amount";
+import { readNativeBalance } from "../src/wallet/substrate/balance";
 import { ACCOUNT, contributedLog, manifest, SOURCE_CONTRACT } from "./helpers";
 
 const NATIVE_ACCOUNT = "111111111111111111111111111111111HC1";
@@ -23,6 +24,10 @@ function nativeApi() {
 }
 
 describe("native contribution adapter", () => {
+  it("keeps the UI free balance separate from spendable balance", async () => {
+    const api = { query: { System: { Account: { getValue: vi.fn().mockResolvedValue({ data: { free: 20n, frozen: 7n } }) } } }, constants: { Balances: { ExistentialDeposit: vi.fn().mockResolvedValue(3n) } } };
+    await expect(readNativeBalance(api, NATIVE_ACCOUNT)).resolves.toEqual({ free: 20n, frozen: 7n, existentialDeposit: 3n, spendable: 13n });
+  });
   it("uses planck for Revive.call and validates the emitted Solidity event", async () => {
     const { api, tx } = nativeApi();
     const adapter = createSubstrateExecutionAdapter(api, {}, NATIVE_ACCOUNT, manifest({ source: { ...manifest().source, contract: SOURCE_CONTRACT } }));

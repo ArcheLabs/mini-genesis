@@ -13,8 +13,10 @@ export async function readNativeBalance(api: any, address: string): Promise<Nati
   const free = BigInt(account?.data?.free ?? 0n);
   const frozen = BigInt(account?.data?.frozen ?? 0n);
   const existentialDeposit = BigInt(await api.constants?.Balances?.ExistentialDeposit?.() ?? 0n);
-  const reservedForAccount = frozen + existentialDeposit;
-  return { free, frozen, existentialDeposit, spendable: free > reservedForAccount ? free - reservedForAccount : 0n };
+  // Frozen funds and the existential deposit are overlapping keep-alive
+  // constraints. Reserving their sum would double-count the overlap.
+  const untouchable = frozen > existentialDeposit ? frozen : existentialDeposit;
+  return { free, frozen, existentialDeposit, spendable: free > untouchable ? free - untouchable : 0n };
 }
 
 export async function readManifestNativeBalance(manifest: DeploymentManifest, address: string): Promise<NativeGenesisBalance> {

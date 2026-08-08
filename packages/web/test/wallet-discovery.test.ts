@@ -22,4 +22,16 @@ describe("Polkadot wallet discovery", () => {
     expect(accounts).toHaveLength(1);
     expect(accounts[0]?.name).toBe("DOT account");
   });
+
+  it("deduplicates accounts by decoded AccountId32", () => {
+    const accountId32 = new Uint8Array(32).fill(7);
+    const signer = { publicKey: accountId32 };
+    const accounts = supportedAccounts([
+      { address: fromBufferToBase58(0)(accountId32), name: "Account A", polkadotSigner: signer },
+      { address: fromBufferToBase58(2)(accountId32), name: "Account B", polkadotSigner: signer },
+    ] as never);
+
+    expect(accounts).toHaveLength(1);
+    expect(accounts[0]?.name).toBe("Account A");
+  });
 });

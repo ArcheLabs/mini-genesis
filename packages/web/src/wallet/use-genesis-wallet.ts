@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getAddress, type Address, type PublicClient } from "viem";
+import { bytesToHex, getAddress, type Address, type PublicClient } from "viem";
 import { useAppKit, useAppKitAccount, useAppKitNetwork, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
 import type { DeploymentManifest } from "../config/manifest";
 import { polkadotHubNetwork } from "./appkit";
@@ -39,7 +39,14 @@ export function toPolkadotAccount(account: InjectedPolkadotAccount): PolkadotAcc
 }
 
 export function supportedAccounts(accounts: InjectedPolkadotAccount[]): PolkadotAccount[] {
-  return accounts.map(toPolkadotAccount).filter((account): account is PolkadotAccount => account !== null);
+  const seen = new Set<string>();
+  return accounts.map(toPolkadotAccount).filter((account): account is PolkadotAccount => {
+    if (!account) return false;
+    const key = bytesToHex(account.accountId32).toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function useGenesisWallet(manifest: DeploymentManifest | null, publicClient: PublicClient | null = null) {
@@ -141,7 +148,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       resolveContractAddress(substrateApi, requestedAddress),
     ]).then(([balance, resolution]) => {
       if (disposed || selectedAddressRef.current !== requestedAddress) return;
-      if (balance.status === "fulfilled") setNativeBalance(balance.value.spendable);
+      if (balance.status === "fulfilled") setNativeBalance(balance.value.free);
       if (resolution.status === "fulfilled") {
         setSubstrateContractAddress(resolution.value.h160);
         setContractIdentityStatus("verified");
@@ -216,7 +223,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     const requestedAddress = selectedPolkadotAddress;
     try {
       const balance = await readNativeBalance(substrateApi, requestedAddress);
-      if (selectedAddressRef.current === requestedAddress) setNativeBalance(balance.spendable);
+      if (selectedAddressRef.current === requestedAddress) setNativeBalance(balance.free);
     } catch { /* Keep the connected session and let the UI show an unavailable balance. */ }
   }, [selectedPolkadotAddress, substrateApi]);
 
