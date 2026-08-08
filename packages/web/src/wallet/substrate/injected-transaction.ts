@@ -14,7 +14,8 @@ export type NativeSignerDiagnosticPatch = {
   txStatus?: NativeSubmissionStatus;
   dispatchError?: unknown;
   txBuildError?: string;
-  signingError?: string;
+  signingError?: unknown;
+  submissionError?: unknown;
 };
 export type NativeSubmissionResult = {
   txHash: `0x${string}`;
@@ -51,6 +52,16 @@ function errorDescription(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   try { return JSON.stringify(error ?? ""); } catch { return String(error); }
+}
+
+function errorDiagnostic(error: unknown): { description: string; raw: unknown } {
+  return { description: errorDescription(error), raw: error };
+}
+
+function isWalletSigningRejection(error: unknown): boolean {
+  const code = typeof error === "object" && error !== null && "code" in error ? Number((error as { code?: unknown }).code) : Number.NaN;
+  if (code === 4001) return true;
+  return /user.*(reject|cancel|den)|reject.*user|declin|cancelled by user|denied by user/i.test(errorDescription(error));
 }
 
 function dispatchErrorDescription(api: ApiPromise, dispatchError: any): string {
@@ -140,11 +151,20 @@ export async function submitNativeReviveCall(params: SubmitNativeReviveParams): 
         });
       } catch (error) {
         const description = errorDescription(error);
-        onDiagnostic({ signingError: description });
+        onDiagnostic({ signingError: errorDiagnostic(error) });
         finishError(new NativeTransactionError("NATIVE_SIGNING_FAILED", description, error));
         return;
       }
-      void sendResult.then((stop: (() => void) | undefined) => { unsubscribe = stop; if (settled) stop?.(); }).catch((error: unknown) => { onDiagnostic({ signingError: errorDescription(error) }); finishError(new NativeTransactionError("NATIVE_SIGNING_FAILED", errorDescription(error), error)); });
+      void sendResult.then((stop: (() => void) | undefined) => { unsubscribe = stop; if (settled) stop?.(); }).catch((error: unknown) => {
+        const description = errorDescription(error);
+        if (isWalletSigningRejection(error)) {
+          onDiagnostic({ signingError: errorDiagnostic(error) });
+          finishError(new NativeTransactionError("NATIVE_SIGNING_FAILED", description, error));
+          return;
+        }
+        onDiagnostic({ submissionError: errorDiagnostic(error) });
+        finishError(new NativeTransactionError("NATIVE_SUBMISSION_FAILED", description, error));
+      });
     });
   } catch (error) {
     if (error instanceof NativeTransactionError) throw error;

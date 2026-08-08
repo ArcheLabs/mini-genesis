@@ -65,4 +65,42 @@ describe("injected Native transaction", () => {
       weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
     })).rejects.toThrow("NATIVE_SUBMISSION_FAILED");
   });
+
+  it("classifies an RPC submit rejection as NATIVE_SUBMISSION_FAILED and preserves the raw error", async () => {
+    const { api, tx } = nativeJsApi(finalized);
+    const rpcError = new Error("1010: Invalid Transaction: Transaction has a bad signature");
+    tx.signAndSend.mockImplementationOnce(() => Promise.reject(rpcError));
+    mocks.getApi.mockResolvedValueOnce(api);
+    mocks.web3Enable.mockResolvedValueOnce([{}]);
+    mocks.web3FromAddress.mockResolvedValueOnce({ signer: {} });
+    const diagnostics: Record<string, unknown> = {};
+
+    await expect(submitNativeReviveCall({
+      manifest: manifest(), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
+      weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
+      onDiagnostic: (patch) => Object.assign(diagnostics, patch),
+    })).rejects.toThrow("NATIVE_SUBMISSION_FAILED");
+
+    expect(diagnostics.submissionError).toEqual({ description: rpcError.message, raw: rpcError });
+    expect(diagnostics.signingError).toBeUndefined();
+  });
+
+  it("keeps an explicit wallet rejection as NATIVE_SIGNING_FAILED", async () => {
+    const { api, tx } = nativeJsApi(finalized);
+    const walletError = Object.assign(new Error("User rejected the request"), { code: 4001 });
+    tx.signAndSend.mockImplementationOnce(() => Promise.reject(walletError));
+    mocks.getApi.mockResolvedValueOnce(api);
+    mocks.web3Enable.mockResolvedValueOnce([{}]);
+    mocks.web3FromAddress.mockResolvedValueOnce({ signer: {} });
+    const diagnostics: Record<string, unknown> = {};
+
+    await expect(submitNativeReviveCall({
+      manifest: manifest(), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
+      weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
+      onDiagnostic: (patch) => Object.assign(diagnostics, patch),
+    })).rejects.toThrow("NATIVE_SIGNING_FAILED");
+
+    expect(diagnostics.signingError).toEqual({ description: walletError.message, raw: walletError });
+    expect(diagnostics.submissionError).toBeUndefined();
+  });
 });

@@ -32,7 +32,8 @@ type NativeDiagnostic = {
   signedExtensions: string[] | null;
   injectorSource: string | null;
   injectorVersion: string | null;
-  signingError: string | null;
+  signingError: unknown;
+  submissionError: unknown;
   signingStarted: boolean;
   walletPopupReached: boolean;
   txStatus: string | null;
@@ -49,7 +50,7 @@ function errorDescription(error: unknown): string {
 function createNativeDiagnostic(account: string): NativeDiagnostic {
   let accountId32: string | null = null;
   try { accountId32 = bytesToHex(accountId32FromSs58(account)); } catch { /* Keep the diagnostic usable for malformed accounts. */ }
-  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, error: null };
+  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, submissionError: null, error: null };
 }
 
 function emitNativeDiagnostic(manifest: DeploymentManifest, diagnostic: NativeDiagnostic): void {
