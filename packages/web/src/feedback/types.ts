@@ -20,7 +20,7 @@ export type NormalizedFeedback = {
   dedupeKey: string;
 };
 export type FeedbackContext = {
-  operation: "connect-wallet" | "switch-network" | "restore-wallet" | "load-global" | "load-user" | "load-history" | "calculate-max" | "submit-contribution";
+  operation: "connect-wallet" | "switch-network" | "restore-wallet" | "load-global" | "load-user" | "load-history" | "calculate-max" | "submit-contribution" | "copy-address";
   locale: "zh-CN" | "en";
   params?: FeedbackParams;
 };

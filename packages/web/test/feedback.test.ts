@@ -4,7 +4,7 @@ import { type FeedbackCode } from "../src/feedback/codes";
 import { normalizeFeedback } from "../src/feedback/normalize";
 
 const base = { operation: "submit-contribution" as const, locale: "zh-CN" as const };
-const codes: FeedbackCode[] = ["INVALID_AMOUNT", "FIRST_CONTRIBUTION_TOO_SMALL", "CONTRIBUTION_TOO_SMALL", "CONTRIBUTION_CLOSED", "INSUFFICIENT_BALANCE", "MAX_AMOUNT_UNAVAILABLE", "BROWSER_WALLET_UNAVAILABLE", "WALLET_CONNECTION_REJECTED", "CHAIN_SWITCH_REJECTED", "USER_REJECTED_TRANSACTION", "WALLET_RESTORE_FAILED", "WRONG_CHAIN", "RPC_UNAVAILABLE", "GLOBAL_DATA_UNAVAILABLE", "USER_DATA_UNAVAILABLE", "HISTORY_UNAVAILABLE", "TRANSACTION_REVERTED", "TRANSACTION_RECEIPT_UNAVAILABLE", "CONTRIBUTED_EVENT_MISMATCH", "TRANSACTION_INCLUDED", "TEMPLATE_MANIFEST_NOT_RUNTIME_READY", "CONFIGURATION_MISMATCH", "OPERATION_CANCELLED", "UNKNOWN_ERROR"];
+const codes: FeedbackCode[] = ["INVALID_AMOUNT", "FIRST_CONTRIBUTION_TOO_SMALL", "CONTRIBUTION_TOO_SMALL", "CONTRIBUTION_CLOSED", "INSUFFICIENT_BALANCE", "MAX_AMOUNT_UNAVAILABLE", "BROWSER_WALLET_UNAVAILABLE", "WALLET_CONNECTION_REJECTED", "CHAIN_SWITCH_REJECTED", "USER_REJECTED_TRANSACTION", "WALLET_RESTORE_FAILED", "WRONG_CHAIN", "RPC_UNAVAILABLE", "GLOBAL_DATA_UNAVAILABLE", "USER_DATA_UNAVAILABLE", "HISTORY_UNAVAILABLE", "TRANSACTION_REVERTED", "TRANSACTION_RECEIPT_UNAVAILABLE", "CONTRIBUTED_EVENT_MISMATCH", "TRANSACTION_INCLUDED", "ADDRESS_COPIED", "TEMPLATE_MANIFEST_NOT_RUNTIME_READY", "CONFIGURATION_MISMATCH", "OPERATION_CANCELLED", "UNKNOWN_ERROR"];
 
 describe("feedback normalization", () => {
   it("never exposes an insufficient-balance code in user copy", () => {
@@ -39,5 +39,10 @@ describe("feedback normalization", () => {
     const second = normalizeFeedback(new Error("TRANSACTION_INCLUDED"), { ...base, params: { transactionHash: first.transactionHash } });
     expect(first.dedupeKey).toBe(`transaction:${first.transactionHash}`);
     expect(second.dedupeKey).toBe(first.dedupeKey);
+  });
+  it("presents address copying as a short success notification", () => {
+    const feedback = normalizeFeedback(new Error("ADDRESS_COPIED"), { ...base, operation: "copy-address" });
+    expect(feedback.kind).toBe("success");
+    expect(feedback.autoDismissMs).toBe(5_000);
   });
 });
