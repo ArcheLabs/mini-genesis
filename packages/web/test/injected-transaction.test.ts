@@ -106,13 +106,13 @@ describe("injected Native transaction", () => {
     expect(diagnostics.submissionError).toBeUndefined();
   });
 
-  it("provides current runtime metadata to an injected wallet that does not know the chain", async () => {
+  it("refreshes current runtime metadata even when the injected wallet reports the chain as known", async () => {
     const { api, tx } = nativeJsApi(finalized);
     Object.assign(api, {
       genesisHash: { toHex: () => `0x${"66".repeat(32)}` },
       runtimeMetadata: { toHex: () => "0x1234" },
     });
-    const metadata = { get: vi.fn().mockResolvedValue([]), provide: vi.fn().mockResolvedValue(true) };
+    const metadata = { get: vi.fn().mockResolvedValue([{ genesisHash: `0x${"66".repeat(32)}`, specVersion: 77 }]), provide: vi.fn().mockResolvedValue(true) };
     mocks.getApi.mockResolvedValueOnce(api);
     mocks.web3Enable.mockResolvedValueOnce([{}]);
     mocks.web3FromAddress.mockResolvedValueOnce({ name: "talisman", version: "3.8.0", signer: {}, metadata });
@@ -132,7 +132,7 @@ describe("injected Native transaction", () => {
       tokenSymbol: "DOT",
       rawMetadata: "0x1234",
     }));
-    expect(diagnostics.injectorMetadataKnown).toBe(false);
+    expect(diagnostics.injectorMetadataKnown).toBe(true);
     expect(diagnostics.injectorMetadataProvided).toBe(true);
     expect(tx.signAndSend).toHaveBeenCalled();
   });

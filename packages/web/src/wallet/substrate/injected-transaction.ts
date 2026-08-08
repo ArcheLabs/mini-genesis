@@ -81,7 +81,6 @@ async function ensureInjectedMetadata(api: ApiPromise, injector: any, manifest: 
     const known = await injector.metadata.get();
     const isKnown = known.some((entry: { genesisHash?: string; specVersion?: number }) => entry.genesisHash?.toLowerCase() === genesisHash.toLowerCase() && Number(entry.specVersion) === specVersion);
     onDiagnostic({ injectorMetadataKnown: isKnown });
-    if (isKnown) return;
     const provided = await injector.metadata.provide({
       chain: manifest.source.name,
       genesisHash,
@@ -95,7 +94,7 @@ async function ensureInjectedMetadata(api: ApiPromise, injector: any, manifest: 
       rawMetadata: api.runtimeMetadata.toHex(),
     });
     onDiagnostic({ injectorMetadataProvided: provided });
-    if (!provided) throw new Error("WALLET_METADATA_REGISTRATION_REJECTED");
+    if (!provided && !isKnown) throw new Error("WALLET_METADATA_REGISTRATION_REJECTED");
   } catch (error) {
     onDiagnostic({ injectorMetadataError: errorDiagnostic(error) });
     throw error;
