@@ -19,7 +19,9 @@ function nativeJsApi(result: any) {
     }),
   };
   const api = {
-    runtimeVersion: { specVersion: 77, transactionVersion: 9 },
+    genesisHash: { toHex: () => `0x${"11".repeat(32)}` },
+    runtimeMetadata: { toHex: () => "0x00" },
+    runtimeVersion: { specVersion: { toString: () => "77", toNumber: () => 77 }, transactionVersion: { toString: () => "9" } },
     registry: { signedExtensions: ["AuthorizeCall", "CheckNonce"], findMetaError: vi.fn() },
     tx: { revive: { call: vi.fn().mockReturnValue(tx) } },
     rpc: { chain: { getHeader: vi.fn().mockResolvedValue({ number: 42 }) } },
@@ -102,5 +104,36 @@ describe("injected Native transaction", () => {
 
     expect(diagnostics.signingError).toEqual({ description: walletError.message, raw: walletError });
     expect(diagnostics.submissionError).toBeUndefined();
+  });
+
+  it("provides current runtime metadata to an injected wallet that does not know the chain", async () => {
+    const { api, tx } = nativeJsApi(finalized);
+    Object.assign(api, {
+      genesisHash: { toHex: () => `0x${"66".repeat(32)}` },
+      runtimeMetadata: { toHex: () => "0x1234" },
+    });
+    const metadata = { get: vi.fn().mockResolvedValue([]), provide: vi.fn().mockResolvedValue(true) };
+    mocks.getApi.mockResolvedValueOnce(api);
+    mocks.web3Enable.mockResolvedValueOnce([{}]);
+    mocks.web3FromAddress.mockResolvedValueOnce({ name: "talisman", version: "3.8.0", signer: {}, metadata });
+    const diagnostics: Record<string, unknown> = {};
+
+    await submitNativeReviveCall({
+      manifest: manifest(), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
+      weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
+      onDiagnostic: (patch) => Object.assign(diagnostics, patch),
+    });
+
+    expect(metadata.provide).toHaveBeenCalledWith(expect.objectContaining({
+      chain: manifest().source.name,
+      genesisHash: `0x${"66".repeat(32)}`,
+      specVersion: 77,
+      tokenDecimals: 10,
+      tokenSymbol: "DOT",
+      rawMetadata: "0x1234",
+    }));
+    expect(diagnostics.injectorMetadataKnown).toBe(false);
+    expect(diagnostics.injectorMetadataProvided).toBe(true);
+    expect(tx.signAndSend).toHaveBeenCalled();
   });
 });

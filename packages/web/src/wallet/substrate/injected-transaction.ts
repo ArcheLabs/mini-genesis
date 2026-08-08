@@ -9,6 +9,10 @@ export type NativeSignerDiagnosticPatch = {
   signedExtensions?: string[];
   injectorSource?: string | null;
   injectorVersion?: string | null;
+  chainGenesisHash?: string;
+  injectorMetadataKnown?: boolean;
+  injectorMetadataProvided?: boolean;
+  injectorMetadataError?: unknown;
   signingStarted?: boolean;
   walletPopupReached?: boolean;
   txStatus?: NativeSubmissionStatus;
@@ -64,6 +68,40 @@ function isWalletSigningRejection(error: unknown): boolean {
   return /user.*(reject|cancel|den)|reject.*user|declin|cancelled by user|denied by user/i.test(errorDescription(error));
 }
 
+function isWalletMetadataError(error: unknown): boolean {
+  return /unable to find metadata for chain|chain metadata.*not found|unknown chain metadata/i.test(errorDescription(error));
+}
+
+async function ensureInjectedMetadata(api: ApiPromise, injector: any, manifest: DeploymentManifest, onDiagnostic: (patch: NativeSignerDiagnosticPatch) => void): Promise<void> {
+  const genesisHash = api.genesisHash.toHex();
+  const specVersion = api.runtimeVersion.specVersion.toNumber();
+  onDiagnostic({ chainGenesisHash: genesisHash });
+  if (!injector.metadata) return;
+  try {
+    const known = await injector.metadata.get();
+    const isKnown = known.some((entry: { genesisHash?: string; specVersion?: number }) => entry.genesisHash?.toLowerCase() === genesisHash.toLowerCase() && Number(entry.specVersion) === specVersion);
+    onDiagnostic({ injectorMetadataKnown: isKnown });
+    if (isKnown) return;
+    const provided = await injector.metadata.provide({
+      chain: manifest.source.name,
+      genesisHash,
+      icon: "substrate",
+      ss58Format: manifest.source.ss58Prefix,
+      chainType: "substrate",
+      specVersion,
+      tokenDecimals: manifest.source.nativeDecimals,
+      tokenSymbol: manifest.source.currencySymbol,
+      types: {},
+      rawMetadata: api.runtimeMetadata.toHex(),
+    });
+    onDiagnostic({ injectorMetadataProvided: provided });
+    if (!provided) throw new Error("WALLET_METADATA_REGISTRATION_REJECTED");
+  } catch (error) {
+    onDiagnostic({ injectorMetadataError: errorDiagnostic(error) });
+    throw error;
+  }
+}
+
 function dispatchErrorDescription(api: ApiPromise, dispatchError: any): string {
   const raw = errorDescription(dispatchError);
   try {
@@ -92,6 +130,7 @@ export async function submitNativeReviveCall(params: SubmitNativeReviveParams): 
     injector = await web3FromAddress(address);
     if (!injector?.signer) throw new Error("NATIVE_SIGNER_UNAVAILABLE");
     onDiagnostic({ injectorSource: injector.name, injectorVersion: injector.version });
+    await ensureInjectedMetadata(api, injector, manifest, onDiagnostic);
   } catch (error) {
     throw new NativeTransactionError("NATIVE_SIGNER_UNAVAILABLE", errorDescription(error), error);
   }
@@ -157,6 +196,11 @@ export async function submitNativeReviveCall(params: SubmitNativeReviveParams): 
       }
       void sendResult.then((stop: (() => void) | undefined) => { unsubscribe = stop; if (settled) stop?.(); }).catch((error: unknown) => {
         const description = errorDescription(error);
+        if (isWalletMetadataError(error)) {
+          onDiagnostic({ signingError: errorDiagnostic(error) });
+          finishError(new NativeTransactionError("NATIVE_SIGNER_UNAVAILABLE", description, error));
+          return;
+        }
         if (isWalletSigningRejection(error)) {
           onDiagnostic({ signingError: errorDiagnostic(error) });
           finishError(new NativeTransactionError("NATIVE_SIGNING_FAILED", description, error));
