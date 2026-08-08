@@ -4,20 +4,45 @@ import { useAppKit, useAppKitAccount, useAppKitNetwork, useAppKitProvider, useDi
 import type { DeploymentManifest } from "../config/manifest";
 import { polkadotHubNetwork } from "./appkit";
 import type { Eip1193Provider } from "./eip1193";
-import { resolveContractAddress } from "./substrate/account";
+import { accountId32FromSs58, resolveContractAddress } from "./substrate/account";
 import { readNativeBalance } from "./substrate/balance";
 import { getSubstrateApi } from "./substrate/client";
 import { connectInjectedExtension, getInjectedExtensions, type InjectedExtension, type InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
-import { createEvmPaymentSource, createPolkadotPaymentSource, chooseDefaultPaymentSource, persistPaymentSource } from "./payment-source";
-import type { EvmPaymentSource, PaymentSource, PolkadotPaymentSource, WalletSession } from "./types";
+import type { EvmWalletSession, PolkadotAccount, PolkadotWalletDescriptor, PolkadotWalletSession, WalletSession } from "./types";
 
-type NativeSourceState = { contractAddressStatus: PolkadotPaymentSource["contractAddressStatus"]; contractIdentity: Address; balance: PolkadotPaymentSource["balance"] };
+const POLKADOT_WALLET_NAMES: Record<string, string> = {
+  "subwallet-js": "SubWallet",
+  talisman: "Talisman",
+};
 
-function sessionWalletName(substrateExtension: InjectedExtension | null, evmAddress: Address | null): string | null {
-  return substrateExtension?.name ?? (evmAddress ? "Connected wallet" : null);
+export function describePolkadotWallet(extensionId: string): PolkadotWalletDescriptor {
+  const known = POLKADOT_WALLET_NAMES[extensionId.toLowerCase()];
+  if (known) return { extensionId, displayName: known };
+  const displayName = extensionId
+    .replace(/-js$/i, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    .trim() || "Polkadot Wallet";
+  return { extensionId, displayName };
 }
 
-export function useWalletSession(manifest: DeploymentManifest | null, publicClient: PublicClient | null = null) {
+export function toPolkadotAccount(account: InjectedPolkadotAccount): PolkadotAccount | null {
+  const publicKey = account.polkadotSigner?.publicKey;
+  if (!(publicKey instanceof Uint8Array) || publicKey.length !== 32) return null;
+  try {
+    const accountId32 = accountId32FromSs58(account.address);
+    if (accountId32.length !== 32) return null;
+    return { address: account.address, name: account.name, signer: account.polkadotSigner, accountId32 };
+  } catch {
+    return null;
+  }
+}
+
+export function supportedAccounts(accounts: InjectedPolkadotAccount[]): PolkadotAccount[] {
+  return accounts.map(toPolkadotAccount).filter((account): account is PolkadotAccount => account !== null);
+}
+
+export function useGenesisWallet(manifest: DeploymentManifest | null, publicClient: PublicClient | null = null) {
   const { open } = useAppKit();
   const { address, isConnected, status } = useAppKitAccount({ namespace: "eip155" });
   const { chainId, switchNetwork } = useAppKitNetwork();
@@ -25,258 +50,195 @@ export function useWalletSession(manifest: DeploymentManifest | null, publicClie
   const { disconnect: disconnectAppKit } = useDisconnect();
   const expectedChainId = Number(manifest?.source.chainId ?? polkadotHubNetwork.id);
   const provider = walletProvider ? walletProvider as Eip1193Provider : null;
-  const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<string[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions());
-  const [substrateExtension, setSubstrateExtension] = useState<InjectedExtension | null>(null);
-  const [substrateAccounts, setSubstrateAccounts] = useState<InjectedPolkadotAccount[]>([]);
-  const [substrateApi, setSubstrateApi] = useState<any>(null);
-  const [nativeSources, setNativeSources] = useState<Record<string, NativeSourceState>>({});
-  const [evmSignerStatus, setEvmSignerStatus] = useState<EvmPaymentSource["signerStatus"]>(provider ? "ready" : "unavailable");
-  const [evmBalances, setEvmBalances] = useState<Record<string, PaymentSource["balance"]>>({});
-  const [selectedPaymentSourceId, setSelectedPaymentSourceId] = useState<string | null>(null);
-  const sessionId = useRef("wallet-session");
-  const selectedIdRef = useRef(selectedPaymentSourceId);
-  selectedIdRef.current = selectedPaymentSourceId;
-
-  const refreshInjectedWallets = useCallback(() => setAvailablePolkadotWallets(getInjectedExtensions()), []);
-  const setEvmBalance = useCallback((id: string, amount: bigint | null, decimals: number, error?: string) => {
-    setEvmBalances((current) => ({ ...current, [id]: { status: error ? "error" : "ready", amount, decimals, ...(error ? { error } : {}) } }));
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("focus", refreshInjectedWallets);
-    return () => window.removeEventListener("focus", refreshInjectedWallets);
-  }, [refreshInjectedWallets]);
-
   const evmAddress = isConnected && address ? getAddress(address) : null;
-  const evmWalletId = "appkit:eip155";
-  const evmSource = useMemo(() => {
-    if (!evmAddress) return null;
-    return createEvmPaymentSource({
-      walletId: evmWalletId,
-      walletName: "Connected wallet",
+
+  const [substrateExtension, setSubstrateExtension] = useState<InjectedExtension | null>(null);
+  const [substrateAccounts, setSubstrateAccounts] = useState<PolkadotAccount[]>([]);
+  const [selectedPolkadotAddress, setSelectedPolkadotAddress] = useState<string | null>(null);
+  const [substrateApi, setSubstrateApi] = useState<any | null>(null);
+  const [nativeBalance, setNativeBalance] = useState<bigint | null>(null);
+  const [substrateContractAddress, setSubstrateContractAddress] = useState<Address | null>(null);
+  const [contractIdentityStatus, setContractIdentityStatus] = useState<PolkadotWalletSession["contractIdentityStatus"]>("loading");
+  const [evmBalance, setEvmBalance] = useState<bigint | null>(null);
+  const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions().map(describePolkadotWallet));
+  const selectedAddressRef = useRef<string | null>(selectedPolkadotAddress);
+  selectedAddressRef.current = selectedPolkadotAddress;
+
+  const refreshPolkadotWallets = useCallback(() => setAvailablePolkadotWallets(getInjectedExtensions().map(describePolkadotWallet)), []);
+  useEffect(() => {
+    window.addEventListener("focus", refreshPolkadotWallets);
+    return () => window.removeEventListener("focus", refreshPolkadotWallets);
+  }, [refreshPolkadotWallets]);
+
+  const evmSession = useMemo<EvmWalletSession | null>(() => {
+    if (!evmAddress || !provider) return null;
+    return {
+      kind: "evm",
+      status: "connected",
       address: evmAddress,
       provider,
       chainId: chainId == null ? null : Number(chainId),
-      expectedChainId,
-      decimals: manifest?.source.evmNativeDecimals ?? 18,
-    });
-  }, [chainId, expectedChainId, evmAddress, manifest?.source.evmNativeDecimals, provider]);
-
-  useEffect(() => {
-    if (!provider || !evmAddress) {
-      setEvmSignerStatus("unavailable");
-      return;
-    }
-    setEvmSignerStatus("ready");
-    const eventProvider = provider as Eip1193Provider & { on?: (event: string, listener: (value: unknown) => void) => void; removeListener?: (event: string, listener: (value: unknown) => void) => void };
-    if (!eventProvider.on) return;
-    const onAccountsChanged = (value: unknown) => {
-      const accounts = Array.isArray(value) ? value.map(String).map((item) => item.toLowerCase()) : [];
-      setEvmSignerStatus(accounts.includes(evmAddress.toLowerCase()) ? "ready" : accounts.length ? "lazy" : "unavailable");
+      correctChain: Number(chainId) === expectedChainId,
+      balance: evmBalance,
     };
-    const onChainChanged = () => setEvmSignerStatus("ready");
-    eventProvider.on("accountsChanged", onAccountsChanged);
-    eventProvider.on("chainChanged", onChainChanged);
-    return () => {
-      eventProvider.removeListener?.("accountsChanged", onAccountsChanged);
-      eventProvider.removeListener?.("chainChanged", onChainChanged);
-    };
-  }, [evmAddress, provider]);
+  }, [chainId, evmAddress, evmBalance, expectedChainId, provider]);
 
-  const nativePaymentSources = useMemo(() => substrateAccounts.map((account) => {
-    const id = `${substrateExtension?.name ? `injected:${substrateExtension.name}` : "injected:wallet"}:polkadot:${account.address}`;
-    const state = nativeSources[id];
-    const source = createPolkadotPaymentSource({
-      walletId: substrateExtension?.name ? `injected:${substrateExtension.name}` : "injected:wallet",
-      walletName: substrateExtension?.name ?? "Connected wallet",
-      address: account.address,
-      name: account.name,
-      signer: account.polkadotSigner,
-      api: substrateApi,
-      decimals: manifest?.source.nativeDecimals ?? 10,
-    });
+  const selectedPolkadotAccount = substrateAccounts.find((account) => account.address === selectedPolkadotAddress) ?? null;
+  const polkadotSession = useMemo<PolkadotWalletSession | null>(() => {
+    if (!substrateExtension || !selectedPolkadotAccount) return null;
     return {
-      ...source,
-      balance: state?.balance ?? source.balance,
-      contractIdentity: state?.contractIdentity ?? source.contractIdentity,
-      contractAddressStatus: state?.contractAddressStatus ?? source.contractAddressStatus,
+      kind: "polkadot",
+      status: "connected",
+      extensionId: substrateExtension.name,
+      walletName: describePolkadotWallet(substrateExtension.name).displayName,
+      accounts: substrateAccounts,
+      selectedAccountAddress: selectedPolkadotAccount.address,
+      balance: nativeBalance,
+      api: substrateApi,
+      contractIdentity: substrateContractAddress,
+      contractIdentityStatus,
     };
-  }), [manifest?.source.nativeDecimals, nativeSources, substrateAccounts, substrateApi, substrateExtension]);
+  }, [contractIdentityStatus, nativeBalance, selectedPolkadotAccount, substrateAccounts, substrateApi, substrateContractAddress, substrateExtension]);
 
-  const paymentSources = useMemo<PaymentSource[]>(() => {
-    const sources: PaymentSource[] = [...nativePaymentSources];
-    if (evmSource) sources.push({ ...evmSource, balance: evmSource.balance, signerStatus: evmSignerStatus });
-    return sources;
-  }, [evmSignerStatus, evmSource, nativePaymentSources]);
-
-  const selectedPaymentSource = useMemo(() => paymentSources.find((source) => source.id === selectedPaymentSourceId) ?? null, [paymentSources, selectedPaymentSourceId]);
-  const sessionStatus: WalletSession["status"] = paymentSources.length ? "connected" : status === "connecting" ? "connecting" : "disconnected";
-  const session = useMemo<WalletSession>(() => ({
-    id: sessionId.current,
-    status: sessionStatus,
-    walletName: sessionWalletName(substrateExtension, evmAddress),
-    paymentSources,
-    selectedPaymentSourceId: selectedPaymentSource?.id ?? null,
-  }), [evmAddress, paymentSources, selectedPaymentSource, sessionStatus, substrateExtension]);
-
-  useEffect(() => {
-    if (!paymentSources.length) {
-      setSelectedPaymentSourceId(null);
-      return;
-    }
-    const current = selectedIdRef.current ? paymentSources.find((source) => source.id === selectedIdRef.current) : null;
-    const next = current ?? chooseDefaultPaymentSource(paymentSources);
-    if (next && next.id !== selectedIdRef.current) {
-      setSelectedPaymentSourceId(next.id);
-      persistPaymentSource(next);
-    }
-  }, [paymentSources]);
+  const session: WalletSession = substrateExtension ? polkadotSession : evmSession;
+  const sessionKey = session?.kind === "evm" ? `evm:${session.address}` : session?.kind === "polkadot" ? `polkadot:${session.selectedAccountAddress}` : null;
 
   useEffect(() => {
     if (!substrateExtension || !manifest) return;
+    try { setSubstrateApi(getSubstrateApi(manifest)); } catch { setSubstrateApi(null); }
+  }, [manifest, substrateExtension]);
+
+  useEffect(() => {
+    if (!substrateExtension) return;
     let disposed = false;
-    try {
-      setSubstrateApi(getSubstrateApi(manifest));
-    } catch {
-      setSubstrateApi(null);
-    }
     const updateAccounts = (accounts: InjectedPolkadotAccount[]) => {
-      if (!disposed) setSubstrateAccounts(accounts);
+      const next = supportedAccounts(accounts);
+      if (disposed) return;
+      if (!next.length) {
+        substrateExtension.disconnect();
+        setSubstrateExtension(null);
+        setSubstrateAccounts([]);
+        setSelectedPolkadotAddress(null);
+        setSubstrateApi(null);
+        return;
+      }
+      setSubstrateAccounts(next);
+      setSelectedPolkadotAddress((current) => next.some((account) => account.address === current) ? current : next[0].address);
     };
     const stop = substrateExtension.subscribe(updateAccounts);
     return () => { disposed = true; stop(); };
-  }, [manifest, substrateExtension]);
+  }, [substrateExtension]);
 
   useEffect(() => {
-    if (!substrateApi || !substrateAccounts.length) return;
+    if (!selectedPolkadotAccount || !substrateApi) return;
+    const requestedAddress = selectedPolkadotAccount.address;
     let disposed = false;
-    for (const account of substrateAccounts) {
-      const walletId = substrateExtension?.name ? `injected:${substrateExtension.name}` : "injected:wallet";
-      const id = `${walletId}:polkadot:${account.address}`;
-      void Promise.allSettled([
-        resolveContractAddress(substrateApi, account.address),
-        readNativeBalance(substrateApi, account.address),
-      ]).then(([resolution, balance]) => {
-        if (disposed) return;
-        setNativeSources((current) => {
-          const previous = current[id];
-          const next = { ...previous, contractAddressStatus: previous?.contractAddressStatus ?? "provisional", contractIdentity: previous?.contractIdentity ?? createPolkadotPaymentSource({ walletId, walletName: substrateExtension?.name ?? "Connected wallet", address: account.address, name: account.name, signer: account.polkadotSigner, api: substrateApi, decimals: manifest?.source.nativeDecimals ?? 10 }).contractIdentity, balance: previous?.balance ?? { status: "loading", amount: null, decimals: manifest?.source.nativeDecimals ?? 10 } } as NativeSourceState;
-          if (resolution.status === "fulfilled") { next.contractIdentity = resolution.value.h160; next.contractAddressStatus = "verified"; }
-          else { next.contractAddressStatus = "error"; }
-          if (balance.status === "fulfilled") { next.balance = { status: "ready", amount: balance.value.spendable, decimals: manifest?.source.nativeDecimals ?? 10 }; }
-          else { next.balance = { status: "error", amount: null, decimals: manifest?.source.nativeDecimals ?? 10, error: "NATIVE_BALANCE_UNAVAILABLE" }; }
-          return { ...current, [id]: next };
-        });
-      });
-    }
-    return () => { disposed = true; };
-  }, [manifest?.source.nativeDecimals, substrateAccounts, substrateApi, substrateExtension]);
-
-  useEffect(() => {
-    if (!evmSource || !publicClient) return;
-    let disposed = false;
-    void publicClient.getBalance({ address: evmSource.address }).then((amount) => {
-      if (disposed) return;
-      setEvmBalance(evmSource.id, amount, manifest?.source.evmNativeDecimals ?? 18);
-    }).catch(() => {
-      if (disposed) return;
-      setEvmBalance(evmSource.id, null, manifest?.source.evmNativeDecimals ?? 18, "EVM_BALANCE_UNAVAILABLE");
+    setNativeBalance(null);
+    setSubstrateContractAddress(null);
+    setContractIdentityStatus("loading");
+    void Promise.allSettled([
+      readNativeBalance(substrateApi, requestedAddress),
+      resolveContractAddress(substrateApi, requestedAddress),
+    ]).then(([balance, resolution]) => {
+      if (disposed || selectedAddressRef.current !== requestedAddress) return;
+      if (balance.status === "fulfilled") setNativeBalance(balance.value.spendable);
+      if (resolution.status === "fulfilled") {
+        setSubstrateContractAddress(resolution.value.h160);
+        setContractIdentityStatus("verified");
+      } else {
+        setContractIdentityStatus("error");
+      }
     });
     return () => { disposed = true; };
-  }, [evmSource, manifest?.source.evmNativeDecimals, publicClient]);
+  }, [selectedPolkadotAccount, substrateApi]);
 
-  const hydratedSources = useMemo(() => paymentSources.map((source) => source.kind === "evm" && evmBalances[source.id] ? { ...source, balance: evmBalances[source.id] } : source), [evmBalances, paymentSources]);
-  const hydratedSelectedPaymentSource = useMemo(() => hydratedSources.find((source) => source.id === selectedPaymentSourceId) ?? null, [hydratedSources, selectedPaymentSourceId]);
+  useEffect(() => {
+    if (!evmSession || !publicClient) return;
+    let disposed = false;
+    setEvmBalance(null);
+    void publicClient.getBalance({ address: evmSession.address }).then((balance) => { if (!disposed) setEvmBalance(balance); }).catch(() => { if (!disposed) setEvmBalance(null); });
+    return () => { disposed = true; };
+  }, [evmSession?.address, publicClient]);
 
-  const selectPaymentSource = useCallback((id: string) => {
-    const source = hydratedSources.find((candidate) => candidate.id === id);
-    if (!source) return;
-    setSelectedPaymentSourceId(source.id);
-    persistPaymentSource(source);
-  }, [hydratedSources]);
-
-  const connect = useCallback(() => open({ view: "Connect" }), [open]);
-  const connectWallet = connect;
+  const connectEvm = useCallback(() => {
+    if (substrateExtension) throw new Error("WALLET_DISCONNECT_REQUIRED");
+    open({ view: "Connect" });
+  }, [open, substrateExtension]);
   const openAccount = useCallback(() => open({ view: "Account" }), [open]);
   const switchToGenesisChain = useCallback(() => switchNetwork(polkadotHubNetwork), [switchNetwork]);
-  const connectPolkadotExtension = useCallback(async (name?: string) => {
-    const extensionName = name ?? getInjectedExtensions()[0];
-    if (!extensionName) throw new Error("SUBSTRATE_WALLET_NOT_FOUND");
-    const extension = await connectInjectedExtension(extensionName, "MINI Genesis");
-    const accounts = extension.getAccounts();
-    if (!accounts.length) { extension.disconnect(); throw new Error("SUBSTRATE_ACCOUNT_NOT_SELECTED"); }
-    if (substrateExtension && substrateExtension !== extension) substrateExtension.disconnect();
+
+  const connectPolkadot = useCallback(async (extensionId?: string) => {
+    if (isConnected) throw new Error("WALLET_DISCONNECT_REQUIRED");
+    const name = extensionId ?? getInjectedExtensions()[0];
+    if (!name) throw new Error("NO_POLKADOT_WALLET");
+    const extension = await connectInjectedExtension(name, "MINI Genesis");
+    const accounts = supportedAccounts(extension.getAccounts());
+    if (!accounts.length) {
+      extension.disconnect();
+      throw new Error("NO_SUPPORTED_POLKADOT_ACCOUNT");
+    }
     setSubstrateExtension(extension);
     setSubstrateAccounts(accounts);
-    setSubstrateApi(manifest ? getSubstrateApi(manifest) : null);
+    setSelectedPolkadotAddress(accounts[0].address);
+    setSubstrateApi(null);
+    setNativeBalance(null);
+    setSubstrateContractAddress(null);
+    setContractIdentityStatus("loading");
     return accounts[0].address;
-  }, [manifest, substrateExtension]);
-  const disconnect = useCallback(() => {
+  }, [isConnected]);
+
+  const selectPolkadotAccount = useCallback((addressToSelect: string) => {
+    if (!substrateAccounts.some((account) => account.address === addressToSelect)) return;
+    setSelectedPolkadotAddress(addressToSelect);
+    setNativeBalance(null);
+    setSubstrateContractAddress(null);
+    setContractIdentityStatus("loading");
+  }, [substrateAccounts]);
+
+  const disconnectPolkadot = useCallback(() => {
     substrateExtension?.disconnect();
     setSubstrateExtension(null);
     setSubstrateAccounts([]);
+    setSelectedPolkadotAddress(null);
     setSubstrateApi(null);
-    setNativeSources({});
-    setSelectedPaymentSourceId(null);
-    void disconnectAppKit({ namespace: "eip155" });
-  }, [disconnectAppKit, substrateExtension]);
-  const ensurePaymentSourceSigner = useCallback(async (source: PaymentSource | null = hydratedSelectedPaymentSource): Promise<PaymentSource> => {
-    if (!source) throw new Error("PAYMENT_SOURCE_NOT_SELECTED");
-    if (source.kind !== "evm") return source;
-    if (!source.provider) throw new Error("EVM_SIGNER_UNAVAILABLE");
-    const authorized = await source.provider.request({ method: "eth_accounts" });
-    let accounts = Array.isArray(authorized) ? authorized.map(String) : [];
-    if (!accounts.some((item) => item.toLowerCase() === source.address.toLowerCase())) {
-      const requested = await source.provider.request({ method: "eth_requestAccounts" });
-      accounts = Array.isArray(requested) ? requested.map(String) : [];
-    }
-    if (!accounts.some((item) => item.toLowerCase() === source.address.toLowerCase())) throw new Error("EVM_PAYMENT_SOURCE_MISMATCH");
-    setEvmSignerStatus("ready");
-    return { ...source, signerStatus: "ready" };
-  }, [hydratedSelectedPaymentSource]);
-  const refreshPaymentSource = useCallback(async (sourceId = hydratedSelectedPaymentSource?.id) => {
-    const source = hydratedSources.find((candidate) => candidate.id === sourceId);
-    if (!source) return;
-    if (source.kind === "evm" && publicClient) {
-      try { setEvmBalance(source.id, await publicClient.getBalance({ address: source.address }), source.decimals); }
-      catch { setEvmBalance(source.id, null, source.decimals, "EVM_BALANCE_UNAVAILABLE"); }
-    }
-    if (source.kind === "polkadot" && source.api) {
-      try {
-        const balance = await readNativeBalance(source.api, source.address);
-        setNativeSources((current) => ({ ...current, [source.id]: { ...(current[source.id] ?? { contractIdentity: source.contractIdentity, contractAddressStatus: source.contractAddressStatus }), balance: { status: "ready", amount: balance.spendable, decimals: source.decimals } } }));
-      } catch { /* source-level error is represented by its balance status */ }
-    }
-  }, [hydratedSelectedPaymentSource?.id, hydratedSources, publicClient, setEvmBalance]);
+    setNativeBalance(null);
+    setSubstrateContractAddress(null);
+    setContractIdentityStatus("loading");
+  }, [substrateExtension]);
 
-  const selected = hydratedSelectedPaymentSource;
-  const account = evmAddress;
-  const correctChain = evmSource?.correctChain ?? false;
-  const walletReady = Boolean(selected && (selected.kind === "polkadot" ? selected.signer && selected.api && selected.contractAddressStatus !== "error" : selected.signerStatus !== "unavailable"));
+  const disconnect = useCallback(() => {
+    if (substrateExtension) disconnectPolkadot();
+    else void disconnectAppKit({ namespace: "eip155" });
+  }, [disconnectAppKit, disconnectPolkadot, substrateExtension]);
+
+  const refreshNativeBalance = useCallback(async () => {
+    if (!substrateApi || !selectedPolkadotAddress) return;
+    const requestedAddress = selectedPolkadotAddress;
+    try {
+      const balance = await readNativeBalance(substrateApi, requestedAddress);
+      if (selectedAddressRef.current === requestedAddress) setNativeBalance(balance.spendable);
+    } catch { /* Keep the connected session and let the UI show an unavailable balance. */ }
+  }, [selectedPolkadotAddress, substrateApi]);
+
+  const walletReady = Boolean(session && (session.kind === "evm" ? session.provider : session.api && session.contractIdentity && session.contractIdentityStatus === "verified"));
   return {
-    session: { ...session, paymentSources: hydratedSources, selectedPaymentSourceId: selected?.id ?? null },
-    selectedPaymentSource: selected,
-    connect: connectWallet,
-    connectWallet,
-    connectPolkadotExtension,
+    session,
+    sessionKey,
+    walletReady,
+    walletConnecting: status === "connecting" || (!session && Boolean(substrateExtension)),
+    connectEvm,
+    connectPolkadot,
     disconnect,
-    selectPaymentSource,
-    refreshPaymentSource,
-    ensurePaymentSourceSigner,
+    disconnectPolkadot,
     openAccount,
     switchToGenesisChain,
-    account,
+    selectPolkadotAccount,
+    refreshNativeBalance,
+    availablePolkadotWallets,
+    polkadotAccounts: substrateAccounts,
     provider,
     isConnected,
     status,
     chainId,
-    correctChain,
-    walletReady,
-    paymentReady: walletReady,
-    substrateApi,
-    availablePolkadotWallets,
   };
 }
-
-/** Compatibility export for code that still imports the previous hook name. */
-export const useGenesisWallet = useWalletSession;

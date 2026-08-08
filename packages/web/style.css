@@ -81,4 +81,3 @@ footer{border-top-color:var(--line-strong)}
 .language-button{padding:0 11px}
 .brand-mark{background:var(--panel-strong) url("/assets/minijam.svg") center/contain no-repeat;color:transparent;transform:none;box-shadow:none;border-radius:0}
 .wallet-button:has(.wallet-dot[hidden]) .chevron-icon{display:none}
-.balance-source-wrap{position:relative;display:inline-flex}.balance-selector{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;color:var(--text);font:600 13px var(--font-mono);cursor:pointer;padding:0}.balance-selector:hover{color:var(--accent)}.balance-selector .chevron-icon{width:14px;height:14px}.balance-menu{right:0;top:calc(100% + 8px);min-width:245px}.balance-menu button{display:grid;grid-template-columns:1fr auto;gap:3px 10px}.balance-menu button small{grid-column:1;color:var(--subtle);font:11px var(--font-mono)}

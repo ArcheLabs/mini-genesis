@@ -2,75 +2,47 @@ import type { Address } from "viem";
 import type { PolkadotSigner } from "polkadot-api/pjs-signer";
 import type { Eip1193Provider } from "./eip1193";
 
+/** Kept for the lazy compatibility fallback in the native execution adapter. */
 export type MappingState = "checking" | "unmapped" | "mapping" | "mapped" | "conflict" | "failed";
 
-export type PaymentSourceKind = "polkadot" | "evm";
-export type PaymentSourceBalanceStatus = "idle" | "loading" | "ready" | "error";
-export type ContractAddressStatus = "provisional" | "verified" | "error";
-
-export type PaymentSourceBalance = {
-  status: PaymentSourceBalanceStatus;
-  amount: bigint | null;
-  decimals: number;
-  error?: string;
-};
-
-export type PolkadotPaymentSource = {
-  id: string;
-  kind: "polkadot";
-  walletId: string;
-  walletName: string;
+export type PolkadotAccount = {
   address: string;
   name?: string;
-  accountId32: Uint8Array;
   signer: PolkadotSigner;
-  balance: PaymentSourceBalance;
-  decimals: number;
-  contractIdentity: Address;
-  contractAddressStatus: ContractAddressStatus;
-  execution: "revive";
-  api: any;
+  accountId32: Uint8Array;
 };
 
-export type EvmPaymentSource = {
-  id: string;
+export type EvmWalletSession = {
   kind: "evm";
-  walletId: string;
-  walletName: string;
+  status: "connected";
   address: Address;
-  balance: PaymentSourceBalance;
-  decimals: number;
-  signerStatus: "ready" | "lazy" | "unavailable";
-  provider: Eip1193Provider | null;
+  provider: Eip1193Provider;
   chainId: number | null;
   correctChain: boolean;
-  execution: "evm";
+  balance: bigint | null;
 };
 
-export type PaymentSource = PolkadotPaymentSource | EvmPaymentSource;
-
-export type WalletSession = {
-  id: string;
-  status: "disconnected" | "connecting" | "connected";
-  walletName: string | null;
-  paymentSources: PaymentSource[];
-  selectedPaymentSourceId: string | null;
+export type PolkadotWalletSession = {
+  kind: "polkadot";
+  status: "connecting" | "connected";
+  extensionId: string;
+  walletName: string;
+  accounts: PolkadotAccount[];
+  selectedAccountAddress: string;
+  balance: bigint | null;
+  api: any | null;
+  contractIdentity: Address | null;
+  contractIdentityStatus: "loading" | "verified" | "error";
 };
 
-export type EvmGenesisWallet = {
-  kind: "evm";
-  address: Address;
-  provider: import("./eip1193").Eip1193Provider;
+export type WalletSession = EvmWalletSession | PolkadotWalletSession | null;
+
+export type PolkadotWalletDescriptor = {
+  extensionId: string;
+  displayName: string;
 };
 
-export type SubstrateGenesisWallet = {
-  kind: "substrate";
-  address: string;
-  contractAddress: Address;
-  signer: PolkadotSigner;
-  extensionName: string;
-  mapped: boolean;
-  mappingState: MappingState;
-};
-
+/** Compatibility aliases for modules that still import the old names. */
+export type EvmGenesisWallet = EvmWalletSession;
+export type SubstrateGenesisWallet = PolkadotWalletSession;
 export type GenesisWallet = EvmGenesisWallet | SubstrateGenesisWallet;

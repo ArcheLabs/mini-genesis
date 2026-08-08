@@ -139,7 +139,7 @@ async function deploy() {
   manifest.status = "deployed";
   manifest.evmNativeDecimals = 18;
   manifest.source.chainId = chainId;
-  manifest.source.currencySymbol = "DOT";
+  manifest.source.currencySymbol = environment === "production" ? "DOT" : "PAS";
   manifest.source.nativeDecimals = 10;
   manifest.source.evmNativeDecimals = 18;
   manifest.source.ss58Prefix = 0;

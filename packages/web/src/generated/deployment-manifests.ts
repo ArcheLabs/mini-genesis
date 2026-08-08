@@ -7,7 +7,7 @@ export const deploymentManifests = {
     "source": {
       "chainId": "420420417",
       "name": "Polkadot Hub TestNet",
-      "currencySymbol": "DOT",
+      "currencySymbol": "PAS",
       "nativeDecimals": 10,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
@@ -51,7 +51,7 @@ export const deploymentManifests = {
     "source": {
       "chainId": "420420417",
       "name": "Polkadot Hub Staging",
-      "currencySymbol": "DOT",
+      "currencySymbol": "PAS",
       "nativeDecimals": 10,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [

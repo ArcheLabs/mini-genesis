@@ -14,7 +14,7 @@ const rpcHttpUrls = manifest?.source.rpcHttpUrls.filter(Boolean) ?? [];
 const polkadotHubNetwork = defineChain({
   id: chainId,
   name: manifest?.source.name ?? "Polkadot Hub",
-  nativeCurrency: { name: DOT_SYMBOL, symbol: DOT_SYMBOL, decimals: DOT_DECIMALS },
+  nativeCurrency: { name: manifest?.source.currencySymbol ?? DOT_SYMBOL, symbol: manifest?.source.currencySymbol ?? DOT_SYMBOL, decimals: manifest?.source.evmNativeDecimals ?? DOT_DECIMALS },
   rpcUrls: { default: { http: rpcHttpUrls } },
   blockExplorers: { default: { name: "Blockscout", url: manifest?.source.explorerUrl ?? "https://blockscout.polkadot.io/" } },
 });

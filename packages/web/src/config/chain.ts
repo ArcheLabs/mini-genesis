@@ -6,7 +6,7 @@ export function genesisChain(manifest: DeploymentManifest): Chain {
   return defineChain({
     id: Number(manifest.source.chainId),
     name: manifest.source.name,
-    nativeCurrency: { name: DOT_SYMBOL, symbol: DOT_SYMBOL, decimals: DOT_DECIMALS },
+    nativeCurrency: { name: manifest.source.currencySymbol ?? DOT_SYMBOL, symbol: manifest.source.currencySymbol ?? DOT_SYMBOL, decimals: manifest.source.evmNativeDecimals ?? DOT_DECIMALS },
     rpcUrls: { default: { http: manifest.source.rpcHttpUrls.filter(Boolean) } },
     blockExplorers: { default: { name: "Explorer", url: manifest.source.explorerUrl || "https://example.invalid" } },
   });
