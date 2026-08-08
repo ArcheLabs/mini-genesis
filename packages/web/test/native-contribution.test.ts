@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { hexToBytes, type Address } from "viem";
-import { createSubstrateExecutionAdapter, estimateNativeMax, validateNativeEvents, validatePolkadotJsNativeEvents } from "../src/genesis/execution/substrate";
+import { createNativeDiagnostic, createSubstrateExecutionAdapter, estimateNativeMax, inspectWeightShape, recordSimulationDiagnostic, validateNativeEvents, validatePolkadotJsNativeEvents, validateWeightRequired } from "../src/genesis/execution/substrate";
 import { parseDotAmount } from "../src/genesis/amount";
 import { readNativeBalance } from "../src/wallet/substrate/balance";
 import { ACCOUNT, contributedLog, manifest, SOURCE_CONTRACT } from "./helpers";
@@ -34,6 +34,47 @@ function nativeApi() {
 }
 
 describe("native contribution adapter", () => {
+  it("accepts the descriptor's snake_case bigint weight", () => {
+    expect(validateWeightRequired({ ref_time: 100n, proof_size: 20n })).toEqual({ ref_time: 100n, proof_size: 20n });
+  });
+  it("records a missing required weight reason", () => {
+    const diagnostic = createNativeDiagnostic(NATIVE_ACCOUNT);
+    expect(() => validateWeightRequired(undefined, diagnostic)).toThrow("REVIVE_WEIGHT_LIMIT");
+    expect(diagnostic.weightLimitFailureReason).toBe("WEIGHT_REQUIRED_MISSING");
+  });
+  it("records zero ref_time", () => {
+    const diagnostic = createNativeDiagnostic(NATIVE_ACCOUNT);
+    expect(() => validateWeightRequired({ ref_time: 0n, proof_size: 10n }, diagnostic)).toThrow("REVIVE_WEIGHT_LIMIT");
+    expect(diagnostic.weightLimitFailureReason).toBe("WEIGHT_REF_TIME_ZERO");
+  });
+  it("records negative proof_size", () => {
+    const diagnostic = createNativeDiagnostic(NATIVE_ACCOUNT);
+    expect(() => validateWeightRequired({ ref_time: 100n, proof_size: -1n }, diagnostic)).toThrow("REVIVE_WEIGHT_LIMIT");
+    expect(diagnostic.weightLimitFailureReason).toBe("WEIGHT_PROOF_SIZE_NEGATIVE");
+  });
+  it("exposes camelCase weight without accepting it", () => {
+    const diagnostic = createNativeDiagnostic(NATIVE_ACCOUNT);
+    expect(inspectWeightShape({ refTime: 100n, proofSize: 20n })).toMatchObject({ keys: ["refTime", "proofSize"], refTime: "100", proofSize: "20", ref_time: null, proof_size: null });
+    expect(() => validateWeightRequired({ refTime: 100n, proofSize: 20n }, diagnostic)).toThrow("REVIVE_WEIGHT_LIMIT");
+    expect(diagnostic.weightLimitFailureReason).toBe("WEIGHT_SHAPE_UNEXPECTED");
+  });
+  it("records the full dry-run resource envelope before validation", () => {
+    const diagnostic = createNativeDiagnostic(NATIVE_ACCOUNT);
+    const simulation = {
+      weight_consumed: { ref_time: 80n, proof_size: 8n }, weight_required: { ref_time: 100n, proof_size: 10n },
+      storage_deposit: { type: "Charge", value: 1n }, max_storage_deposit: { type: "Charge", value: 5n }, gas_consumed: 77n,
+      result: { success: true, value: { flags: 0, data: new Uint8Array() } },
+    };
+    recordSimulationDiagnostic(diagnostic, simulation);
+    expect(diagnostic.dryRunEnvelope).toBe(simulation);
+    expect(diagnostic.dryRunEnvelopeShape?.keys).toEqual(Object.keys(simulation));
+    expect(diagnostic.dryRunWeightRequiredShape).toMatchObject({ ref_time: "100", proof_size: "10" });
+    expect(diagnostic.dryRunWeightConsumed).toBe(simulation.weight_consumed);
+    expect(diagnostic.dryRunStorageDeposit).toBe(simulation.storage_deposit);
+    expect(diagnostic.dryRunMaxStorageDeposit).toBe(simulation.max_storage_deposit);
+    expect(diagnostic.dryRunGasConsumed).toBe(77n);
+    expect(diagnostic.dryRunResult).toBe(simulation.result);
+  });
   it("keeps the UI free balance separate from spendable balance", async () => {
     const api = { query: { System: { Account: { getValue: vi.fn().mockResolvedValue({ data: { free: 20n, frozen: 7n } }) } } }, constants: { Balances: { ExistentialDeposit: vi.fn().mockResolvedValue(3n) } } };
     await expect(readNativeBalance(api, NATIVE_ACCOUNT)).resolves.toEqual({ free: 20n, frozen: 7n, existentialDeposit: 3n, spendable: 13n });

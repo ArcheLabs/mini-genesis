@@ -10,14 +10,30 @@ import type { GenesisExecutionAdapter, ContributionContext, ContributionResult }
 
 type Weight = { ref_time: bigint; proof_size: bigint };
 type Simulation = {
-  weight_required: Weight;
-  weight_consumed: Weight;
+  weight_required?: unknown;
+  weight_consumed?: unknown;
   storage_deposit: unknown;
   max_storage_deposit: unknown;
+  gas_consumed?: unknown;
   result: { success?: boolean; value?: unknown; error?: unknown };
 };
 
-type NativeDiagnostic = {
+type ScalarShapeDiagnostic = { type: string; constructor: string | null; string: string | null; keys: string[] };
+type WeightShapeDiagnostic = {
+  type: string;
+  constructor: string | null;
+  keys: string[];
+  refTime: string | null;
+  ref_time: string | null;
+  proofSize: string | null;
+  proof_size: string | null;
+  refTimeShape: ScalarShapeDiagnostic;
+  ref_timeShape: ScalarShapeDiagnostic;
+  proofSizeShape: ScalarShapeDiagnostic;
+  proof_sizeShape: ScalarShapeDiagnostic;
+};
+
+export type NativeDiagnostic = {
   account: string;
   accountId32: string | null;
   free: bigint | null;
@@ -25,6 +41,19 @@ type NativeDiagnostic = {
   existentialDeposit: bigint | null;
   spendable: bigint | null;
   dryRunResult: unknown;
+  dryRunEnvelope: unknown;
+  dryRunEnvelopeShape: { type: string; constructor: string | null; keys: string[] } | null;
+  dryRunWeightRequired: unknown;
+  dryRunWeightConsumed: unknown;
+  dryRunStorageDeposit: unknown;
+  dryRunMaxStorageDeposit: unknown;
+  dryRunGasConsumed: unknown;
+  dryRunWeightRequiredShape: WeightShapeDiagnostic | null;
+  dryRunMaxStorageDepositShape: ScalarShapeDiagnostic | null;
+  dryRunResultValueShape: ScalarShapeDiagnostic | null;
+  dryRunInput: { origin: string; dest: string; value: string; gasLimit: null; storageDepositLimit: null; data: string } | null;
+  weightLimitFailureReason: string | null;
+  contractAddress: string | null;
   dryRunError: string | null;
   txBuildError: string | null;
   feeEstimateError: string | null;
@@ -54,10 +83,91 @@ function errorDescription(error: unknown): string {
   try { return JSON.stringify(error ?? ""); } catch { return String(error); }
 }
 
-function createNativeDiagnostic(account: string): NativeDiagnostic {
+function objectKeys(value: unknown): string[] {
+  if (!value || typeof value !== "object") return [];
+  try { return Object.keys(value); } catch { return []; }
+}
+
+function diagnosticScalar(value: unknown): string | null {
+  return typeof value === "bigint" || typeof value === "number" || typeof value === "string" ? String(value) : null;
+}
+
+export function inspectScalar(value: unknown): ScalarShapeDiagnostic {
+  let constructor: string | null = null;
+  if (value && typeof value === "object") {
+    try { constructor = (value as { constructor?: { name?: string } }).constructor?.name ?? null; } catch { /* Diagnostic only. */ }
+  }
+  let string: string | null = null;
+  try { string = String(value); } catch { /* Diagnostic only. */ }
+  return { type: typeof value, constructor, string, keys: objectKeys(value) };
+}
+
+export function inspectWeightShape(weight: unknown): WeightShapeDiagnostic {
+  const value = weight && typeof weight === "object" ? weight as Record<string, unknown> : {};
+  return {
+    type: typeof weight,
+    constructor: inspectScalar(weight).constructor,
+    keys: objectKeys(weight),
+    refTime: diagnosticScalar(value.refTime),
+    ref_time: diagnosticScalar(value.ref_time),
+    proofSize: diagnosticScalar(value.proofSize),
+    proof_size: diagnosticScalar(value.proof_size),
+    refTimeShape: inspectScalar(value.refTime),
+    ref_timeShape: inspectScalar(value.ref_time),
+    proofSizeShape: inspectScalar(value.proofSize),
+    proof_sizeShape: inspectScalar(value.proof_size),
+  };
+}
+
+function bigintLike(value: unknown): bigint | null {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number" && Number.isSafeInteger(value)) return BigInt(value);
+  if (typeof value === "string" && /^-?\d+$/.test(value)) return BigInt(value);
+  return null;
+}
+
+export function recordSimulationDiagnostic(diagnostic: NativeDiagnostic, simulation: unknown): void {
+  diagnostic.dryRunEnvelope = simulation;
+  const envelope = simulation && typeof simulation === "object" ? simulation as Record<string, unknown> : {};
+  const envelopeScalar = inspectScalar(simulation);
+  diagnostic.dryRunEnvelopeShape = { type: envelopeScalar.type, constructor: envelopeScalar.constructor, keys: envelopeScalar.keys };
+  diagnostic.dryRunWeightRequired = envelope.weight_required ?? envelope.weightRequired;
+  diagnostic.dryRunWeightConsumed = envelope.weight_consumed ?? envelope.weightConsumed;
+  diagnostic.dryRunStorageDeposit = envelope.storage_deposit ?? envelope.storageDeposit;
+  diagnostic.dryRunMaxStorageDeposit = envelope.max_storage_deposit ?? envelope.maxStorageDeposit;
+  diagnostic.dryRunGasConsumed = envelope.gas_consumed ?? envelope.gasConsumed;
+  diagnostic.dryRunWeightRequiredShape = inspectWeightShape(diagnostic.dryRunWeightRequired);
+  diagnostic.dryRunMaxStorageDepositShape = inspectScalar(diagnostic.dryRunMaxStorageDeposit);
+  const result = envelope.result && typeof envelope.result === "object" ? envelope.result as Record<string, unknown> : {};
+  diagnostic.dryRunResult = envelope.result;
+  diagnostic.dryRunResultValueShape = inspectScalar(result.value);
+}
+
+export function validateWeightRequired(required: unknown, diagnostic?: NativeDiagnostic): Weight {
+  const fail = (reason: string): never => {
+    if (diagnostic) diagnostic.weightLimitFailureReason = reason;
+    throw new Error("REVIVE_WEIGHT_LIMIT");
+  };
+  if (!required || typeof required !== "object") return fail("WEIGHT_REQUIRED_MISSING");
+  const value = required as Record<string, unknown>;
+  if (!("ref_time" in value) && ("refTime" in value || "proofSize" in value)) return fail("WEIGHT_SHAPE_UNEXPECTED");
+  if (!("ref_time" in value)) return fail("WEIGHT_REF_TIME_MISSING");
+  const refTime = bigintLike(value.ref_time);
+  if (refTime === null) return fail("WEIGHT_REF_TIME_UNSUPPORTED_TYPE");
+  if (refTime === 0n) return fail("WEIGHT_REF_TIME_ZERO");
+  if (refTime < 0n) return fail("WEIGHT_REF_TIME_NEGATIVE");
+  if (!("proof_size" in value)) return fail("WEIGHT_PROOF_SIZE_MISSING");
+  const proofSize = bigintLike(value.proof_size);
+  if (proofSize === null) return fail("WEIGHT_PROOF_SIZE_UNSUPPORTED_TYPE");
+  if (proofSize < 0n) return fail("WEIGHT_PROOF_SIZE_NEGATIVE");
+  if (diagnostic) diagnostic.weightLimitFailureReason = null;
+  return { ref_time: refTime, proof_size: proofSize };
+}
+
+export function createNativeDiagnostic(account: string): NativeDiagnostic {
   let accountId32: string | null = null;
   try { accountId32 = bytesToHex(accountId32FromSs58(account)); } catch { /* Keep the diagnostic usable for malformed accounts. */ }
-  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, chainGenesisHash: null, injectorMetadataKnown: null, injectorMetadataProvided: null, injectorMetadataError: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, submissionError: null, signerPath: null, network: null, reviveCall: null, error: null };
+  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunEnvelope: null, dryRunEnvelopeShape: null, dryRunWeightRequired: null, dryRunWeightConsumed: null, dryRunStorageDeposit: null, dryRunMaxStorageDeposit: null, dryRunGasConsumed: null, dryRunWeightRequiredShape: null, dryRunMaxStorageDepositShape: null, dryRunResultValueShape: null, dryRunInput: null, weightLimitFailureReason: null, contractAddress: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, chainGenesisHash: null, injectorMetadataKnown: null, injectorMetadataProvided: null, injectorMetadataError: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, submissionError: null, signerPath: null, network: null, reviveCall: null, error: null };
 }
 
 function emitNativeDiagnostic(manifest: DeploymentManifest, diagnostic: NativeDiagnostic): void {
@@ -110,6 +220,10 @@ function validateSimulation(simulation: Simulation): void {
 
 export async function simulateNativeContribution(api: any, account: string, contractAddress: Address, amount: ParsedDotAmount, diagnostic?: NativeDiagnostic): Promise<{ weightLimit: Weight; storageDepositLimit: bigint; simulation: Simulation }> {
   const data = encodeFunctionData({ abi: genesisAbi, functionName: "contribute" });
+  if (diagnostic) {
+    diagnostic.contractAddress = contractAddress;
+    diagnostic.dryRunInput = { origin: account, dest: contractAddress, value: amount.planck.toString(), gasLimit: null, storageDepositLimit: null, data };
+  }
   let simulation: Simulation;
   try {
     simulation = await api.apis.ReviveApi.call(account, contractAddress, amount.planck, undefined, undefined, hexToBytes(data));
@@ -118,10 +232,9 @@ export async function simulateNativeContribution(api: any, account: string, cont
     if (isAccountUnmappedError(error)) throw new Error("ACCOUNT_UNMAPPED");
     throw new Error("REVIVE_DRY_RUN_FAILED");
   }
-  if (diagnostic) diagnostic.dryRunResult = simulation.result;
+  if (diagnostic) recordSimulationDiagnostic(diagnostic, simulation);
   validateSimulation(simulation);
-  const required = simulation.weight_required;
-  if (!required || required.ref_time <= 0n || required.proof_size < 0n) throw new Error("REVIVE_WEIGHT_LIMIT");
+  const required = validateWeightRequired(simulation.weight_required, diagnostic);
   return { weightLimit: required, storageDepositLimit: storageChargeOrZero(simulation.max_storage_deposit), simulation };
 }
 
@@ -131,6 +244,7 @@ function ceilPlanckFromEvmWei(value: bigint): bigint { return (value + NATIVE_TO
 export async function estimateNativeMax(api: any, account: string, manifest: DeploymentManifest, phase: number, firstMinimum: bigint, subsequentExclusive: bigint): Promise<bigint | null> {
   if (phase >= 2) return 0n;
   const diagnostic = createNativeDiagnostic(account);
+  diagnostic.network = manifest.source.chainId === "420420419" ? "polkadot-mainnet" : "paseo";
   try {
     const resolution = await resolveContractAddress(api, account);
     const balance = await readNativeBalance(api, account);
@@ -225,6 +339,7 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
     async safeMax() { return null; },
     async contribute(input, context, onUpdate = () => {}, signal): Promise<ContributionResult> {
       const diagnostic = createNativeDiagnostic(account);
+      diagnostic.network = manifest.source.chainId === "420420419" ? "polkadot-mainnet" : "paseo";
       try {
         checkCancelled(signal); onUpdate({ state: "validating" });
         const amount = validateContributionAmount(input, context.phase, context.firstMinimum, context.subsequentExclusive);
