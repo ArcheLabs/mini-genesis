@@ -19,6 +19,15 @@ export type StoredPolkadotSession = { version: 1; extensionId: string; accountId
 export type PolkadotRestoreStatus = "idle" | "restoring" | "done";
 export type WalletStatus = "disconnected" | "restoring" | "connecting" | "hydrating" | "ready" | "error";
 
+export function selectWalletSession(isEvmConnected: boolean, evmSession: EvmWalletSession | null, polkadotSession: PolkadotWalletSession | null): WalletSession {
+  return isEvmConnected ? evmSession : polkadotSession ?? evmSession;
+}
+export function deriveWalletLifecycle(session: WalletSession, restoreStatus: PolkadotRestoreStatus, appKitStatus: string | undefined): { walletReady: boolean; walletStatus: WalletStatus } {
+  const walletReady = Boolean(session && (session.kind === "evm" ? session.provider : session.api && session.contractIdentity && session.contractIdentityStatus === "verified" && (session.balanceStatus === "ready" || session.balanceStatus === "refreshing")));
+  const walletStatus: WalletStatus = restoreStatus === "restoring" ? "restoring" : appKitStatus === "connecting" ? "connecting" : !session ? "disconnected" : session.kind === "polkadot" && !walletReady ? "hydrating" : walletReady ? "ready" : "error";
+  return { walletReady, walletStatus };
+}
+
 export function accountId32Hex(account: PolkadotAccount): `0x${string}` { return bytesToHex(account.accountId32).toLowerCase() as `0x${string}`; }
 export function samePolkadotAccounts(current: PolkadotAccount[], next: PolkadotAccount[]): boolean {
   return current.length === next.length && current.every((account, index) => {
@@ -98,6 +107,8 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions().map(describePolkadotWallet));
   const [restoreStatus, setRestoreStatus] = useState<PolkadotRestoreStatus>(() => readStoredPolkadotSession() ? "restoring" : "idle");
   const restorationAttempted = useRef(false);
+  const evmConnectedRef = useRef(isConnected);
+  evmConnectedRef.current = isConnected;
   const selectedAddressRef = useRef<string | null>(selectedPolkadotAddress);
   selectedAddressRef.current = selectedPolkadotAddress;
 
@@ -139,7 +150,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     };
   }, [contractIdentityStatus, nativeBalance, nativeBalanceStatus, selectedPolkadotAccount, substrateAccounts, substrateApi, substrateContractAddress, substrateExtension]);
 
-  const session: WalletSession = substrateExtension ? polkadotSession : evmSession;
+  const session = selectWalletSession(isConnected, evmSession, polkadotSession);
   const sessionKey = session?.kind === "evm" ? `evm:${session.address}` : session?.kind === "polkadot" ? `polkadot:${session.accountId32}` : null;
 
   useEffect(() => {
@@ -224,6 +235,10 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     const name = extensionId ?? getInjectedExtensions()[0];
     if (!name) throw new Error("NO_POLKADOT_WALLET");
     const extension = await connectInjectedExtension(name, "MINI Genesis");
+    if (evmConnectedRef.current) {
+      extension.disconnect();
+      throw new Error("WALLET_DISCONNECT_REQUIRED");
+    }
     const accounts = supportedAccounts(extension.getAccounts());
     if (!accounts.length) {
       extension.disconnect();
@@ -280,6 +295,14 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   }, [selectedPolkadotAddress, substrateApi]);
 
   useEffect(() => {
+    if (!isConnected) return;
+    restorationAttempted.current = true;
+    setRestoreStatus("done");
+    if (substrateExtension) disconnectPolkadot();
+    else clearStoredPolkadotSession();
+  }, [disconnectPolkadot, isConnected, substrateExtension]);
+
+  useEffect(() => {
     if (restorationAttempted.current || status === "connecting" || isConnected || substrateExtension) return;
     restorationAttempted.current = true;
     const stored = readStoredPolkadotSession();
@@ -289,8 +312,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     void connectPolkadot(stored.extensionId, stored.accountId32).catch(() => clearStoredPolkadotSession()).finally(() => setRestoreStatus("done"));
   }, [connectPolkadot, isConnected, status, substrateExtension]);
 
-  const walletReady = Boolean(session && (session.kind === "evm" ? session.provider : session.api && session.contractIdentity && session.contractIdentityStatus === "verified" && (session.balanceStatus === "ready" || session.balanceStatus === "refreshing")));
-  const walletStatus: WalletStatus = restoreStatus === "restoring" ? "restoring" : status === "connecting" ? "connecting" : !session ? "disconnected" : session.kind === "polkadot" && !walletReady ? "hydrating" : walletReady ? "ready" : "error";
+  const { walletReady, walletStatus } = deriveWalletLifecycle(session, restoreStatus, status);
   return {
     session,
     sessionKey,

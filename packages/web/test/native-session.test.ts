@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { reconcileGenesisUserState } from "../src/genesis/reconcile";
-import { POLKADOT_SESSION_STORAGE_KEY, clearStoredPolkadotSession, readStoredPolkadotSession, samePolkadotAccounts, storePolkadotSession, type StoredPolkadotSession } from "../src/wallet/use-genesis-wallet";
+import { POLKADOT_SESSION_STORAGE_KEY, clearStoredPolkadotSession, deriveWalletLifecycle, readStoredPolkadotSession, samePolkadotAccounts, selectWalletSession, storePolkadotSession, type StoredPolkadotSession } from "../src/wallet/use-genesis-wallet";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -34,6 +34,28 @@ describe("native wallet session persistence", () => {
     const styles = readFileSync(resolve(process.cwd(), "src/interaction-overrides.css"), "utf8");
     expect(styles).toContain(".wallet-menu button.selected{color:var(--accent)");
     expect(styles).toContain(".account-menu-address");
+  });
+
+  it("lets a restored EVM session win over stale Polkadot restoration", () => {
+    const evm = { kind: "evm", provider: {} } as any;
+    const polkadot = { kind: "polkadot", api: {}, contractIdentity: "0x0000000000000000000000000000000000000001", contractIdentityStatus: "verified", balanceStatus: "ready" } as any;
+    expect(selectWalletSession(true, evm, polkadot)).toBe(evm);
+    expect(deriveWalletLifecycle(evm, "done", "connected")).toEqual({ walletReady: true, walletStatus: "ready" });
+  });
+
+  it("keeps Polkadot restoration available when EVM is disconnected", () => {
+    const polkadot = { kind: "polkadot", api: {}, contractIdentity: "0x0000000000000000000000000000000000000001", contractIdentityStatus: "verified", balanceStatus: "ready" } as any;
+    expect(selectWalletSession(false, null, polkadot)).toBe(polkadot);
+    expect(deriveWalletLifecycle(polkadot, "done", "disconnected")).toEqual({ walletReady: true, walletStatus: "ready" });
+  });
+
+  it("ends stale Polkadot restoration before it can affect the EVM UI", () => {
+    const walletSource = readFileSync(resolve(process.cwd(), "src/wallet/use-genesis-wallet.ts"), "utf8");
+    const appSource = readFileSync(resolve(process.cwd(), "src.tsx"), "utf8");
+    expect(walletSource).toContain('if (!isConnected) return;\n    restorationAttempted.current = true;\n    setRestoreStatus("done");');
+    expect(walletSource).toContain("if (evmConnectedRef.current) {");
+    expect(walletSource).toContain("const session = selectWalletSession(isConnected, evmSession, polkadotSession);");
+    expect(appSource).toContain('const initialWalletLoading = !demoMode && !paymentReady && walletStatus !== "disconnected";');
   });
 });
 
