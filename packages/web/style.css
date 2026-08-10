@@ -41,6 +41,19 @@ footer{border-top-color:var(--line-strong)}
 @media(max-width:640px){.genesis-card{padding:24px 18px}.stats-strip{gap:8px}.stats-strip div{padding:12px 14px}.rule-summary{padding:18px 8px}}
 @media(prefers-reduced-motion:reduce){.genesis-card,.stats-strip>div,.assets-heading,.asset-card,.history-card,.assets-empty,.rule-item{animation:none}}
 
+/* Genesis emission phase marker */
+.progress-visual{position:relative;padding-top:20px}
+.progress-visual .progress-track{margin:0 0 10px;overflow:visible}
+.progress-visual.without-boundary{padding-top:0}
+.progress-visual.without-boundary .progress-track{margin:12px 0 10px}
+.progress-protection-region{position:absolute;top:0;right:0;bottom:0;z-index:0;border-radius:0 999px 999px 0;background:color-mix(in srgb,var(--muted) 8%,transparent);pointer-events:none}
+.progress-fill{z-index:1}
+.progress-phase-boundary{position:absolute;top:-3px;bottom:-3px;z-index:2;width:1px;background:color-mix(in srgb,var(--muted) 65%,transparent);pointer-events:none}
+.progress-phase-boundary.is-active{background:color-mix(in srgb,var(--accent) 70%,transparent)}
+.progress-phase-label{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;color:var(--muted);font:600 10px/1 var(--font-mono);letter-spacing:.02em}
+.progress-phase-boundary.is-active .progress-phase-label{color:var(--accent)}
+@media(max-width:640px){.progress-visual{padding-top:18px}.progress-phase-label{font-size:9px;bottom:calc(100% + 5px)}}
+
 /* spacing rhythm fixes */
 .hero{padding-bottom:64px}
 .section#rules{padding-top:72px}
