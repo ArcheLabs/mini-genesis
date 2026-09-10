@@ -6,9 +6,8 @@ const repositoryRoot = resolve(import.meta.dirname, "..");
 const environment = process.argv[2];
 const finalizeOnly = process.argv[3] === "--finalize-only";
 const PRODUCTION_DURATION_SECONDS = 7n * 24n * 60n * 60n;
-const requiredEnvironment = [
+const deploymentEnvironment = [
   "RPC_URL",
-  "PRIVATE_KEY",
   "TREASURY",
   "PHASE2_ALLOCATION",
   "PHASE2_START_PRICE_X18",
@@ -50,6 +49,10 @@ function decimal(value) {
   return BigInt(value).toString();
 }
 
+function normalizedAddress(value) {
+  return String(value).trim().toLowerCase();
+}
+
 function parseBroadcastDeployment(broadcast) {
   const transactions = Array.isArray(broadcast?.transactions) ? broadcast.transactions : [];
   const transaction = transactions.find(
@@ -73,14 +76,18 @@ function ensureProductionConstants() {
 
 async function deploy() {
   if (environment !== "staging" && environment !== "production") throw new Error("Deployment environment must be staging or production");
+  for (const name of deploymentEnvironment) requiredEnv(name);
+  if (!finalizeOnly) requiredEnv("PRIVATE_KEY");
+  ensureProductionConstants();
+
   const rpcUrl = requiredEnv("RPC_URL");
   if (!finalizeOnly) {
-    for (const name of requiredEnvironment.slice(1)) requiredEnv(name);
-    ensureProductionConstants();
     run("forge", ["script", "script/DeployMiniGenesisCurve.s.sol", "--rpc-url", rpcUrl, "--broadcast"]);
   }
 
   const chainId = decimal(runText("cast", ["chain-id", "--rpc-url", rpcUrl]).split(/\s+/)[0]);
+  if (chainId !== decimal(requiredEnv("EXPECTED_CHAIN_ID"))) throw new Error("Phase II deployment chain ID does not match EXPECTED_CHAIN_ID");
+
   const broadcastPath = resolve(repositoryRoot, "broadcast", "DeployMiniGenesisCurve.s.sol", chainId, "run-latest.json");
   let broadcast;
   try {
@@ -103,6 +110,14 @@ async function deploy() {
   const endPriceX18 = decimal(call("endPrice()(uint256)"));
   const startTime = decimal(call("startTime()(uint64)"));
   const endTime = decimal(call("endTime()(uint64)"));
+
+  if (normalizedAddress(treasury) !== normalizedAddress(requiredEnv("TREASURY"))) throw new Error("Phase II deployment treasury does not match TREASURY");
+  if (allocationMini !== decimal(requiredEnv("PHASE2_ALLOCATION"))) throw new Error("Phase II deployment allocation does not match PHASE2_ALLOCATION");
+  if (startPriceX18 !== decimal(requiredEnv("PHASE2_START_PRICE_X18"))) throw new Error("Phase II deployment start price does not match PHASE2_START_PRICE_X18");
+  if (endPriceX18 !== decimal(requiredEnv("PHASE2_END_PRICE_X18"))) throw new Error("Phase II deployment end price does not match PHASE2_END_PRICE_X18");
+  if (startTime !== decimal(requiredEnv("PHASE2_START_TIMESTAMP"))) throw new Error("Phase II deployment start time does not match PHASE2_START_TIMESTAMP");
+  if (endTime !== decimal(requiredEnv("PHASE2_END_TIMESTAMP"))) throw new Error("Phase II deployment end time does not match PHASE2_END_TIMESTAMP");
+
   if (BigInt(endTime) <= BigInt(startTime) || BigInt(allocationMini) === 0n || BigInt(startPriceX18) === 0n || BigInt(endPriceX18) <= BigInt(startPriceX18)) {
     throw new Error("Phase II deployment parameters failed the economics gate");
   }
