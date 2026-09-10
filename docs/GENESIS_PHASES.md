@@ -14,7 +14,7 @@ The page is read-only and records the earliest participants' risk and the work
 that followed. The displayed `0.00008946 DOT/MINI` value is the **Genesis I final
 reference price**, not an exchange spot price.
 
-## Genesis II — LIVE
+## Genesis II — IMPLEMENTED / NOT YET LIVE
 
 Genesis II is a separate `MiniGenesisCurve` contract. It distributes a fixed
 2,000,000 MINI credit from the 10,000,000 MINI Early Operations Reserve through a
@@ -26,6 +26,10 @@ Reserve. The contract records the authoritative on-chain credit in
 
 The contract is non-upgradeable and has no owner pricing control, whitelist,
 deadline extension, or allocation increase path.
+
+The implementation must not be described as LIVE until a production deployment
+has been completed and the production manifest contains the deployed Phase II
+contract and immutable parameters.
 
 ## Genesis III — LOCKED
 
