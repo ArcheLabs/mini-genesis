@@ -3,7 +3,7 @@
 MINI Genesis is a finite, three-phase Genesis application for MINI:
 
 * **Genesis I — COMPLETED:** immutable time-weighted stream distribution through `MiniGenesisStream`.
-* **Genesis II — LIVE:** a separate, limited 2,000,000 MINI Early Operations Reserve allocation through a deterministic quantity-based linear bonding curve.
+* **Genesis II — IMPLEMENTED / NOT YET LIVE:** a separate, limited 2,000,000 MINI Early Operations Reserve allocation through a deterministic quantity-based linear bonding curve.
 * **Genesis III — LOCKED:** the final Genesis phase, with no allocation, date, or price determined in this release.
 
 Phase I and Phase II are different mechanisms. Phase I emits MINI by block and
