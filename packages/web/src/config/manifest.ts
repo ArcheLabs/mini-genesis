@@ -12,6 +12,50 @@ export type ContractConfig = Partial<Record<
   | "firstContributionMinimum"
   | "subsequentContributionMinimumExclusive", string>>;
 
+export type GenesisAchievement = {
+  id: string;
+  name: string;
+  status: "delivered" | "active" | "investigated" | "discontinued";
+  summary: string;
+  evidenceUrl?: string;
+};
+
+export type GenesisPhase2Manifest = {
+  status: "template" | "active" | "ended";
+  mechanism: "linear-bonding-curve";
+  contract?: Address;
+  deploymentBlock?: string;
+  runtimeCodeHash?: Hex;
+  allocationMini?: string;
+  startPriceX18?: string;
+  endPriceX18?: string;
+  startTime?: string;
+  endTime?: string;
+  snapshot?: {
+    phase: 2;
+    status: "ended";
+    allocationMini: string;
+    soldMini: string;
+    raisedDot: string;
+    buyerCount: string;
+    startPriceX18: string;
+    terminalPriceX18: string;
+    startTime: string;
+    endTime: string;
+    contract: Address;
+    deploymentBlock: string;
+    runtimeCodeHash: Hex;
+  };
+};
+
+export type GenesisManifest = {
+  phases: {
+    phase1: { status: "ended"; mechanism: "stream"; finalReferencePriceX18?: string; achievements?: GenesisAchievement[] };
+    phase2: GenesisPhase2Manifest;
+    phase3: { status: "locked" };
+  };
+};
+
 export type DeploymentManifest = {
   environment: DeploymentEnvironment;
   status: ManifestStatus;
@@ -35,6 +79,7 @@ export type DeploymentManifest = {
   destination: { chainId: string; genesisHash: Hex; miniLucky: Address; trustGraph: Address; personhoodPrecompile: Address; deploymentBlock: string };
   backend?: { baseUrl: string | null };
   product: unknown;
+  genesis?: GenesisManifest;
 };
 
 export type RuntimeErrorCode =
@@ -72,6 +117,11 @@ export function assertManifestRuntime(manifest: DeploymentManifest): void {
   if (!isAddress(manifest.source.contract) || /^0x0+$/i.test(manifest.source.contract)) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.runtimeCodeHash || /^0x0+$/i.test(manifest.source.runtimeCodeHash)) throw new Error("CONFIGURATION_MISMATCH");
   if (manifest.source.deploymentBlock === "0") throw new Error("CONFIGURATION_MISMATCH");
+}
+
+export function phase2Address(manifest: DeploymentManifest): Address | null {
+  const value = manifest.genesis?.phases.phase2?.contract;
+  return value && isAddress(value) && !/^0x0+$/i.test(value) ? value : null;
 }
 
 export function checksumAddress(value: string): Address { return getAddress(value); }

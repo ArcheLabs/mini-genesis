@@ -1,7 +1,7 @@
 import type { Address, PublicClient } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
 import { genesisAbi } from "./abi";
-import { phaseName, type PhaseName } from "./phase";
+import { streamPhaseName, type StreamPhaseName } from "./stream-phase";
 
 export type GenesisStatic = {
   genesisAllocation: bigint;
@@ -16,7 +16,7 @@ export type GenesisStatic = {
 
 export type GenesisDynamic = {
   phase: number;
-  phaseName: PhaseName;
+  phaseName: StreamPhaseName;
   startBlock: bigint;
   contributionEndBlock: bigint;
   emissionEndBlock: bigint;
@@ -51,7 +51,7 @@ export async function readGlobalDynamic(client: PublicClient, manifest: Deployme
     read(client, manifest.source.contract, "emittedMini"),
     client.getBlockNumber(),
   ]);
-  return { phase: Number(rawPhase), phaseName: phaseName(rawPhase), startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, emittedMini, observedBlockNumber };
+  return { phase: Number(rawPhase), phaseName: streamPhaseName(rawPhase), startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, emittedMini, observedBlockNumber };
 }
 
 export async function readGenesisUserState(client: PublicClient, manifest: DeploymentManifest, contractAddress: Address): Promise<GenesisUser> {

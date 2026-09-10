@@ -1,13 +1,27 @@
 # MINI Genesis
 
-MINI Genesis is the fair-launch application for MINI.
+MINI Genesis is a finite, three-phase Genesis application for MINI:
 
-Users contribute DOT and accumulate MINI through block-by-block distribution. The repository contains:
+* **Genesis I — COMPLETED:** immutable time-weighted stream distribution through `MiniGenesisStream`.
+* **Genesis II — IMPLEMENTED / NOT YET LIVE:** a separate, limited 2,000,000 MINI Early Operations Reserve allocation through a deterministic quantity-based linear bonding curve.
+* **Genesis III — LOCKED:** the final Genesis phase, with no allocation, date, or price determined in this release.
+
+Phase I and Phase II are different mechanisms. Phase I emits MINI by block and
+contribution weight; Phase II prices exact MINI quantities from cumulative sold
+amount. Phase II creates no additional MINI, and unsold MINI remains in the
+Early Operations Reserve.
+
+The repository contains:
 
 * the `MiniGenesisStream` contract;
 * deployment and manifest tooling;
 * the standalone Genesis frontend;
 * staging and production release workflows.
+
+Phase II production parameters are fixed at 0.000750 → 0.001250 DOT/MINI,
+with a full-sale capacity of 2,000 DOT. The displayed Genesis I value
+0.00008946 DOT/MINI is a historical final reference price, not an exchange spot
+price.
 
 ## Requirements
 
@@ -163,6 +177,16 @@ To finalize an existing deployment:
 pnpm finalize:production
 ```
 
+Phase II uses independent deployment tooling and never modifies the Phase I
+deployment:
+
+```bash
+pnpm deploy:phase2:staging
+pnpm finalize:phase2:staging
+pnpm deploy:phase2:production
+pnpm finalize:phase2:production
+```
+
 The deployment updates:
 
 ```text
@@ -201,3 +225,9 @@ cast send "$MINI_GENESIS_STREAM_ADDRESS" \
 * [Security](docs/SECURITY.md)
 * [TestNet checklist](docs/TESTNET_CHECKLIST.md)
 * [Mainnet checklist](docs/MAINNET_CHECKLIST.md)
+* [Genesis phases](docs/GENESIS_PHASES.md)
+* [Phase II economics](docs/PHASE2_ECONOMICS.md)
+* [Phase II accounting](docs/PHASE2_ACCOUNTING.md)
+* [Phase II security](docs/PHASE2_SECURITY.md)
+* [Phase II mainnet checklist](docs/PHASE2_MAINNET_CHECKLIST.md)
+* [Phase II staging report](docs/PHASE2_STAGING_REPORT.md)
