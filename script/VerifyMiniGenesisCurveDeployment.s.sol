@@ -16,6 +16,11 @@ contract VerifyMiniGenesisCurveDeployment is Script {
     function run() external view {
         uint256 expectedChainId = vm.envUint("EXPECTED_CHAIN_ID");
         address curveAddress = vm.envAddress("MINI_GENESIS_CURVE_ADDRESS");
+        uint256 expectedStart = vm.envUint("PHASE2_START_TIMESTAMP");
+        uint256 expectedEnd = vm.envUint("PHASE2_END_TIMESTAMP");
+        require(expectedStart <= type(uint64).max, "expected start exceeds uint64");
+        require(expectedEnd <= type(uint64).max, "expected end exceeds uint64");
+
         MiniGenesisCurve curve = MiniGenesisCurve(payable(curveAddress));
 
         require(block.chainid == expectedChainId, "unexpected chain id");
@@ -23,6 +28,8 @@ contract VerifyMiniGenesisCurveDeployment is Script {
         require(curve.allocation() == EXPECTED_ALLOCATION, "allocation mismatch");
         require(curve.startPrice() == EXPECTED_START_PRICE, "start price mismatch");
         require(curve.endPrice() == EXPECTED_END_PRICE, "end price mismatch");
+        require(curve.startTime() == uint64(expectedStart), "start timestamp mismatch");
+        require(curve.endTime() == uint64(expectedEnd), "end timestamp mismatch");
         require(curve.endTime() > curve.startTime(), "invalid time range");
         require(curve.endTime() - curve.startTime() == EXPECTED_DURATION, "duration mismatch");
         require(
@@ -32,6 +39,8 @@ contract VerifyMiniGenesisCurveDeployment is Script {
 
         console2.log("verified MiniGenesisCurve", curveAddress);
         console2.log("verified chain id", block.chainid);
+        console2.log("verified start timestamp", curve.startTime());
+        console2.log("verified end timestamp", curve.endTime());
         console2.log("verified duration", curve.endTime() - curve.startTime());
         console2.log("verified full-sale proceeds", curve.cumulativeCost(curve.allocation()));
     }
