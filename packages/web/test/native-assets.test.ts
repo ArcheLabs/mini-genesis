@@ -19,7 +19,7 @@ describe("wallet-specific My Assets", () => {
     expect(src).toContain("native-assets-grid");
     expect(src).toContain("const miniAssetCard");
     expect(src).toContain("const ecosystemAssetCard");
-    expect(src).toContain('<button className="claim-button" type="button" disabled>Claim</button>');
+    expect(src).toContain("<LuckyCreditClaim");
     expect(src).toContain("const contributedAssetCard");
     expect(src).toContain("text.contributed");
     expect(src).toContain("${formatAmount(nativeAssets.contributedDot)} ${nativeSymbol}");
@@ -28,7 +28,6 @@ describe("wallet-specific My Assets", () => {
     expect(src).toContain("if (shouldLoadContributionHistory(session?.kind ?? null)) void loadHistory(genesisIdentity, sessionKey);");
     expect(src).not.toContain("void loadHistory(committedIdentity, sessionKey);");
     expect(styles).toContain(".native-assets-grid .mini-asset{grid-column:1 / -1}");
-    expect(styles).toContain(".unavailable-asset .asset-value::after{content:\"????.??\"");
     expect(styles).not.toContain(".my-grid .asset-card:nth-child(2)");
   });
 });

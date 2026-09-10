@@ -1,10 +1,15 @@
 import { getAddress, isAddress, keccak256, toBytes, type Address, type Hex } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
-import type { ClaimStatus, Ledger, PreparedClaim } from "./types";
+import type { ClaimRecord, ClaimStatus, Ledger, PreparedClaim } from "./types";
 
 export class ApiError extends Error { constructor(public readonly code: string, public readonly requestId?: string) { super(code); } }
 const MAX_BODY = 256 * 1024;
-function baseUrl(manifest: DeploymentManifest): string { const value = manifest.backend?.baseUrl; if (!value) throw new ApiError("CLAIM_SERVICE_UNCONFIGURED"); if (manifest.environment === "production" && !value.startsWith("https://")) throw new ApiError("CONFIGURATION_MISMATCH"); return value.replace(/\/$/, ""); }
+function baseUrl(manifest: DeploymentManifest): string {
+  const value = manifest.backend?.baseUrl ?? import.meta.env.VITE_MINI_LUCKY_BACKEND_URL;
+  if (!value) throw new ApiError("CLAIM_SERVICE_UNCONFIGURED");
+  if (manifest.environment === "production" && !value.startsWith("https://")) throw new ApiError("CONFIGURATION_MISMATCH");
+  return value.replace(/\/$/, "");
+}
 async function request<T>(manifest: DeploymentManifest, path: string, init: RequestInit = {}): Promise<T> {
   const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 15_000); const onAbort = () => controller.abort();
   init.signal?.addEventListener("abort", onAbort, { once: true });
@@ -20,8 +25,24 @@ async function request<T>(manifest: DeploymentManifest, path: string, init: Requ
 }
 export function validateExactUsername(username: string): string { const bytes = new TextEncoder().encode(username); if (!username || bytes.length > 64) throw new ApiError("INVALID_USERNAME"); return username; }
 export async function getLedger(manifest: DeploymentManifest, sourceH160: Address): Promise<Ledger> { return request<Ledger>(manifest, `/v1/accounts/${getAddress(sourceH160)}`); }
-export async function prepareClaim(manifest: DeploymentManifest, sourceH160: Address, username: string): Promise<PreparedClaim> { return request<PreparedClaim>(manifest, "/v1/claims/prepare", { method: "POST", body: JSON.stringify({ sourceH160: getAddress(sourceH160), username: validateExactUsername(username) }) }); }
-export async function submitClaim(manifest: DeploymentManifest, creditGrantId: Hex, signature: Hex, signal?: AbortSignal): Promise<unknown> { return request(manifest, "/v1/claims", { method: "POST", body: JSON.stringify({ creditGrantId, signature }), signal }); }
+export async function prepareClaim(manifest: DeploymentManifest, sourceH160: Address, username: string): Promise<PreparedClaim> {
+  const canonicalUsername = validateExactUsername(username).trim();
+  const response = await request<{
+    sourceH160: Address;
+    targetKind: "USERNAME";
+    username: string;
+    ownerAccountId32: Hex;
+    targetH160: Address;
+    amount: string;
+    nonce: string;
+    typedData: PreparedClaim["typedData"];
+  }>(manifest, "/v1/claims/resolve", { method: "POST", body: JSON.stringify({ sourceH160: getAddress(sourceH160), username: canonicalUsername }) });
+  if (response.targetKind !== "USERNAME" || response.username !== canonicalUsername || !isAddress(response.targetH160) || !bytes32(response.ownerAccountId32) || !/^\d+$/.test(response.amount) || !/^\d+$/.test(response.nonce)) throw new ApiError("INVALID_CLAIM_RESPONSE");
+  return { claim: { sourceH160: getAddress(response.sourceH160), username: response.username, usernameHash: keccak256(toBytes(response.username)), ownerAccountId32: response.ownerAccountId32, targetH160: getAddress(response.targetH160), amount: response.amount, nonce: response.nonce }, typedData: response.typedData };
+}
+export async function submitClaim(manifest: DeploymentManifest, prepared: PreparedClaim, signature: Hex, signal?: AbortSignal): Promise<ClaimRecord> {
+  return request<ClaimRecord>(manifest, "/v1/claims", { method: "POST", body: JSON.stringify({ sourceH160: prepared.claim.sourceH160, username: prepared.claim.username, targetH160: prepared.claim.targetH160, amount: prepared.claim.amount, nonce: prepared.claim.nonce, signature }), signal });
+}
 export async function claimStatus(manifest: DeploymentManifest, creditGrantId: Hex, signal?: AbortSignal): Promise<{ status: ClaimStatus }> { return request(manifest, `/v1/claims/${creditGrantId}`, { signal }); }
 export async function pollClaimStatus(manifest: DeploymentManifest, creditGrantId: Hex, options: { signal?: AbortSignal; pollMs?: number; timeoutMs?: number } = {}): Promise<{ status: ClaimStatus }> {
   const deadline = Date.now() + (options.timeoutMs ?? 120_000);
@@ -43,13 +64,13 @@ function equalBigInt(a: unknown, b: string): boolean { try { return BigInt(Strin
 function mismatch(): never { throw new ApiError("PREPARED_CLAIM_MISMATCH"); }
 export function validatePreparedClaim(prepared: PreparedClaim, account: Address, username: string, manifest: DeploymentManifest): void {
   const { claim, typedData } = prepared; const domain = typedData.domain; const message = typedData.message;
-  if (typedData.primaryType !== "GenesisCreditClaim" || domain.name !== "Mini Genesis Lucky Credit Claim" || domain.version !== "2" || !equalBigInt(domain.chainId, manifest.source.chainId) || !equalAddress(domain.verifyingContract, manifest.source.contract)) mismatch();
-  const typeFields = typedData.types.GenesisCreditClaim;
-  if (!Array.isArray(typeFields) || !typeFields.some((field) => field && typeof field === "object" && (field as any).name === "sourceAccount") || typeFields.some((field) => field && typeof field === "object" && ((field as any).name === "sourceH160" || (field as any).name === "source"))) mismatch();
-  if (!isAddress(claim.sourceH160) || getAddress(claim.sourceH160) !== getAddress(account) || claim.username !== username || !bytes32(claim.creditGrantId) || !bytes32(claim.usernameHash) || keccak256(toBytes(username)) !== claim.usernameHash || !bytes32(claim.identityResolutionBlockHash) || !bytes32(claim.contextAlias) || claim.contextAlias.toLowerCase() === `0x${"0".repeat(64)}` || !bytes32(claim.targetChainGenesisHash) || !isAddress(claim.identityH160) || !/^\d+$/.test(claim.amount) || BigInt(claim.amount) <= 0n || !/^\d+$/.test(claim.deadline) || BigInt(claim.deadline) <= BigInt(Math.floor(Date.now() / 1000))) mismatch();
-  if (!equalAddress(message.sourceAccount, account) || Object.hasOwn(message, "sourceH160") || Object.hasOwn(message, "source")) mismatch();
+  if (typedData.primaryType !== "GenesisClaim" || domain.name !== "Mini Lucky Genesis Claim" || domain.version !== "3" || !equalBigInt(domain.chainId, manifest.source.chainId) || !equalAddress(domain.verifyingContract, manifest.source.contract)) mismatch();
+  const typeFields = typedData.types.GenesisClaim;
+  if (!Array.isArray(typeFields) || typeFields.length !== 5 || !["source", "target", "usernameHash", "amount", "nonce"].every((name, index) => { const field = typeFields[index]; return field && typeof field === "object" && (field as { name?: unknown }).name === name; })) mismatch();
+  if (!isAddress(claim.sourceH160) || getAddress(claim.sourceH160) !== getAddress(account) || claim.username !== username || !bytes32(claim.usernameHash) || keccak256(toBytes(username)) !== claim.usernameHash || !isAddress(claim.targetH160) || !bytes32(claim.ownerAccountId32) || !/^\d+$/.test(claim.amount) || BigInt(claim.amount) <= 0n || !/^\d+$/.test(claim.nonce) || BigInt(claim.nonce) < 0n) mismatch();
+  if (!equalAddress(message.source, account) || Object.hasOwn(message, "sourceAccount") || Object.hasOwn(message, "sourceH160")) mismatch();
   const exact: Array<[unknown, unknown]> = [
-    [message.sourceContract, manifest.source.contract], [message.sourceAccount, claim.sourceH160], [message.creditGrantId, claim.creditGrantId], [message.claimSequence, claim.claimSequence], [message.username, claim.username], [message.usernameHash, claim.usernameHash], [message.identityAccount, claim.identityH160], [message.identityResolutionBlock, claim.identityResolutionBlock], [message.identityResolutionBlockHash, claim.identityResolutionBlockHash], [message.contextAlias, claim.contextAlias], [message.amount, claim.amount], [message.deadline, claim.deadline], [message.targetChainId, claim.targetChainId], [message.targetChainGenesisHash, claim.targetChainGenesisHash], [message.miniLucky, claim.miniLucky],
+    [message.source, claim.sourceH160], [message.target, claim.targetH160], [message.usernameHash, claim.usernameHash], [message.amount, claim.amount], [message.nonce, claim.nonce],
   ];
   for (const [left, right] of exact) {
     if (typeof right === "string" && isAddress(right)) { if (!equalAddress(left, right)) mismatch(); }
@@ -57,6 +78,4 @@ export function validatePreparedClaim(prepared: PreparedClaim, account: Address,
     else if (typeof right === "string" && /^\d+$/.test(right)) { if (!equalBigInt(left, right)) mismatch(); }
     else if (left !== right) mismatch();
   }
-  if (!equalAddress(message.sourceContract, manifest.source.contract)) mismatch();
-  if (claim.targetChainId !== manifest.destination.chainId || claim.targetChainGenesisHash.toLowerCase() !== manifest.destination.genesisHash.toLowerCase() || claim.miniLucky.toLowerCase() !== manifest.destination.miniLucky.toLowerCase()) mismatch();
 }
