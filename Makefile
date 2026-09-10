@@ -33,8 +33,12 @@ snapshot:
 	forge snapshot
 
 slither:
+	# Phase I is immutable historical code. Its reviewed startBlock == 0 state
+	# sentinel triggers Slither's incorrect-equality detector; exclude only that
+	# detector for Phase I rather than rewriting historical source.
 	slither src/MiniGenesisStream.sol --foundry-out-directory out \
-		--filter-paths "lib"
+		--filter-paths "lib" --exclude incorrect-equality
+	# Phase II receives the full detector set.
 	slither src/MiniGenesisCurve.sol --foundry-out-directory out \
 		--filter-paths "lib"
 
