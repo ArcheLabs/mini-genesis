@@ -1,5 +1,5 @@
 import { fromBufferToBase58, getSs58AddressInfo, type SS58String } from "@polkadot-api/substrate-bindings";
-import { bytesToHex, getAddress, hexToBytes, keccak256, type Address, type Hex } from "viem";
+import { bytesToHex, getAddress, keccak256, type Address } from "viem";
 
 export type ContractAddressResolution = {
   accountId32: Uint8Array;
@@ -57,12 +57,6 @@ export async function resolveContractAddress(api: any, account: string | Uint8Ar
 
 export function accountIdHex(address: string): `0x${string}` {
   return bytesToHex(accountId32FromSs58(address));
-}
-
-export function accountId32ToSs58(accountId32: Hex, ss58Prefix = 0): string {
-  const bytes = hexToBytes(accountId32);
-  if (bytes.length !== 32) throw new Error("SUBSTRATE_ACCOUNT_NOT_SELECTED");
-  return fromBufferToBase58(ss58Prefix)(bytes);
 }
 
 export function sameSubstrateAccount(left: string, right: string): boolean {
