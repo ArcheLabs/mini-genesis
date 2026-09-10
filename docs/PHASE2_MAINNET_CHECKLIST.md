@@ -2,11 +2,13 @@
 
 Do not mark production ready until every item is evidenced.
 
-- [ ] `forge fmt --check`, `forge build`, and `forge test` pass.
+- [ ] `make fmt-check`, `forge build`, and `forge test` pass.
 - [ ] Fuzz and invariant suites pass.
-- [ ] Slither passes with only reviewed, local suppressions.
+- [ ] Slither passes with only reviewed, local suppressions. Phase I's reviewed `startBlock == 0` state sentinel is excluded from only the `incorrect-equality` detector; Phase II receives the full detector set.
 - [ ] Phase I ABI, manifest fields, contract, and tests are unchanged.
 - [ ] `MiniGenesisCurve.json` and frontend generated ABI pass the ABI check.
+- [ ] Deployment manifest validation and manifest tests pass, including the exact seven-day production duration gate.
+- [ ] Frontend typecheck, tests, and production-equivalent build pass.
 - [ ] Staging EVM purchase, second-buyer repricing, refund, treasury, and finality checks pass.
 - [ ] Staging Substrate Native purchase and account-mapping checks pass.
 - [ ] Staging deadline rejection and accounting checks pass.
