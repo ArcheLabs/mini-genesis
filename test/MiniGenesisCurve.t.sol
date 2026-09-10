@@ -125,6 +125,21 @@ contract MiniGenesisCurveTest is Test {
         assertEq(curve.totalRaisedDot(), curve.cumulativeCost(curve.totalSoldMini()));
     }
 
+    function testZeroCostDustPurchaseCannotCreateCreditOrBuyer() public {
+        uint256 dust = 1;
+        assertEq(curve.quoteBuy(dust), 0);
+
+        vm.prank(alice);
+        vm.expectRevert(MiniGenesisCurve.InsufficientPayment.selector);
+        curve.buyExactMini{ value: 0 }(dust, 0);
+
+        assertEq(curve.totalSoldMini(), 0);
+        assertEq(curve.totalRaisedDot(), 0);
+        assertEq(curve.purchasedMini(alice), 0);
+        assertEq(curve.buyerCount(), 0);
+        assertEq(treasury.balance, 0);
+    }
+
     function testSlippageAndCapRevertAtomically() public {
         uint256 beforeBalance = alice.balance;
         vm.prank(alice);
