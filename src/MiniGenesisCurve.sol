@@ -91,6 +91,9 @@ contract MiniGenesisCurve is ReentrancyGuard {
         uint256 soldAfter = totalSoldMini + miniAmount;
 
         uint256 dotCost = quoteBuy(miniAmount);
+        // Reject dust purchases that round to zero DOT. Otherwise an address could
+        // create free MINI credit and inflate buyerCount without contributing value.
+        if (dotCost == 0) revert InsufficientPayment();
         if (dotCost > maxDotCost) revert SlippageExceeded();
         if (msg.value < dotCost) revert InsufficientPayment();
 
