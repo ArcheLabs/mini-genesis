@@ -46,8 +46,8 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm --dir packages/web install --frozen-lockfile
 
-      - name: Check formatting
-        run: forge fmt --check
+      - name: Check Phase II formatting
+        run: make fmt-check
 
       - name: Build contracts
         run: forge build
