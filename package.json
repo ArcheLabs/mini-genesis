@@ -5,6 +5,13 @@
     "deploy:staging": "node scripts/deploy.mjs staging",
     "finalize:staging": "node scripts/deploy.mjs staging --finalize-only",
     "deploy:production": "node scripts/deploy.mjs production",
-    "finalize:production": "node scripts/deploy.mjs production --finalize-only"
+    "finalize:production": "node scripts/deploy.mjs production --finalize-only",
+    "deploy:phase2:staging": "node scripts/deploy-phase2.mjs staging",
+    "finalize:phase2:staging": "node scripts/deploy-phase2.mjs staging --finalize-only",
+    "deploy:phase2:production": "node scripts/deploy-phase2.mjs production",
+    "finalize:phase2:production": "node scripts/deploy-phase2.mjs production --finalize-only",
+    "snapshot:phase2": "node scripts/snapshot-phase2.mjs",
+    "snapshot:phase2:staging": "node scripts/snapshot-phase2.mjs staging",
+    "snapshot:phase2:production": "node scripts/snapshot-phase2.mjs production"
   }
 }

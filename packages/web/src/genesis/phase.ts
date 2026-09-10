@@ -1,6 +1,9 @@
-export type PhaseName = "Waiting" | "Contribution" | "Protection" | "Ended";
-export const phaseNames: readonly PhaseName[] = ["Waiting", "Contribution", "Protection", "Ended"];
-export function phaseName(value: number | bigint): PhaseName { return phaseNames[Number(value)] ?? "Ended"; }
+import { streamPhaseName, streamPhaseNames, type StreamPhaseName } from "./stream-phase";
+
+/** @deprecated Genesis product stages are defined in stages.ts; this is the Phase I stream state. */
+export type PhaseName = StreamPhaseName;
+export const phaseNames = streamPhaseNames;
+export const phaseName = streamPhaseName;
 export const phaseMessage: Record<PhaseName, { zh: string; en: string }> = {
   Waiting: { zh: "尚未启动", en: "Not started" },
   Contribution: { zh: "加入阶段", en: "Join pool" },

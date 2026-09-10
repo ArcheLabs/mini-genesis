@@ -41,6 +41,22 @@ export const deploymentManifests = {
       "deploymentBlock": "0"
     },
     "product": null,
+    "genesis": {
+      "phases": {
+        "phase1": {
+          "status": "ended",
+          "mechanism": "stream",
+          "finalReferencePriceX18": "89460000000000"
+        },
+        "phase2": {
+          "status": "template",
+          "mechanism": "linear-bonding-curve"
+        },
+        "phase3": {
+          "status": "locked"
+        }
+      }
+    },
     "backend": {
       "baseUrl": null
     }
@@ -89,6 +105,22 @@ export const deploymentManifests = {
       "dotName": "mini-lucky-dev.dot",
       "ownerH160": "0x0000000000000000000000000000000000000000"
     },
+    "genesis": {
+      "phases": {
+        "phase1": {
+          "status": "ended",
+          "mechanism": "stream",
+          "finalReferencePriceX18": "89460000000000"
+        },
+        "phase2": {
+          "status": "template",
+          "mechanism": "linear-bonding-curve"
+        },
+        "phase3": {
+          "status": "locked"
+        }
+      }
+    },
     "backend": {
       "baseUrl": null
     }
@@ -136,6 +168,22 @@ export const deploymentManifests = {
       "productId": "mini-lucky",
       "dotName": "mini-lucky.dot",
       "ownerH160": "0x0000000000000000000000000000000000000000"
+    },
+    "genesis": {
+      "phases": {
+        "phase1": {
+          "status": "ended",
+          "mechanism": "stream",
+          "finalReferencePriceX18": "89460000000000"
+        },
+        "phase2": {
+          "status": "template",
+          "mechanism": "linear-bonding-curve"
+        },
+        "phase3": {
+          "status": "locked"
+        }
+      }
     },
     "backend": {
       "baseUrl": null

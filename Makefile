@@ -21,12 +21,14 @@ snapshot:
 slither:
 	slither src/MiniGenesisStream.sol --foundry-out-directory out \
 		--filter-paths "lib"
+	slither src/MiniGenesisCurve.sol --foundry-out-directory out \
+		--filter-paths "lib"
 
 abi:
 	./packages/abi/export.sh
 
 abi-check: abi
-	git diff --exit-code -- packages/abi/MiniGenesisStream.json
+	git diff --exit-code -- packages/abi/MiniGenesisStream.json packages/abi/MiniGenesisCurve.json
 
 manifest-check:
 	node scripts/validate-deployment-manifests.mjs
