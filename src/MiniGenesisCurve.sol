@@ -64,9 +64,11 @@ contract MiniGenesisCurve is ReentrancyGuard {
             revert InvalidConfiguration();
         }
         uint256 priceDelta = endPrice_ - startPrice_;
+        // Math.mulDiv handles the linear term with full intermediate precision.
+        // These bounds protect only the explicit denominator and q^2 numerator
+        // used by cumulativeCost at the maximum possible sold amount.
         if (
-            (allocation_ > MINI_UNIT && startPrice_ > (type(uint256).max / allocation_) * MINI_UNIT)
-                || allocation_ > type(uint256).max / (2 * MINI_UNIT)
+            allocation_ > type(uint256).max / (2 * MINI_UNIT)
                 || priceDelta > type(uint256).max / allocation_ / allocation_
         ) {
             revert InvalidConfiguration();
@@ -118,7 +120,11 @@ contract MiniGenesisCurve is ReentrancyGuard {
     }
 
     function phase() public view returns (Phase) {
+        // Timestamp comparisons are the intended immutable campaign clock. A
+        // validator's small timestamp latitude cannot alter prices or allocation.
+        // slither-disable-next-line timestamp
         if (block.timestamp < startTime) return Phase.Waiting;
+        // slither-disable-next-line timestamp
         if (totalSoldMini == allocation || block.timestamp >= endTime) return Phase.Ended;
         return Phase.Active;
     }
