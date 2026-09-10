@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const environment = process.argv[2];
 const finalizeOnly = process.argv[3] === "--finalize-only";
+const PRODUCTION_DURATION_SECONDS = 7n * 24n * 60n * 60n;
 const requiredEnvironment = [
   "RPC_URL",
   "PRIVATE_KEY",
@@ -67,7 +68,7 @@ function ensureProductionConstants() {
   if (decimal(requiredEnv("PHASE2_END_PRICE_X18")) !== "1250000000000000") throw new Error("Production end price must be 0.001250 DOT/MINI");
   const start = BigInt(requiredEnv("PHASE2_START_TIMESTAMP"));
   const end = BigInt(requiredEnv("PHASE2_END_TIMESTAMP"));
-  if (end - start !== 7n * 24n * 60n * 60n) throw new Error("Production Phase II duration must be exactly 7 days");
+  if (end - start !== PRODUCTION_DURATION_SECONDS) throw new Error("Production Phase II duration must be exactly 7 days");
 }
 
 async function deploy() {
@@ -105,8 +106,13 @@ async function deploy() {
   if (BigInt(endTime) <= BigInt(startTime) || BigInt(allocationMini) === 0n || BigInt(startPriceX18) === 0n || BigInt(endPriceX18) <= BigInt(startPriceX18)) {
     throw new Error("Phase II deployment parameters failed the economics gate");
   }
-  if (environment === "production" && (allocationMini !== "2000000000000000000000000" || startPriceX18 !== "750000000000000" || endPriceX18 !== "1250000000000000")) {
-    throw new Error("Phase II deployment parameters failed the production economics gate");
+  if (environment === "production") {
+    if (allocationMini !== "2000000000000000000000000" || startPriceX18 !== "750000000000000" || endPriceX18 !== "1250000000000000") {
+      throw new Error("Phase II deployment parameters failed the production economics gate");
+    }
+    if (BigInt(endTime) - BigInt(startTime) !== PRODUCTION_DURATION_SECONDS) {
+      throw new Error("Phase II deployment duration failed the production seven-day gate");
+    }
   }
 
   const manifestPath = resolve(repositoryRoot, "deployments", `${environment}.json`);
