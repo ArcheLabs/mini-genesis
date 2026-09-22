@@ -12,13 +12,17 @@ export type ContractConfig = Partial<Record<
   | "firstContributionMinimum"
   | "subsequentContributionMinimumExclusive", string>>;
 
-export type GenesisAchievement = {
+export type GenesisWorkStatus = "planned" | "active" | "delivered" | "investigated" | "discontinued";
+export type GenesisLocalizedText = { "zh-CN": string; en: string };
+export type GenesisWorkItem = {
   id: string;
   name: string;
-  status: "delivered" | "active" | "investigated" | "discontinued";
-  summary: string;
+  status: GenesisWorkStatus;
+  summary: string | GenesisLocalizedText;
   evidenceUrl?: string;
 };
+/** Backward-compatible name used by older Phase I manifests. */
+export type GenesisAchievement = GenesisWorkItem;
 
 export type GenesisPhase2Manifest = {
   status: "template" | "active" | "ended";
@@ -50,8 +54,15 @@ export type GenesisPhase2Manifest = {
 
 export type GenesisManifest = {
   phases: {
-    phase1: { status: "ended"; mechanism: "stream"; finalReferencePriceX18?: string; achievements?: GenesisAchievement[] };
-    phase2: GenesisPhase2Manifest;
+    phase1: {
+      status: "ended";
+      mechanism: "stream";
+      finalReferencePriceX18?: string;
+      achievements?: GenesisAchievement[];
+      workItems?: GenesisWorkItem[];
+      researchHistory?: GenesisWorkItem[];
+    };
+    phase2: GenesisPhase2Manifest & { workItems?: GenesisWorkItem[] };
     phase3: { status: "locked" };
   };
 };

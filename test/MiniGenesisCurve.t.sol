@@ -10,8 +10,8 @@ import { RevertingCurveTreasury } from "./mocks/RevertingCurveTreasury.sol";
 
 contract MiniGenesisCurveTest is Test {
     uint256 internal constant ALLOCATION = 2_000_000 ether;
-    uint256 internal constant START_PRICE = 750_000_000_000_000;
-    uint256 internal constant END_PRICE = 1_250_000_000_000_000;
+    uint256 internal constant START_PRICE = 3_500_000_000_000_000;
+    uint256 internal constant END_PRICE = 5_500_000_000_000_000;
     uint64 internal constant START = 1_000_000;
     uint64 internal constant END = START + 7 days;
 
@@ -58,16 +58,25 @@ contract MiniGenesisCurveTest is Test {
     }
 
     function testCheckpointPricesAndCumulativeCosts() public view {
-        uint256[5] memory sold =
-            [uint256(0), 500_000 ether, 1_000_000 ether, 1_500_000 ether, ALLOCATION];
-        uint256[5] memory prices = [
-            uint256(750_000_000_000_000),
-            875_000_000_000_000,
-            1_000_000_000_000_000,
-            1_125_000_000_000_000,
-            1_250_000_000_000_000
+        uint256[6] memory sold =
+            [
+                uint256(0),
+                500_000 ether,
+                1_000_000 ether,
+                1_500_000 ether,
+                1_600_000 ether,
+                ALLOCATION
+            ];
+        uint256[6] memory prices = [
+            uint256(3_500_000_000_000_000),
+            4_000_000_000_000_000,
+            4_500_000_000_000_000,
+            5_000_000_000_000_000,
+            5_100_000_000_000_000,
+            5_500_000_000_000_000
         ];
-        uint256[5] memory costs = [uint256(0), 406.25 ether, 875 ether, 1_406.25 ether, 2_000 ether];
+        uint256[6] memory costs =
+            [uint256(0), 1_875 ether, 4_000 ether, 6_375 ether, 6_880 ether, 9_000 ether];
         for (uint256 i; i < sold.length; ++i) {
             assertEq(curve.priceAt(sold[i]), prices[i]);
             assertEq(curve.spotPrice(), prices[0]);
@@ -208,13 +217,13 @@ contract MiniGenesisCurveTest is Test {
         curve.buyExactMini{ value: 1 ether }(1 ether, type(uint256).max);
     }
 
-    function testFullSaleCostsExactlyTwoThousandDot() public {
+    function testFullSaleCostsExactlyNineThousandDot() public {
         uint256 cost = curve.quoteBuy(ALLOCATION);
-        assertEq(cost, 2_000 ether);
+        assertEq(cost, 9_000 ether);
         vm.prank(alice);
         curve.buyExactMini{ value: cost }(ALLOCATION, cost);
         assertEq(curve.totalSoldMini(), ALLOCATION);
-        assertEq(curve.totalRaisedDot(), 2_000 ether);
+        assertEq(curve.totalRaisedDot(), 9_000 ether);
         assertEq(curve.remainingMini(), 0);
     }
 }

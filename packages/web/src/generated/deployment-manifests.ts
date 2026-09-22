@@ -46,11 +46,116 @@ export const deploymentManifests = {
         "phase1": {
           "status": "ended",
           "mechanism": "stream",
-          "finalReferencePriceX18": "89460000000000"
+          "finalReferencePriceX18": "89460000000000",
+          "workItems": [
+            {
+              "id": "minijam",
+              "name": "MiniJAM",
+              "status": "delivered",
+              "summary": {
+                "en": "Stage-1 infrastructure delivered.",
+                "zh-CN": "Stage-1 基础设施已交付。"
+              }
+            },
+            {
+              "id": "jamscript",
+              "name": "JamScript",
+              "status": "delivered",
+              "summary": {
+                "en": "Language and deployment tooling delivered.",
+                "zh-CN": "语言与部署工具链已交付。"
+              }
+            },
+            {
+              "id": "jam-computer",
+              "name": "JAM Computer",
+              "status": "delivered",
+              "summary": {
+                "en": "User-facing application delivered.",
+                "zh-CN": "面向用户的应用已交付。"
+              }
+            },
+            {
+              "id": "minicells",
+              "name": "MiniCells",
+              "status": "delivered",
+              "summary": {
+                "en": "Research system and tooling delivered.",
+                "zh-CN": "研究系统与工具已形成。"
+              }
+            }
+          ],
+          "researchHistory": [
+            {
+              "id": "zkjam",
+              "name": "ZkJAM",
+              "status": "discontinued",
+              "summary": {
+                "en": "Investigated and discontinued after feasibility work.",
+                "zh-CN": "经过可行性研究后停止。"
+              }
+            }
+          ]
         },
         "phase2": {
           "status": "template",
-          "mechanism": "linear-bonding-curve"
+          "mechanism": "linear-bonding-curve",
+          "workItems": [
+            {
+              "id": "jamscript",
+              "name": "JamScript",
+              "status": "active",
+              "summary": {
+                "en": "Advance the application-development ecosystem.",
+                "zh-CN": "推进应用开发生态。"
+              }
+            },
+            {
+              "id": "minicells",
+              "name": "MiniCells",
+              "status": "active",
+              "summary": {
+                "en": "Advance network-usable AI service architecture.",
+                "zh-CN": "推进可在网络中使用的 AI 服务架构。"
+              }
+            },
+            {
+              "id": "minijam",
+              "name": "MiniJAM",
+              "status": "active",
+              "summary": {
+                "en": "Advance the public-resource execution network.",
+                "zh-CN": "推进公共资源执行网络。"
+              }
+            },
+            {
+              "id": "locus-ownership",
+              "name": "Locus & Ownership",
+              "status": "active",
+              "summary": {
+                "en": "Develop wallet-agnostic ownership primitives.",
+                "zh-CN": "开发钱包无关的所有权原语。"
+              }
+            },
+            {
+              "id": "mini-utility",
+              "name": "MINI Utility",
+              "status": "planned",
+              "summary": {
+                "en": "Develop MINI settlement utility.",
+                "zh-CN": "开发 MINI 结算效用。"
+              }
+            },
+            {
+              "id": "developer-ecosystem",
+              "name": "Developer Ecosystem",
+              "status": "active",
+              "summary": {
+                "en": "Improve third-party developer tooling and path.",
+                "zh-CN": "改进第三方开发者工具与路径。"
+              }
+            }
+          ]
         },
         "phase3": {
           "status": "locked"
@@ -110,11 +215,116 @@ export const deploymentManifests = {
         "phase1": {
           "status": "ended",
           "mechanism": "stream",
-          "finalReferencePriceX18": "89460000000000"
+          "finalReferencePriceX18": "89460000000000",
+          "workItems": [
+            {
+              "id": "minijam",
+              "name": "MiniJAM",
+              "status": "delivered",
+              "summary": {
+                "en": "MiniJAM Stage-1 infrastructure and client generation delivered.",
+                "zh-CN": "MiniJAM Stage-1 基础设施与客户端生成已交付。"
+              }
+            },
+            {
+              "id": "jamscript",
+              "name": "JamScript",
+              "status": "delivered",
+              "summary": {
+                "en": "Language, toolchain, runtime integration, deployment flow, and backend delivered.",
+                "zh-CN": "语言、工具链、运行时集成、部署流程与后端已形成并交付。"
+              }
+            },
+            {
+              "id": "jam-computer",
+              "name": "JAM Computer",
+              "status": "delivered",
+              "summary": {
+                "en": "A user-facing JAM Computer application and product outcome delivered.",
+                "zh-CN": "面向用户的 JAM Computer 应用与产品成果已交付。"
+              }
+            },
+            {
+              "id": "minicells",
+              "name": "MiniCells",
+              "status": "delivered",
+              "summary": {
+                "en": "Continuous-learning research system, experimental model architecture, and reproducible MiniCells research tooling delivered.",
+                "zh-CN": "持续学习研究系统、实验性模型架构与可复现的 MiniCells 研究工具已形成。"
+              }
+            }
+          ],
+          "researchHistory": [
+            {
+              "id": "zkjam",
+              "name": "ZkJAM",
+              "status": "discontinued",
+              "summary": {
+                "en": "The initial ZK direction was investigated and discontinued after feasibility work.",
+                "zh-CN": "初始 ZK 方向经过可行性研究后停止，作为研究历史保留。"
+              }
+            }
+          ]
         },
         "phase2": {
           "status": "template",
-          "mechanism": "linear-bonding-curve"
+          "mechanism": "linear-bonding-curve",
+          "workItems": [
+            {
+              "id": "jamscript",
+              "name": "JamScript",
+              "status": "active",
+              "summary": {
+                "en": "Move JamScript toward a usable MiniJAM/JAM application-development ecosystem.",
+                "zh-CN": "推动 JamScript 走向可用的 MiniJAM/JAM 应用开发生态。"
+              }
+            },
+            {
+              "id": "minicells",
+              "name": "MiniCells",
+              "status": "active",
+              "summary": {
+                "en": "Advance reproducible continuous-learning research toward a network-usable AI service architecture.",
+                "zh-CN": "推动可复现的持续学习研究走向可在网络中使用的 AI 服务架构。"
+              }
+            },
+            {
+              "id": "minijam",
+              "name": "MiniJAM",
+              "status": "active",
+              "summary": {
+                "en": "Advance Stage-1 infrastructure toward a public-resource execution network.",
+                "zh-CN": "推动 Stage-1 基础设施，建设公共资源执行网络。"
+              }
+            },
+            {
+              "id": "locus-ownership",
+              "name": "Locus & Ownership",
+              "status": "active",
+              "summary": {
+                "en": "Develop wallet-agnostic ownership and asset interaction primitives.",
+                "zh-CN": "开发钱包无关的所有权和资产交互原语。"
+              }
+            },
+            {
+              "id": "mini-utility",
+              "name": "MINI Utility",
+              "status": "planned",
+              "summary": {
+                "en": "Make MINI the protocol settlement asset for application and public-resource usage.",
+                "zh-CN": "使 MINI 成为应用与公共资源使用的协议结算资产。"
+              }
+            },
+            {
+              "id": "developer-ecosystem",
+              "name": "Developer Ecosystem",
+              "status": "active",
+              "summary": {
+                "en": "Improve documentation, SDKs, tooling, infrastructure, and third-party application development.",
+                "zh-CN": "改进文档、SDK、工具链、基础设施和第三方应用开发路径。"
+              }
+            }
+          ]
         },
         "phase3": {
           "status": "locked"
@@ -174,11 +384,116 @@ export const deploymentManifests = {
         "phase1": {
           "status": "ended",
           "mechanism": "stream",
-          "finalReferencePriceX18": "89460000000000"
+          "finalReferencePriceX18": "89460000000000",
+          "workItems": [
+            {
+              "id": "minijam",
+              "name": "MiniJAM",
+              "status": "delivered",
+              "summary": {
+                "en": "MiniJAM Stage-1 infrastructure and client generation delivered.",
+                "zh-CN": "MiniJAM Stage-1 基础设施与客户端生成已交付。"
+              }
+            },
+            {
+              "id": "jamscript",
+              "name": "JamScript",
+              "status": "delivered",
+              "summary": {
+                "en": "Language, toolchain, runtime integration, deployment flow, and backend delivered.",
+                "zh-CN": "语言、工具链、运行时集成、部署流程与后端已形成并交付。"
+              }
+            },
+            {
+              "id": "jam-computer",
+              "name": "JAM Computer",
+              "status": "delivered",
+              "summary": {
+                "en": "A user-facing JAM Computer application and product outcome delivered.",
+                "zh-CN": "面向用户的 JAM Computer 应用与产品成果已交付。"
+              }
+            },
+            {
+              "id": "minicells",
+              "name": "MiniCells",
+              "status": "delivered",
+              "summary": {
+                "en": "Continuous-learning research system, experimental model architecture, and reproducible MiniCells research tooling delivered.",
+                "zh-CN": "持续学习研究系统、实验性模型架构与可复现的 MiniCells 研究工具已形成。"
+              }
+            }
+          ],
+          "researchHistory": [
+            {
+              "id": "zkjam",
+              "name": "ZkJAM",
+              "status": "discontinued",
+              "summary": {
+                "en": "The initial ZK direction was investigated and discontinued after feasibility work.",
+                "zh-CN": "初始 ZK 方向经过可行性研究后停止，作为研究历史保留。"
+              }
+            }
+          ]
         },
         "phase2": {
           "status": "template",
-          "mechanism": "linear-bonding-curve"
+          "mechanism": "linear-bonding-curve",
+          "workItems": [
+            {
+              "id": "jamscript",
+              "name": "JamScript",
+              "status": "active",
+              "summary": {
+                "en": "Move JamScript toward a usable MiniJAM/JAM application-development ecosystem.",
+                "zh-CN": "推动 JamScript 走向可用的 MiniJAM/JAM 应用开发生态。"
+              }
+            },
+            {
+              "id": "minicells",
+              "name": "MiniCells",
+              "status": "active",
+              "summary": {
+                "en": "Advance reproducible continuous-learning research toward a network-usable AI service architecture.",
+                "zh-CN": "推动可复现的持续学习研究走向可在网络中使用的 AI 服务架构。"
+              }
+            },
+            {
+              "id": "minijam",
+              "name": "MiniJAM",
+              "status": "active",
+              "summary": {
+                "en": "Advance Stage-1 infrastructure toward a public-resource execution network.",
+                "zh-CN": "推动 Stage-1 基础设施，建设公共资源执行网络。"
+              }
+            },
+            {
+              "id": "locus-ownership",
+              "name": "Locus & Ownership",
+              "status": "active",
+              "summary": {
+                "en": "Develop wallet-agnostic ownership and asset interaction primitives.",
+                "zh-CN": "开发钱包无关的所有权和资产交互原语。"
+              }
+            },
+            {
+              "id": "mini-utility",
+              "name": "MINI Utility",
+              "status": "planned",
+              "summary": {
+                "en": "Make MINI the protocol settlement asset for application and public-resource usage.",
+                "zh-CN": "使 MINI 成为应用与公共资源使用的协议结算资产。"
+              }
+            },
+            {
+              "id": "developer-ecosystem",
+              "name": "Developer Ecosystem",
+              "status": "active",
+              "summary": {
+                "en": "Improve documentation, SDKs, tooling, infrastructure, and third-party application development.",
+                "zh-CN": "改进文档、SDK、工具链、基础设施和第三方应用开发路径。"
+              }
+            }
+          ]
         },
         "phase3": {
           "status": "locked"

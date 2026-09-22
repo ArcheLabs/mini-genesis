@@ -6,7 +6,7 @@ describe("Genesis product stages", () => {
     expect(genesisStages).toEqual(["phase1", "phase2", "phase3"]);
     expect(Object.keys(genesisStageCopy)).toHaveLength(3);
     expect(genesisStageCopy.phase1.status).toBe("COMPLETED");
-    expect(genesisStageCopy.phase2.status).toBe("LIVE");
+    expect(genesisStageCopy.phase2.status).toBe("WAITING");
     expect(genesisStageCopy.phase3.status).toBe("LOCKED");
   });
 });

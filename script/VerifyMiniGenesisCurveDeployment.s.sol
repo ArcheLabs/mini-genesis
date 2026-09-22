@@ -8,9 +8,9 @@ import { MiniGenesisCurve } from "../src/MiniGenesisCurve.sol";
 /// @notice Read-only production gate for the fixed Genesis II economics.
 contract VerifyMiniGenesisCurveDeployment is Script {
     uint256 internal constant EXPECTED_ALLOCATION = 2_000_000 ether;
-    uint256 internal constant EXPECTED_START_PRICE = 750_000_000_000_000;
-    uint256 internal constant EXPECTED_END_PRICE = 1_250_000_000_000_000;
-    uint256 internal constant EXPECTED_FULL_SALE_PROCEEDS = 2_000 ether;
+    uint256 internal constant EXPECTED_START_PRICE = 3_500_000_000_000_000;
+    uint256 internal constant EXPECTED_END_PRICE = 5_500_000_000_000_000;
+    uint256 internal constant EXPECTED_FULL_SALE_PROCEEDS = 9_000 ether;
     uint64 internal constant EXPECTED_DURATION = 7 days;
 
     function run() external view {

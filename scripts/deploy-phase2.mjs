@@ -67,8 +67,8 @@ function parseBroadcastDeployment(broadcast) {
 function ensureProductionConstants() {
   if (environment !== "production") return;
   if (decimal(requiredEnv("PHASE2_ALLOCATION")) !== "2000000000000000000000000") throw new Error("Production allocation must be 2,000,000 MINI");
-  if (decimal(requiredEnv("PHASE2_START_PRICE_X18")) !== "750000000000000") throw new Error("Production start price must be 0.000750 DOT/MINI");
-  if (decimal(requiredEnv("PHASE2_END_PRICE_X18")) !== "1250000000000000") throw new Error("Production end price must be 0.001250 DOT/MINI");
+  if (decimal(requiredEnv("PHASE2_START_PRICE_X18")) !== "3500000000000000") throw new Error("Production start price must be 0.003500 DOT/MINI");
+  if (decimal(requiredEnv("PHASE2_END_PRICE_X18")) !== "5500000000000000") throw new Error("Production end price must be 0.005500 DOT/MINI");
   const start = BigInt(requiredEnv("PHASE2_START_TIMESTAMP"));
   const end = BigInt(requiredEnv("PHASE2_END_TIMESTAMP"));
   if (end - start !== PRODUCTION_DURATION_SECONDS) throw new Error("Production Phase II duration must be exactly 7 days");
@@ -122,7 +122,7 @@ async function deploy() {
     throw new Error("Phase II deployment parameters failed the economics gate");
   }
   if (environment === "production") {
-    if (allocationMini !== "2000000000000000000000000" || startPriceX18 !== "750000000000000" || endPriceX18 !== "1250000000000000") {
+    if (allocationMini !== "2000000000000000000000000" || startPriceX18 !== "3500000000000000" || endPriceX18 !== "5500000000000000") {
       throw new Error("Phase II deployment parameters failed the production economics gate");
     }
     if (BigInt(endTime) - BigInt(startTime) !== PRODUCTION_DURATION_SECONDS) {
@@ -135,6 +135,7 @@ async function deploy() {
   manifest.genesis ??= { phases: {} };
   manifest.genesis.phases ??= {};
   manifest.genesis.phases.phase1 ??= { status: "ended", mechanism: "stream", finalReferencePriceX18: "89460000000000" };
+  const phase2WorkItems = manifest.genesis.phases.phase2?.workItems;
   manifest.genesis.phases.phase2 = {
     status: "active",
     mechanism: "linear-bonding-curve",
@@ -146,6 +147,7 @@ async function deploy() {
     endPriceX18,
     startTime,
     endTime,
+    ...(phase2WorkItems ? { workItems: phase2WorkItems } : {}),
   };
   manifest.genesis.phases.phase3 ??= { status: "locked" };
   manifest.status = "deployed";

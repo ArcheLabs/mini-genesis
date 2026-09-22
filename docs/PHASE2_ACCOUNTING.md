@@ -6,7 +6,8 @@
 
 Each successful `buyExactMini(miniAmount, maxDotCost)` increases
 `purchasedMini[msg.sender]` by the exact requested amount and increases
-`totalSoldMini` by the same amount. The global cap is `2,000,000e18` MINI.
+`totalSoldMini` by the same amount. The global cap is `2,000,000e18` MINI. The
+production curve's exact full-sale cumulative cost is `9,000 DOT`.
 
 Any future claim or migration system must use the credit as its authoritative
 upper bound. A repeated backend request must never be able to issue more than
@@ -31,6 +32,10 @@ purchase. The invariant is:
 ```text
 totalRaisedDot == cumulativeCost(totalSoldMini)
 ```
+
+At the production checkpoints, the accounting is `C(1,600,000 MINI) = 6,880
+DOT` and `C(2,000,000 MINI) = 9,000 DOT`. These are cumulative values, not
+fundraising targets.
 
 Only the actual curve cost is sent synchronously to the immutable treasury.
 Excess `msg.value` is returned to the buyer and is not included in

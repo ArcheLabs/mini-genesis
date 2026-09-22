@@ -4,11 +4,12 @@ import { curveCumulativeCost, curvePriceAt, curveQuote, maxMiniForBudget, produc
 describe("Genesis II curve", () => {
   it("matches the protocol checkpoints", () => {
     const points = [
-      [0n, 750_000_000_000_000n, 0n],
-      [500_000n * 10n ** 18n, 875_000_000_000_000n, 406_250_000_000_000_000_000n],
-      [1_000_000n * 10n ** 18n, 1_000_000_000_000_000n, 875n * 10n ** 18n],
-      [1_500_000n * 10n ** 18n, 1_125_000_000_000_000n, 1_406_250_000_000_000_000_000n],
-      [2_000_000n * 10n ** 18n, 1_250_000_000_000_000n, 2_000n * 10n ** 18n],
+      [0n, 3_500_000_000_000_000n, 0n],
+      [500_000n * 10n ** 18n, 4_000_000_000_000_000n, 1_875n * 10n ** 18n],
+      [1_000_000n * 10n ** 18n, 4_500_000_000_000_000n, 4_000n * 10n ** 18n],
+      [1_500_000n * 10n ** 18n, 5_000_000_000_000_000n, 6_375n * 10n ** 18n],
+      [1_600_000n * 10n ** 18n, 5_100_000_000_000_000n, 6_880n * 10n ** 18n],
+      [2_000_000n * 10n ** 18n, 5_500_000_000_000_000n, 9_000n * 10n ** 18n],
     ] as const;
     for (const [sold, price, cost] of points) {
       expect(curvePriceAt(productionCurve, sold)).toBe(price);
@@ -23,7 +24,7 @@ describe("Genesis II curve", () => {
   });
 
   it("finds the largest exact amount within a DOT budget", () => {
-    const budget = 406_250_000_000_000_000_000n;
+    const budget = 1_875n * 10n ** 18n;
     const amount = maxMiniForBudget(productionCurve, 0n, budget);
     expect(amount).toBeGreaterThanOrEqual(500_000n * 10n ** 18n);
     expect(curveQuote(productionCurve, 0n, amount)).toBeLessThanOrEqual(budget);

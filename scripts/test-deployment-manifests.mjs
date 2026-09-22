@@ -8,6 +8,9 @@ for (const environment of ["local", "staging", "production"]) {
   assert.equal(manifest.genesis.phases.phase1.mechanism, "stream");
   assert.equal(manifest.genesis.phases.phase2.status, "template");
   assert.equal(manifest.genesis.phases.phase2.mechanism, "linear-bonding-curve");
+  assert.equal(manifest.genesis.phases.phase1.workItems?.length, 4);
+  assert.equal(manifest.genesis.phases.phase1.researchHistory?.[0]?.status, "discontinued");
+  assert.equal(manifest.genesis.phases.phase2.workItems?.length, 6);
   assert.equal(manifest.genesis.phases.phase3.status, "locked");
   validateManifest(manifest, environment);
   assert.throws(
@@ -33,8 +36,8 @@ for (const environment of ["staging", "production"]) {
     deploymentBlock: "1",
     runtimeCodeHash: `0x${"11".repeat(32)}`,
     allocationMini: (2_000_000n * 10n ** 18n).toString(),
-    startPriceX18: "750000000000000",
-    endPriceX18: "1250000000000000",
+    startPriceX18: "3500000000000000",
+    endPriceX18: "5500000000000000",
     startTime: "2000000000",
     endTime: (2_000_000_000n + 7n * 24n * 60n * 60n).toString(),
   };

@@ -34,8 +34,8 @@ contract MiniGenesisCurveHandler is Test {
 
 contract MiniGenesisCurveInvariantTest is Test {
     uint256 internal constant ALLOCATION = 2_000_000 ether;
-    uint256 internal constant START_PRICE = 750_000_000_000_000;
-    uint256 internal constant END_PRICE = 1_250_000_000_000_000;
+    uint256 internal constant START_PRICE = 3_500_000_000_000_000;
+    uint256 internal constant END_PRICE = 5_500_000_000_000_000;
     uint64 internal constant START = 1_000_000;
     uint64 internal constant END = START + 7 days;
     MiniGenesisCurve internal curve;

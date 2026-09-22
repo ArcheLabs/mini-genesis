@@ -59,9 +59,12 @@ function validateGenesisPhases(genesis, environment) {
   const phaseNames = Object.keys(phases).sort();
   if (phaseNames.length !== 3 || phaseNames.join(",") !== "phase1,phase2,phase3") throw new Error(`INVALID_GENESIS_PHASE_SET_${environment}`);
   if (phases.phase1?.status !== "ended" || phases.phase1?.mechanism !== "stream") throw new Error(`INVALID_GENESIS_PHASE1_${environment}`);
+  validateWorkItems(phases.phase1?.workItems, `GENESIS_PHASE1_WORK_ITEMS_${environment}`);
+  validateWorkItems(phases.phase1?.researchHistory, `GENESIS_PHASE1_RESEARCH_HISTORY_${environment}`);
   if (phases.phase3?.status !== "locked") throw new Error(`INVALID_GENESIS_PHASE3_${environment}`);
   const phase2 = phases.phase2;
   if (!phase2 || !["template", "active", "ended"].includes(phase2.status) || phase2.mechanism !== "linear-bonding-curve") throw new Error(`INVALID_GENESIS_PHASE2_${environment}`);
+  validateWorkItems(phase2.workItems, `GENESIS_PHASE2_WORK_ITEMS_${environment}`);
   if (phase2.status === "template") return;
   check(phase2.contract, ADDRESS, "GENESIS_PHASE2_CONTRACT");
   check(required(phase2.deploymentBlock, "GENESIS_PHASE2_DEPLOYMENT_BLOCK"), DECIMAL, "GENESIS_PHASE2_DEPLOYMENT_BLOCK");
@@ -75,7 +78,7 @@ function validateGenesisPhases(genesis, environment) {
     [phase2.endTime, "GENESIS_PHASE2_END_TIME"],
   ]) check(required(value, name), DECIMAL, name);
   if (environment === "production" && BigInt(phase2.allocationMini) !== 2_000_000n * 10n ** 18n) throw new Error(`INVALID_GENESIS_PHASE2_ALLOCATION_${environment}`);
-  if (environment === "production" && (BigInt(phase2.startPriceX18) !== 750_000_000_000_000n || BigInt(phase2.endPriceX18) !== 1_250_000_000_000_000n)) throw new Error(`INVALID_GENESIS_PHASE2_PRICES_${environment}`);
+  if (environment === "production" && (BigInt(phase2.startPriceX18) !== 3_500_000_000_000_000n || BigInt(phase2.endPriceX18) !== 5_500_000_000_000_000n)) throw new Error(`INVALID_GENESIS_PHASE2_PRICES_${environment}`);
   if (BigInt(phase2.allocationMini) === 0n || BigInt(phase2.startPriceX18) === 0n || BigInt(phase2.endPriceX18) <= BigInt(phase2.startPriceX18)) throw new Error(`INVALID_GENESIS_PHASE2_ECONOMICS_${environment}`);
   if (BigInt(phase2.endTime) <= BigInt(phase2.startTime)) throw new Error(`INVALID_GENESIS_PHASE2_TIME_${environment}`);
   if (environment === "production" && BigInt(phase2.endTime) - BigInt(phase2.startTime) !== PRODUCTION_PHASE2_DURATION) throw new Error(`INVALID_GENESIS_PHASE2_DURATION_${environment}`);
@@ -104,6 +107,20 @@ function validateGenesisPhases(genesis, environment) {
     [snapshot.endTime, phase2.endTime, "END_TIME"],
   ]) if (snapshotValue !== phaseValue) throw new Error(`MISMATCHED_GENESIS_PHASE2_SNAPSHOT_${name}_${environment}`);
   if (BigInt(snapshot.soldMini) > BigInt(snapshot.allocationMini) || BigInt(snapshot.terminalPriceX18) < BigInt(snapshot.startPriceX18) || BigInt(snapshot.terminalPriceX18) > BigInt(snapshot.endPriceX18)) throw new Error(`INVALID_GENESIS_PHASE2_SNAPSHOT_VALUES_${environment}`);
+}
+
+function validateWorkItems(items, name) {
+  if (items === undefined) return;
+  if (!Array.isArray(items)) throw new Error(`INVALID_${name}`);
+  const statuses = new Set(["planned", "active", "delivered", "investigated", "discontinued"]);
+  for (const item of items) {
+    if (!item || typeof item.id !== "string" || !item.id || typeof item.name !== "string" || !item.name || !statuses.has(item.status)) {
+      throw new Error(`INVALID_${name}`);
+    }
+    if (typeof item.summary !== "string" && (!item.summary || typeof item.summary.en !== "string" || typeof item.summary["zh-CN"] !== "string")) {
+      throw new Error(`INVALID_${name}`);
+    }
+  }
 }
 
 export async function readManifest(environment, options) {

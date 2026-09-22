@@ -2,9 +2,9 @@ import { formatUnits, parseUnits } from "viem";
 
 export const MINI_UNIT = 10n ** 18n;
 export const PHASE2_ALLOCATION = 2_000_000n * MINI_UNIT;
-export const PHASE2_START_PRICE_X18 = 750_000_000_000_000n;
-export const PHASE2_END_PRICE_X18 = 1_250_000_000_000_000n;
-export const PHASE2_FULL_RAISE_DOT = 2_000n * MINI_UNIT;
+export const PHASE2_START_PRICE_X18 = 3_500_000_000_000_000n;
+export const PHASE2_END_PRICE_X18 = 5_500_000_000_000_000n;
+export const PHASE2_FULL_RAISE_DOT = 9_000n * MINI_UNIT;
 
 export type CurveParameters = {
   allocation: bigint;
