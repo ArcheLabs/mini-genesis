@@ -12,6 +12,7 @@ contract MiniGenesisCurveFuzzTest is Test {
     uint64 internal constant END = START + 7 days;
     address internal treasury = makeAddr("treasury");
     address internal alice = makeAddr("alice");
+    address internal bob = makeAddr("bob");
 
     function testFuzzPriceAndCostAreMonotone(uint256 soldA, uint256 soldB) public {
         MiniGenesisCurve curve =
@@ -24,7 +25,7 @@ contract MiniGenesisCurveFuzzTest is Test {
     }
 
     function testFuzzSplitPurchasesTelescope(uint256 first, uint256 second) public {
-        first = bound(first, 1 ether, 1_000_000 ether);
+        first = bound(first, 1 ether, ALLOCATION - 1 ether);
         second = bound(second, 1 ether, ALLOCATION - first);
         MiniGenesisCurve combined =
             new MiniGenesisCurve(treasury, ALLOCATION, START_PRICE, END_PRICE, START, END);
@@ -32,16 +33,17 @@ contract MiniGenesisCurveFuzzTest is Test {
             new MiniGenesisCurve(treasury, ALLOCATION, START_PRICE, END_PRICE, START, END);
         vm.warp(START);
         vm.deal(alice, 10_000 ether);
+        vm.deal(bob, 10_000 ether);
 
         uint256 total = combined.quoteBuy(first + second);
         vm.prank(alice);
         combined.buyExactMini{ value: total }(first + second, total);
 
         uint256 firstCost = split.quoteBuy(first);
-        vm.prank(alice);
+        vm.prank(bob);
         split.buyExactMini{ value: firstCost }(first, firstCost);
         uint256 secondCost = split.quoteBuy(second);
-        vm.prank(alice);
+        vm.prank(bob);
         split.buyExactMini{ value: secondCost }(second, secondCost);
 
         assertEq(firstCost + secondCost, total);

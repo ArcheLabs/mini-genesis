@@ -29,7 +29,10 @@ price.
 * Foundry `v0.3.0`
 * Node.js `24`
 * pnpm `10`
-* Python `3.12` and Slither
+* Python `3.12` and Slither `0.10.4`
+
+The pinned local toolchain is recorded in `.tool-versions`; CI installs the
+same Foundry and Slither versions.
 
 Clone the repository with its submodules:
 

@@ -58,15 +58,14 @@ contract MiniGenesisCurveTest is Test {
     }
 
     function testCheckpointPricesAndCumulativeCosts() public view {
-        uint256[6] memory sold =
-            [
-                uint256(0),
-                500_000 ether,
-                1_000_000 ether,
-                1_500_000 ether,
-                1_600_000 ether,
-                ALLOCATION
-            ];
+        uint256[6] memory sold = [
+            uint256(0),
+            500_000 ether,
+            1_000_000 ether,
+            1_500_000 ether,
+            1_600_000 ether,
+            ALLOCATION
+        ];
         uint256[6] memory prices = [
             uint256(3_500_000_000_000_000),
             4_000_000_000_000_000,
@@ -103,8 +102,9 @@ contract MiniGenesisCurveTest is Test {
         MiniGenesisCurve sold =
             new MiniGenesisCurve(treasury, 1 ether, START_PRICE, END_PRICE, START, END);
         vm.warp(START);
+        uint256 soldCost = sold.quoteBuy(1 ether);
         vm.prank(alice);
-        sold.buyExactMini{ value: 0.001 ether }(1 ether, type(uint256).max);
+        sold.buyExactMini{ value: soldCost }(1 ether, soldCost);
         assertTrue(sold.soldOut());
         assertEq(uint256(sold.phase()), uint256(MiniGenesisCurve.Phase.Ended));
     }
