@@ -11,6 +11,8 @@ export type Eip1193Network = {
   rpcUrls: string[];
 };
 
+const inFlightSwitches = new WeakMap<Eip1193Provider, Map<number, Promise<void>>>();
+
 export function parseEip1193ChainId(value: unknown): number | null {
   try {
     const parsed = typeof value === "number"
@@ -36,7 +38,22 @@ function providerErrorCode(error: unknown): number | null {
   return Number.isInteger(code) ? code : null;
 }
 
-export async function switchEip1193Chain(provider: Eip1193Provider, network: Eip1193Network): Promise<void> {
+export function switchEip1193Chain(provider: Eip1193Provider, network: Eip1193Network): Promise<void> {
+  const providerSwitches = inFlightSwitches.get(provider) ?? new Map<number, Promise<void>>();
+  const pendingSwitch = providerSwitches.get(network.chainId);
+  if (pendingSwitch) return pendingSwitch;
+
+  const switchPromise = performEip1193ChainSwitch(provider, network).finally(() => {
+    providerSwitches.delete(network.chainId);
+    if (providerSwitches.size === 0) inFlightSwitches.delete(provider);
+  });
+  providerSwitches.set(network.chainId, switchPromise);
+  inFlightSwitches.set(provider, providerSwitches);
+  return switchPromise;
+}
+
+async function performEip1193ChainSwitch(provider: Eip1193Provider, network: Eip1193Network): Promise<void> {
+  if (await readEip1193ChainId(provider) === network.chainId) return;
   const chainId = `0x${network.chainId.toString(16)}`;
   const switchChain = () => provider.request({ method: "wallet_switchEthereumChain", params: [{ chainId }] });
 

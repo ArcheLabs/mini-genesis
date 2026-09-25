@@ -26,7 +26,15 @@ const customRpcUrls = {
   [`eip155:${chainId}`]: rpcHttpUrls.map((url) => ({ url })),
 } as Record<string, { url: string }[]>;
 
-export const wagmiAdapter = new WagmiAdapter({
+class DeferredSwitchWagmiAdapter extends WagmiAdapter {
+  override connect(params: Parameters<WagmiAdapter["connect"]>[0]) {
+    // Connecting should only request account access. Network addition and
+    // switching are handled afterward by the explicit application action.
+    return super.connect({ ...params, chainId: undefined });
+  }
+}
+
+export const wagmiAdapter = new DeferredSwitchWagmiAdapter({
   networks: [polkadotHubNetwork],
   projectId,
   customRpcUrls,
@@ -36,7 +44,12 @@ export const wagmiAdapter = new WagmiAdapter({
 export const appKit = createAppKit({
   adapters: [wagmiAdapter],
   networks: [polkadotHubNetwork],
+  defaultNetwork: polkadotHubNetwork,
   customRpcUrls,
+  // Use the application's EIP-1193 switch flow so adding a network and
+  // switching to it happen as separate, serialized wallet requests.
+  allowUnsupportedChain: true,
+  enableNetworkSwitch: false,
   projectId: projectId,
   metadata: {
     name: "MINI Genesis",

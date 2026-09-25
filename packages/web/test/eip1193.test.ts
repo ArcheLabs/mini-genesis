@@ -56,6 +56,39 @@ describe("EIP-1193 chain switching", () => {
     expect(activeChainId).toBe(network.chainId);
   });
 
+  it("coalesces concurrent requests for the same provider and network", async () => {
+    let activeChainId = 1;
+    const request = vi.fn(async ({ method, params }: { method: string; params?: unknown[] }) => {
+      if (method === "wallet_switchEthereumChain") {
+        activeChainId = Number(BigInt((params?.[0] as { chainId: string }).chainId));
+        return null;
+      }
+      if (method === "eth_chainId") return `0x${activeChainId.toString(16)}`;
+      throw new Error(`Unexpected method: ${method}`);
+    });
+    const provider = { request } as Eip1193Provider;
+
+    await Promise.all([
+      switchEip1193Chain(provider, network),
+      switchEip1193Chain(provider, network),
+    ]);
+
+    expect(request.mock.calls.filter(([args]) => args.method === "wallet_switchEthereumChain")).toHaveLength(1);
+    expect(activeChainId).toBe(network.chainId);
+  });
+
+  it("does not ask the wallet to switch when it is already on the target chain", async () => {
+    const request = vi.fn(async ({ method }: { method: string }) => {
+      if (method === "eth_chainId") return `0x${network.chainId.toString(16)}`;
+      throw new Error(`Unexpected method: ${method}`);
+    });
+
+    await switchEip1193Chain({ request } as Eip1193Provider, network);
+
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenCalledWith({ method: "eth_chainId" });
+  });
+
   it("rejects a switch when the provider still reports the wrong chain", async () => {
     const request = vi.fn(async ({ method }: { method: string }) => method === "eth_chainId" ? "0x1" : null);
     await expect(switchEip1193Chain({ request } as Eip1193Provider, network)).rejects.toThrow("CHAIN_SWITCH_REJECTED");

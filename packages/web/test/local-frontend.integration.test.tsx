@@ -105,10 +105,11 @@ describe("local frontend browser integration", () => {
   it("registers Development as an AppKit CAIP EVM network and marks the matching wallet chain ready", async () => {
     vi.stubEnv("VITE_DEPLOYMENT_ENV", "local");
     vi.resetModules();
-    const [{ appKit, customRpcUrls, polkadotHubNetwork }, walletModule, manifestModule] = await Promise.all([
+    const [{ appKit, customRpcUrls, polkadotHubNetwork, wagmiAdapter }, walletModule, manifestModule, adapterModule] = await Promise.all([
       import("../src/wallet/appkit"),
       import("../src/wallet/use-genesis-wallet"),
       import("../src/config/manifest"),
+      import("@reown/appkit-adapter-wagmi"),
     ]);
     const manifest = manifestModule.getManifest("local")!;
     const caipId = `eip155:${manifest.source.chainId}`;
@@ -119,7 +120,22 @@ describe("local frontend browser integration", () => {
     expect(polkadotHubNetwork.chainNamespace).toBe("eip155");
     expect(supported?.caipNetworkId).toBe(caipId);
     expect(supported?.chainNamespace).toBe("eip155");
+    expect((appKit as typeof appKit & { options: { defaultNetwork?: unknown } }).options.defaultNetwork).toBe(polkadotHubNetwork);
     expect(customRpcUrls[caipId]).toEqual([{ url: "http://127.0.0.1:8545" }]);
+    expect((appKit as typeof appKit & { options: { allowUnsupportedChain?: boolean; enableNetworkSwitch?: boolean } }).options).toMatchObject({
+      allowUnsupportedChain: true,
+      enableNetworkSwitch: false,
+    });
+    const adapterConnect = vi.spyOn(adapterModule.WagmiAdapter.prototype, "connect").mockResolvedValue({
+      address: "0x544Ac734C6B113789Ea97ac145B1a141bB7e0c65",
+      chainId: 1,
+      provider: null,
+      type: "INJECTED",
+      id: "injected",
+    });
+    await wagmiAdapter.connect({ id: "injected", chainId: 1 } as any);
+    expect(adapterConnect).toHaveBeenCalledWith(expect.objectContaining({ chainId: undefined }));
+    adapterConnect.mockRestore();
 
     let correctChain = false;
     function WalletProbe() {
