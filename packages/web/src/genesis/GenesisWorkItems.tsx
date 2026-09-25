@@ -26,12 +26,12 @@ function statusLabel(status: GenesisWorkItem["status"], language: Language): str
 }
 
 export function GenesisWorkItems({ language, mode, workItems, researchHistory = [] }: Props) {
-  const phase2 = mode === "phase2-funds" || mode === "phase2-enabled";
-  const heading = mode === "phase1-enabled" ? (language === "zh-CN" ? "Genesis I 的成果" : "What Genesis I Enabled") : mode === "phase2-enabled" ? (language === "zh-CN" ? "Genesis II 的成果" : "What Genesis II Enabled") : (language === "zh-CN" ? "Genesis II 的资金用途" : "What Genesis II Funds");
-  const title = mode === "phase1-enabled" ? (language === "zh-CN" ? "资金 → 执行成果" : "Capital → Execution") : phase2 ? (language === "zh-CN" ? "执行周期成果" : "Execution cycle outcomes") : (language === "zh-CN" ? "下一轮执行周期" : "The next execution cycle");
-  return <section className="work-items-section">
-    <div className="stage-eyebrow">{heading}</div>
-    <h2>{title}</h2>
+  const phase1 = mode === "phase1-enabled";
+  const heading = phase1
+    ? (language === "zh-CN" ? "已交付" : "Delivered")
+    : (language === "zh-CN" ? "Genesis II 执行计划" : "Genesis II Execution");
+  return <section className={`work-items-section ${phase1 ? "phase1-work-items" : "phase2-work-items"}`}>
+    <h2>{heading}</h2>
     <div className="work-item-grid">
       {workItems.map((item) => <article key={item.id} className={`work-item work-item-${item.status}`} data-testid={`genesis-work-item-${item.id}`}>
         <div className="work-item-head"><strong>{item.name}</strong><span>{statusLabel(item.status, language)}</span></div>

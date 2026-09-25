@@ -17,8 +17,8 @@ test("Development registers as supported CAIP EVM network and keeps Genesis I of
   const afterPoll = await page.evaluate(() => window.__localFrontendProbe!.readAddresses.length);
   expect(afterPoll).toBeGreaterThan(probe.readAddresses.length);
 
-  await page.locator(".stage-tab").nth(0).click();
-  await expect(page.locator(".phase1-panel")).toContainText("0.00008946 DOT/MINI");
+  await page.locator('[data-testid="stage-nav-phase1"]').click();
+  await expect(page.locator(".phase1-panel")).toContainText("0.00008946 DOT / MINI");
   await expect(page.getByText("Total DOT raised")).toHaveCount(0);
   await expect(page.getByText("MINI allocation")).toHaveCount(0);
   await expect(page.getByText("Start / end blocks")).toHaveCount(0);

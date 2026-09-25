@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { PublicClient } from "viem";
 import { getManifest } from "../../src/config/manifest";
 import { GenesisStages } from "../../src/genesis/GenesisStages";
+import { GenesisStageNavigation, type GenesisStageId } from "../../src/genesis/GenesisStageNavigation";
 import { appKit, customRpcUrls } from "../../src/wallet/appkit";
 import { deriveWalletState } from "../../src/wallet/wallet-state";
 
@@ -55,6 +56,7 @@ const client = {
 } as unknown as PublicClient;
 
 function LocalFrontend() {
+  const [stage, setStage] = useState<GenesisStageId>("phase2");
   useEffect(() => {
     const caipId = `eip155:${manifest.source.chainId}`;
     const supported = appKit.getCaipNetworks().find((network) => network.caipNetworkId === caipId);
@@ -76,7 +78,10 @@ function LocalFrontend() {
     };
   }, []);
 
-  return <GenesisStages language="en" manifest={manifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />;
+  return <>
+    <GenesisStageNavigation language="en" stage={stage} phase2Status="LIVE" onSelect={setStage} />
+    <GenesisStages language="en" stage={stage} onPhase2StatusChange={() => {}} manifest={manifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />
+  </>;
 }
 
 createRoot(document.getElementById("root")!).render(<LocalFrontend />);

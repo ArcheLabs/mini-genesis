@@ -7,11 +7,13 @@ import type { WalletSession } from "../wallet/types";
 import { GenesisPhase1 } from "./GenesisPhase1";
 import { GenesisPhase2 } from "./GenesisPhase2";
 import { GenesisPhase3 } from "./GenesisPhase3";
+import type { GenesisStageId } from "./GenesisStageNavigation";
 
 type Language = "zh-CN" | "en";
-type Stage = "phase1" | "phase2" | "phase3";
 type Props = {
   language: Language;
+  stage: GenesisStageId;
+  onPhase2StatusChange: (status: string) => void;
   manifest: DeploymentManifest | null;
   publicClient: PublicClient | null;
   session: WalletSession;
@@ -54,8 +56,7 @@ export function phase2Status(dynamic: GenesisCurveDynamic | null, manifest: Depl
   return "WAITING";
 }
 
-export function GenesisStages({ language, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onRefresh }: Props) {
-  const [stage, setStage] = useState<Stage>("phase2");
+export function GenesisStages({ language, stage, onPhase2StatusChange, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onRefresh }: Props) {
   const [dynamic, setDynamic] = useState<GenesisCurveDynamic | null>(null);
   const [error, setError] = useState<string | null>(null);
   const snapshot = useMemo(() => phase2Snapshot(manifest), [manifest]);
@@ -82,13 +83,9 @@ export function GenesisStages({ language, manifest, publicClient, session, provi
   }, [refresh]);
 
   const status = phase2Status(dynamic, manifest, demoMode);
+  useEffect(() => onPhase2StatusChange(status), [onPhase2StatusChange, status]);
+
   return <main className="genesis-stages">
-    <section className="stage-tabs" aria-label={language === "zh-CN" ? "Genesis 阶段" : "Genesis stages"}>
-      {(["phase1", "phase2", "phase3"] as const).map((item) => <button key={item} className={`stage-tab ${stage === item ? "active" : ""}`} type="button" onClick={() => setStage(item)} aria-pressed={stage === item}>
-        <span>{item === "phase1" ? "Genesis I" : item === "phase2" ? "Genesis II" : "Genesis III"}</span>
-        <small>{item === "phase1" ? "COMPLETED" : item === "phase2" ? status : "LOCKED"}</small>
-      </button>)}
-    </section>
     {error && <p className="genesis-data-note" role="status">{error}</p>}
     {stage === "phase1" && <GenesisPhase1 language={language} />}
     {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onRefresh={() => { onRefresh(); void refresh(); }} />}

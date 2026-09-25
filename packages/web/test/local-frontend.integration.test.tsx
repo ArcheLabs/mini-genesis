@@ -1,9 +1,10 @@
-import { act, createElement } from "react";
+import { act, createElement, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import type { PublicClient } from "viem";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getManifest } from "../src/config/manifest";
 import { GenesisStages } from "../src/genesis/GenesisStages";
+import { GenesisStageNavigation, type GenesisStageId } from "../src/genesis/GenesisStageNavigation";
 import { readContributionHistory } from "../src/genesis/history";
 import { readGlobalDynamic, readGlobalStatic, readGenesisUserState } from "../src/genesis/reads";
 
@@ -57,7 +58,11 @@ const curveValues: Record<string, bigint> = {
 };
 
 function LocalReadLifecycle({ client }: { client: PublicClient }) {
-  return <GenesisStages language="en" manifest={localManifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />;
+  const [stage, setStage] = useState<GenesisStageId>("phase2");
+  return <>
+    <GenesisStageNavigation language="en" stage={stage} phase2Status="LIVE" onSelect={setStage} />
+    <GenesisStages language="en" stage={stage} onPhase2StatusChange={() => {}} manifest={localManifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />
+  </>;
 }
 
 describe("local frontend browser integration", () => {
@@ -85,9 +90,9 @@ describe("local frontend browser integration", () => {
     expect(readContract).toHaveBeenCalled();
     expect(readContract.mock.calls.every(([request]) => request.address === phase2Address)).toBe(true);
 
-    const genesis1Tab = [...container.querySelectorAll(".stage-tab")].find((button) => button.textContent?.includes("Genesis I")) as HTMLButtonElement;
+    const genesis1Tab = container.querySelector('[data-testid="stage-nav-phase1"]') as HTMLButtonElement;
     await act(async () => { genesis1Tab.click(); await new Promise((resolve) => setTimeout(resolve, 0)); });
-    expect(container.textContent).toContain("0.00008946 DOT/MINI");
+    expect(container.textContent).toContain("0.00008946 DOT / MINI");
     expect(container.textContent).not.toContain("Total DOT raised");
     expect(container.textContent).not.toContain("MINI allocation");
     expect(container.textContent).not.toContain("Start / end blocks");

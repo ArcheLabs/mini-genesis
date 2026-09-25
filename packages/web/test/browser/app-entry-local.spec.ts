@@ -46,6 +46,7 @@ const block = {
 };
 
 test("real app startup never touches Genesis I and keeps Genesis II reads alive", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
   const readAddresses: string[] = [];
   await page.route((url) => url.hostname === "127.0.0.1" && url.port === "8545", async (route) => {
     if (route.request().method() === "OPTIONS") {
@@ -73,6 +74,40 @@ test("real app startup never touches Genesis I and keeps Genesis II reads alive"
 
   await page.goto("/");
   await expect(page.locator(".phase2-panel h1")).toHaveText("Genesis II");
+  await expect(page.locator('[data-testid="stage-nav-phase2"]')).toHaveAttribute("aria-current", "page");
+  await expect(page.locator('[data-testid="phase2-current-price"]')).toContainText("0.003500");
+  await expect(page.locator('[data-testid="phase2-holder-count"]')).toHaveText("0");
+  await expect(page.locator('[data-testid="phase2-time-remaining"]')).not.toHaveText("—");
+  await expect(page.locator(".reserve-banner")).toHaveCount(0);
+  await expect(page.getByText("DOT raised", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("MINI distributed", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("MINI remaining", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Rules", { exact: true })).toHaveCount(0);
+  const curve = page.locator(".curve-chart svg");
+  await expect(page.locator('[data-testid="curve-current-point"]')).toBeVisible();
+  await expect(page.locator('[data-testid="curve-after-buy-point"]')).toBeVisible();
+  const afterOneDot = Number(await curve.getAttribute("data-after-buy-position"));
+  await page.getByRole("button", { name: "20 DOT", exact: true }).click();
+  const afterTwentyDot = Number(await curve.getAttribute("data-after-buy-position"));
+  expect(afterTwentyDot).toBeGreaterThan(afterOneDot);
+  await page.getByRole("button", { name: "1 DOT", exact: true }).click();
+  const curveBox = await curve.boundingBox();
+  const purchaseBox = await page.locator(".purchase-panel").boundingBox();
+  expect(curveBox && purchaseBox && purchaseBox.x > curveBox.x && purchaseBox.y <= curveBox.y + 20).toBe(true);
+  expect(purchaseBox && purchaseBox.y + purchaseBox.height).toBeLessThan(1000);
+
+  const hoverTarget = await curve.evaluate((svg: SVGSVGElement) => {
+    const point = svg.createSVGPoint();
+    point.x = 306;
+    point.y = 130;
+    const screen = point.matrixTransform(svg.getScreenCTM()!);
+    return { x: screen.x, y: screen.y };
+  });
+  await page.mouse.move(hoverTarget.x, hoverTarget.y);
+  await expect(page.getByTestId("curve-tooltip")).toContainText("50.00%");
+  await expect(page.getByTestId("curve-tooltip")).toContainText("1,000,000 MINI sold");
+  await expect(page.getByTestId("curve-tooltip")).toContainText("0.004500 DOT / MINI");
+
   await expect(page.locator(".genesis-data-note")).toHaveCount(0);
   await expect.poll(() => readAddresses.length).toBeGreaterThanOrEqual(10);
   expect(readAddresses).not.toContain(zeroAddress);
@@ -84,10 +119,20 @@ test("real app startup never touches Genesis I and keeps Genesis II reads alive"
   expect(readAddresses).not.toContain(zeroAddress);
   expect(readAddresses.every((address) => address === phase2Address)).toBe(true);
 
-  await page.locator(".stage-tab").nth(0).click();
-  await expect(page.locator(".phase1-panel")).toContainText("0.00008946 DOT/MINI");
+  await page.setViewportSize({ width: 390, height: 844 });
+  const mobileCurve = await page.locator(".curve-chart svg").boundingBox();
+  const mobilePurchase = await page.locator(".purchase-panel").boundingBox();
+  expect(mobileCurve && mobilePurchase && mobilePurchase.x === mobileCurve.x && mobilePurchase.y > mobileCurve.y).toBe(true);
+
+  await page.locator('[data-testid="stage-nav-phase1"]').click();
+  await expect(page.locator(".phase1-panel")).toContainText("0.00008946 DOT / MINI");
+  await expect(page.locator(".phase1-panel")).not.toContainText("is complete");
   await expect(page.getByText("Total DOT raised")).toHaveCount(0);
   await expect(page.getByText("MINI allocation")).toHaveCount(0);
   await expect(page.getByText("Start / end blocks")).toHaveCount(0);
+  await page.locator('[data-testid="stage-nav-phase3"]').click();
+  await expect(page.locator(".phase3-panel")).toContainText("LOCKED");
+  await expect(page.locator(".phase3-panel")).toContainText("Liquidity Accumulation");
+  await expect(page.locator(".phase3-panel")).not.toContainText("No supply");
   expect(readAddresses).not.toContain(zeroAddress);
 });
