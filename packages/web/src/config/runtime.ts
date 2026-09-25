@@ -21,17 +21,21 @@ export async function validateRuntime(client: PublicClient, manifest: Deployment
     const chainId = await client.getChainId();
     if (String(chainId) !== manifest.source.chainId) throw new Error("chain id mismatch");
     checks.chainId = "passed";
-    const bytecode = await client.getBytecode({ address: manifest.source.contract });
-    if (!bytecode) throw new Error("contract bytecode missing");
-    if (keccak256(bytecode) !== manifest.source.runtimeCodeHash) throw new Error("runtime code hash mismatch");
-    checks.bytecode = "passed";
-    for (const name of getterNames) {
-      const expected = manifest.source.contractConfig?.[name];
-      if (expected === undefined) { checks[name] = "skipped"; continue; }
-      const actual = await client.readContract({ address: manifest.source.contract, abi: genesisAbi, functionName: name } as any);
-      const value = name === "treasury" ? String(actual).toLowerCase() : String(actual);
-      if (value !== (name === "treasury" ? String(expected).toLowerCase() : String(expected))) throw new Error(`${name} mismatch`);
-      checks[name] = "passed";
+    if (manifest.environment === "local") {
+      checks.phase1Bytecode = "skipped";
+    } else {
+      const bytecode = await client.getBytecode({ address: manifest.source.contract });
+      if (!bytecode) throw new Error("contract bytecode missing");
+      if (keccak256(bytecode) !== manifest.source.runtimeCodeHash) throw new Error("runtime code hash mismatch");
+      checks.bytecode = "passed";
+      for (const name of getterNames) {
+        const expected = manifest.source.contractConfig?.[name];
+        if (expected === undefined) { checks[name] = "skipped"; continue; }
+        const actual = await client.readContract({ address: manifest.source.contract, abi: genesisAbi, functionName: name } as any);
+        const value = name === "treasury" ? String(actual).toLowerCase() : String(actual);
+        if (value !== (name === "treasury" ? String(expected).toLowerCase() : String(expected))) throw new Error(`${name} mismatch`);
+        checks[name] = "passed";
+      }
     }
     const phase2 = manifest.genesis?.phases.phase2;
     if (phase2 && phase2.status !== "template") {

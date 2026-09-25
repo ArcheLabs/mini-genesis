@@ -9,10 +9,18 @@ const DECIMAL = /^\d+$/;
 const PRODUCTION_PHASE2_DURATION = 7n * 24n * 60n * 60n;
 const required = (value, name) => { if (value === undefined || value === "") throw new Error(`MISSING_${name}`); return value; };
 const check = (value, pattern, name) => { if (typeof value !== "string" || !pattern.test(value)) throw new Error(`INVALID_${name}`); return value; };
+const isLoopback = (value, protocols) => {
+  try {
+    const url = new URL(value);
+    return protocols.includes(url.protocol) && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+      && !url.username && !url.password;
+  } catch { return false; }
+};
 
 export function validateManifest(manifest, environment, options = {}) {
   if (manifest?.environment !== environment) throw new Error(`INVALID_ENVIRONMENT_${environment}`);
   if (!["template", "deployed"].includes(manifest.status)) throw new Error(`INVALID_STATUS_${environment}`);
+  const localRevive = environment === "local" && manifest.status === "deployed";
   const { source, destination, product } = manifest;
   if (!source || !destination) throw new Error("MISSING_NETWORK");
   check(required(source.chainId, "SOURCE_CHAIN_ID"), DECIMAL, "SOURCE_CHAIN_ID");
@@ -21,12 +29,18 @@ export function validateManifest(manifest, environment, options = {}) {
   check(required(source.deploymentBlock, "SOURCE_DEPLOYMENT_BLOCK"), DECIMAL, "SOURCE_DEPLOYMENT_BLOCK");
   if (typeof source.name !== "string" || !source.name) throw new Error("MISSING_SOURCE_NAME");
   if (typeof source.currencySymbol !== "string" || !source.currencySymbol) throw new Error("MISSING_SOURCE_CURRENCY");
-  if (source.nativeDecimals !== 10) throw new Error("INVALID_SOURCE_NATIVE_DECIMALS");
+  if (localRevive) {
+    if (!Number.isInteger(source.nativeDecimals) || source.nativeDecimals < 0 || source.nativeDecimals > 18) throw new Error("INVALID_SOURCE_NATIVE_DECIMALS");
+    if (!Number.isInteger(source.ss58Prefix) || source.ss58Prefix < 0 || source.ss58Prefix > 16383) throw new Error("INVALID_SOURCE_SS58_PREFIX");
+  } else {
+    if (source.nativeDecimals !== 10) throw new Error("INVALID_SOURCE_NATIVE_DECIMALS");
+    if (source.ss58Prefix !== 0) throw new Error("INVALID_SOURCE_SS58_PREFIX");
+  }
   if (source.evmNativeDecimals !== 18) throw new Error("INVALID_SOURCE_EVM_NATIVE_DECIMALS");
-  if (source.ss58Prefix !== 0) throw new Error("INVALID_SOURCE_SS58_PREFIX");
-  if (!Array.isArray(source.rpcHttpUrls) || source.rpcHttpUrls.some((url) => typeof url !== "string" || (url && !/^https:\/\//.test(url)))) throw new Error("INVALID_SOURCE_RPC_URLS");
-  if (!Array.isArray(source.substrateWsUrls) || source.substrateWsUrls.some((url) => typeof url !== "string" || (url && !/^wss:\/\//.test(url)))) throw new Error("INVALID_SOURCE_SUBSTRATE_WS_URLS");
-  if (typeof source.explorerUrl !== "string" || (source.explorerUrl && !/^https:\/\//.test(source.explorerUrl))) throw new Error("INVALID_SOURCE_EXPLORER_URL");
+  if (!Array.isArray(source.rpcHttpUrls) || source.rpcHttpUrls.some((url) => typeof url !== "string" || (localRevive ? !isLoopback(url, ["http:"]) : (url && !/^https:\/\//.test(url))))) throw new Error("INVALID_SOURCE_RPC_URLS");
+  if (!Array.isArray(source.substrateWsUrls) || source.substrateWsUrls.some((url) => typeof url !== "string" || (localRevive ? !isLoopback(url, ["ws:"]) : (url && !/^wss:\/\//.test(url))))) throw new Error("INVALID_SOURCE_SUBSTRATE_WS_URLS");
+  if (typeof source.explorerUrl !== "string" || (source.explorerUrl && (localRevive ? !isLoopback(source.explorerUrl, ["http:"]) : !/^https:\/\//.test(source.explorerUrl)))) throw new Error("INVALID_SOURCE_EXPLORER_URL");
+  if (localRevive) check(source.substrateGenesisHash, HASH, "SOURCE_SUBSTRATE_GENESIS_HASH");
   check(required(destination.chainId, "DESTINATION_CHAIN_ID"), DECIMAL, "DESTINATION_CHAIN_ID");
   check(destination.genesisHash, HASH, "DESTINATION_GENESIS_HASH");
   check(destination.miniLucky, ADDRESS, "DESTINATION_MINI_LUCKY");
@@ -35,6 +49,7 @@ export function validateManifest(manifest, environment, options = {}) {
   check(required(destination.deploymentBlock, "DESTINATION_DEPLOYMENT_BLOCK"), DECIMAL, "DESTINATION_DEPLOYMENT_BLOCK");
   if (environment === "local") {
     if (product !== null) throw new Error("LOCAL_PRODUCT_MUST_BE_NULL");
+    if (manifest.status === "deployed" && !["active", "ended"].includes(manifest.genesis?.phases?.phase2?.status)) throw new Error("LOCAL_PHASE2_MUST_BE_DEPLOYED");
   } else {
     if (!product || product.dotName !== (environment === "staging" ? "mini-lucky-dev.dot" : "mini-lucky.dot")) throw new Error(`INVALID_${environment.toUpperCase()}_PRODUCT`);
     check(product.ownerH160, ADDRESS, "PRODUCT_OWNER_H160");
@@ -43,11 +58,16 @@ export function validateManifest(manifest, environment, options = {}) {
   validateGenesisPhases(manifest.genesis, environment);
   if (manifest.status === "deployed" || options.runtimeReady) {
     if (manifest.status !== "deployed") throw new Error(`TEMPLATE_MANIFEST_NOT_RUNTIME_READY_${environment}`);
-    for (const value of [source.contract, source.runtimeCodeHash, source.deploymentBlock]) if (value === "0" || ZERO.test(value)) throw new Error(`ZERO_DEPLOYMENT_VALUE_${environment}`);
     if (source.rpcHttpUrls.length === 0 || source.rpcHttpUrls.some((url) => !url)) throw new Error(`MISSING_SOURCE_RPC_${environment}`);
-    if (!source.explorerUrl) throw new Error(`MISSING_SOURCE_EXPLORER_${environment}`);
-    const supported = options.supportedChainIds ?? [];
-    if (supported.length && (!supported.includes(source.chainId) || !supported.includes(destination.chainId))) throw new Error(`UNSUPPORTED_CHAIN_ID_${environment}`);
+    if (localRevive) {
+      if (!source.substrateWsUrls.length || source.substrateWsUrls.some((url) => !url)) throw new Error(`MISSING_SOURCE_SUBSTRATE_RPC_${environment}`);
+      if (source.substrateGenesisHash === "0x" + "0".repeat(64)) throw new Error(`MISSING_SOURCE_GENESIS_HASH_${environment}`);
+    } else {
+      for (const value of [source.contract, source.runtimeCodeHash, source.deploymentBlock]) if (value === "0" || ZERO.test(value)) throw new Error(`ZERO_DEPLOYMENT_VALUE_${environment}`);
+      if (!source.explorerUrl) throw new Error(`MISSING_SOURCE_EXPLORER_${environment}`);
+      const supported = options.supportedChainIds ?? [];
+      if (supported.length && (!supported.includes(source.chainId) || !supported.includes(destination.chainId))) throw new Error(`UNSUPPORTED_CHAIN_ID_${environment}`);
+    }
   }
   return manifest;
 }

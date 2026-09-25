@@ -2,24 +2,23 @@
 export const deploymentManifests = {
   "local": {
     "environment": "local",
-    "status": "template",
+    "status": "deployed",
     "evmNativeDecimals": 18,
     "source": {
-      "chainId": "420420417",
-      "name": "Polkadot Hub TestNet",
-      "currencySymbol": "PAS",
-      "nativeDecimals": 10,
+      "chainId": "420420420",
+      "name": "Development",
+      "currencySymbol": "MINI",
+      "nativeDecimals": 12,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
-        "https://eth-rpc-testnet.polkadot.io/",
-        "https://services.polkadothub-rpc.com/testnet/"
+        "http://127.0.0.1:8545"
       ],
       "substrateWsUrls": [
-        "wss://asset-hub-paseo-rpc.n.dwellir.com"
+        "ws://127.0.0.1:9944"
       ],
-      "substrateGenesisHash": "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2",
+      "substrateGenesisHash": "0xcc125d1e041fd31340ec7dbe70abe42d023ebcb0cdcd8dae9e0bebe5f13ea3a0",
       "ss58Prefix": 0,
-      "explorerUrl": "https://blockscout-testnet.polkadot.io/",
+      "explorerUrl": "",
       "contract": "0x0000000000000000000000000000000000000000",
       "runtimeCodeHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "deploymentBlock": "0",
@@ -98,8 +97,16 @@ export const deploymentManifests = {
           ]
         },
         "phase2": {
-          "status": "template",
+          "status": "active",
           "mechanism": "linear-bonding-curve",
+          "contract": "0x970951a12f975e6762482aca81e57d5a2a4e73f4",
+          "deploymentBlock": "8",
+          "runtimeCodeHash": "0xe38de2beab8e0ee08c371d1a104fa480943433c41946faadf4de46d31bef9f68",
+          "allocationMini": "2000000000000000000000000",
+          "startPriceX18": "3500000000000000",
+          "endPriceX18": "5500000000000000",
+          "startTime": "1790309748",
+          "endTime": "1790914548",
           "workItems": [
             {
               "id": "jamscript",

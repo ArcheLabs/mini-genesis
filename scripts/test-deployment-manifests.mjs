@@ -6,7 +6,13 @@ for (const environment of ["local", "staging", "production"]) {
   const manifest = JSON.parse(await readFile(`deployments/${environment}.json`, "utf8"));
   assert.equal(manifest.genesis.phases.phase1.status, "ended");
   assert.equal(manifest.genesis.phases.phase1.mechanism, "stream");
-  assert.equal(manifest.genesis.phases.phase2.status, "template");
+  if (environment === "local" && manifest.status === "deployed") {
+    assert.equal(manifest.genesis.phases.phase2.status, "active");
+    assert.match(manifest.source.rpcHttpUrls[0], /^http:\/\/127\.0\.0\.1:8545\/?$/);
+    assert.match(manifest.source.substrateWsUrls[0], /^ws:\/\/127\.0\.0\.1:9944\/?$/);
+  } else {
+    assert.equal(manifest.genesis.phases.phase2.status, "template");
+  }
   assert.equal(manifest.genesis.phases.phase2.mechanism, "linear-bonding-curve");
   assert.equal(manifest.genesis.phases.phase1.workItems?.length, 4);
   assert.equal(manifest.genesis.phases.phase1.researchHistory?.[0]?.status, "discontinued");
@@ -24,6 +30,25 @@ for (const environment of ["staging", "production"]) {
   assert.throws(
     () => validateManifest({ ...manifest, status: "deployed" }, environment, { runtimeReady: true, supportedChainIds: ["1"] }),
     /ZERO_|UNSUPPORTED_CHAIN_ID/,
+  );
+}
+
+{
+  const local = JSON.parse(await readFile("deployments/local.json", "utf8"));
+  if (local.status === "deployed") {
+    assert.throws(
+      () => validateManifest({ ...local, source: { ...local.source, rpcHttpUrls: ["https://example.org/"] } }, "local"),
+      /INVALID_SOURCE_RPC_URLS/,
+    );
+    assert.throws(
+      () => validateManifest({ ...local, source: { ...local.source, substrateWsUrls: ["wss://example.org/"] } }, "local"),
+      /INVALID_SOURCE_SUBSTRATE_WS_URLS/,
+    );
+  }
+  const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
+  assert.throws(
+    () => validateManifest({ ...staging, source: { ...staging.source, rpcHttpUrls: ["http://127.0.0.1:8545"] } }, "staging"),
+    /INVALID_SOURCE_RPC_URLS/,
   );
 }
 
