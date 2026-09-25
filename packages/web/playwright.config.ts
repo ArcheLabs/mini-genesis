@@ -1,0 +1,16 @@
+import { defineConfig } from "playwright/test";
+
+export default defineConfig({
+  testDir: "./test/browser",
+  timeout: 30_000,
+  use: {
+    baseURL: "http://127.0.0.1:4173",
+    browserName: "chromium",
+  },
+  webServer: {
+    command: "VITE_DEPLOYMENT_ENV=local ./node_modules/.bin/vite --host 127.0.0.1 --port 4173 --strictPort",
+    url: "http://127.0.0.1:4173/test/browser/local-frontend.html",
+    reuseExistingServer: !process.env.CI,
+    timeout: 30_000,
+  },
+});

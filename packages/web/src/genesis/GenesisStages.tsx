@@ -4,7 +4,6 @@ import type { DeploymentManifest } from "../config/manifest";
 import { getPhase2Contract, readCurveDynamic, type GenesisCurveDynamic } from "./curve-reads";
 import type { Eip1193Provider } from "../wallet/eip1193";
 import type { WalletSession } from "../wallet/types";
-import type { GenesisDynamic, GenesisStatic } from "./reads";
 import { GenesisPhase1 } from "./GenesisPhase1";
 import { GenesisPhase2 } from "./GenesisPhase2";
 import { GenesisPhase3 } from "./GenesisPhase3";
@@ -19,9 +18,6 @@ type Props = {
   provider: Eip1193Provider | null;
   walletReady: boolean;
   correctChain: boolean;
-  phase1Static: GenesisStatic | null;
-  phase1Dynamic: GenesisDynamic | null;
-  phase1UserMini?: bigint | null;
   demoMode?: boolean;
   onConnect: () => void;
   onRefresh: () => void;
@@ -50,6 +46,7 @@ function phase2Snapshot(manifest: DeploymentManifest | null): GenesisCurveDynami
 
 export function phase2Status(dynamic: GenesisCurveDynamic | null, manifest: DeploymentManifest | null, demoMode: boolean): string {
   if (dynamic?.phaseName === "Waiting") return "WAITING";
+  if (dynamic?.phaseName === "Active") return "LIVE";
   if (dynamic?.phaseName === "Ended") return dynamic.totalSoldMini === dynamic.allocation ? "COMPLETED · SOLD OUT" : "COMPLETED";
   const status = manifest?.genesis?.phases.phase2?.status;
   if (status === "ended") return "COMPLETED";
@@ -57,7 +54,7 @@ export function phase2Status(dynamic: GenesisCurveDynamic | null, manifest: Depl
   return "WAITING";
 }
 
-export function GenesisStages({ language, manifest, publicClient, session, provider, walletReady, correctChain, phase1Static, phase1Dynamic, phase1UserMini: _phase1UserMini = null, demoMode = false, onConnect, onRefresh }: Props) {
+export function GenesisStages({ language, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onRefresh }: Props) {
   const [stage, setStage] = useState<Stage>("phase2");
   const [dynamic, setDynamic] = useState<GenesisCurveDynamic | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +82,6 @@ export function GenesisStages({ language, manifest, publicClient, session, provi
   }, [refresh]);
 
   const status = phase2Status(dynamic, manifest, demoMode);
-  const explorerAddress = manifest?.source.explorerUrl && manifest.source.contract ? `${manifest.source.explorerUrl.replace(/\/$/, "")}/address/${manifest.source.contract}` : null;
   return <main className="genesis-stages">
     <section className="stage-tabs" aria-label={language === "zh-CN" ? "Genesis 阶段" : "Genesis stages"}>
       {(["phase1", "phase2", "phase3"] as const).map((item) => <button key={item} className={`stage-tab ${stage === item ? "active" : ""}`} type="button" onClick={() => setStage(item)} aria-pressed={stage === item}>
@@ -94,7 +90,7 @@ export function GenesisStages({ language, manifest, publicClient, session, provi
       </button>)}
     </section>
     {error && <p className="genesis-data-note" role="status">{error}</p>}
-    {stage === "phase1" && <GenesisPhase1 language={language} manifest={manifest} phase1Static={phase1Static} phase1Dynamic={phase1Dynamic} explorerAddress={explorerAddress} />}
+    {stage === "phase1" && <GenesisPhase1 language={language} />}
     {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onRefresh={() => { onRefresh(); void refresh(); }} />}
     {stage === "phase3" && <GenesisPhase3 language={language} />}
   </main>;

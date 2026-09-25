@@ -161,4 +161,9 @@ export function phase2Address(manifest: DeploymentManifest): Address | null {
   return value && isAddress(value) && !/^0x0+$/i.test(value) ? value : null;
 }
 
+export function hasLivePhase1Contract(manifest: DeploymentManifest | null | undefined): manifest is DeploymentManifest {
+  const value = manifest?.source.contract;
+  return Boolean(value && isAddress(value) && !/^0x0+$/i.test(value));
+}
+
 export function checksumAddress(value: string): Address { return getAddress(value); }

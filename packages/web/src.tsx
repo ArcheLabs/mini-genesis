@@ -8,8 +8,8 @@ import { walletClient } from "./src/wallet/wallet-client";
 import { GenesisWalletProvider } from "./src/wallet/AppKitProvider";
 import { useGenesisWallet } from "./src/wallet/use-genesis-wallet";
 import { readContributionHistory, type ContributionHistoryItem } from "./src/genesis/history";
-import { startVisiblePolling, type PollController } from "./src/genesis/polling";
-import { readGlobalDynamic, readGlobalStatic, readGenesisUserState, type GenesisDynamic, type GenesisStatic, type GenesisUser } from "./src/genesis/reads";
+import type { PollController } from "./src/genesis/polling";
+import { readGenesisUserState, type GenesisDynamic, type GenesisStatic, type GenesisUser } from "./src/genesis/reads";
 import { calculateStartPriceX18 } from "./src/genesis/start-price";
 import { contributionBoundaryPercent } from "./src/genesis/progress";
 import { GenesisProgress } from "./src/genesis/GenesisProgress";
@@ -27,7 +27,6 @@ import { NotificationCenter } from "./src/feedback/NotificationCenter";
 import { SystemBanner } from "./src/feedback/SystemBanner";
 import { useFeedback } from "./src/feedback/use-feedback";
 import type { FeedbackContext, NormalizedFeedback } from "./src/feedback/types";
-import { getRetryAfterMs, isRateLimitError } from "./src/rpc/error";
 import { NativeSignerSmoke } from "./src/dev/native-signer-smoke";
 import { GenesisStages } from "./src/genesis/GenesisStages";
 import "./style.css";
@@ -128,8 +127,6 @@ function App() {
   const [openRule, setOpenRule] = useState<number | null>(null);
   const walletWrapRef = useRef<HTMLDivElement | null>(null);
   const languageWrapRef = useRef<HTMLDivElement | null>(null);
-  const dynamicRunning = useRef(false);
-  const dynamicStateRef = useRef<GenesisDynamic | null>(dynamicState);
   const globalPollingRef = useRef<PollController | null>(null);
   const reconciliationRef = useRef<AbortController | null>(null);
   const nativeMaxRefreshKey = useRef<string | null>(null);
@@ -142,70 +139,23 @@ function App() {
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem("mini-genesis-theme", theme); }, [theme]);
   useEffect(() => { document.documentElement.classList.toggle("native-mainnet-override", nativeMainnetOverride); }, [nativeMainnetOverride]);
   useEffect(() => { localStorage.setItem("mini-genesis-language", language); }, [language]);
-  useEffect(() => { dynamicStateRef.current = dynamicState; }, [dynamicState]);
   useEffect(() => { if (!demoMode && previousWalletStatus.current === "connecting" && status === "disconnected") feedback.presentCode("WALLET_CONNECTION_REJECTED", context("connect-wallet")); previousWalletStatus.current = status; }, [context, feedback.presentCode, status]);
   useEffect(() => { if (demoMode) return; if (!manifest) feedback.presentCode("CONFIGURATION_MISMATCH", context("load-global")); else if (manifest.status !== "deployed") feedback.presentCode("TEMPLATE_MANIFEST_NOT_RUNTIME_READY", context("load-global")); }, [context, feedback.presentCode, manifest]);
   useEffect(() => { const onHashChange = () => { const next = routeFromHash(); setRoute(next); window.setTimeout(() => scrollToRoute(next), 0); }; window.addEventListener("hashchange", onHashChange); return () => window.removeEventListener("hashchange", onHashChange); }, []);
   useEffect(() => { const onPointerDown = (event: PointerEvent) => { if (walletMenu && walletWrapRef.current && !walletWrapRef.current.contains(event.target as Node)) setWalletMenu(false); if (languageMenu && languageWrapRef.current && !languageWrapRef.current.contains(event.target as Node)) setLanguageMenu(false); }; const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") { setWalletMenu(false); setPolkadotWalletMenu(false); setAccountMenu(false); setLanguageMenu(false); feedback.notifications.filter((item) => !item.persistent).forEach((item) => feedback.dismiss(item.dedupeKey)); } }; document.addEventListener("pointerdown", onPointerDown); document.addEventListener("keydown", onKeyDown); return () => { document.removeEventListener("pointerdown", onPointerDown); document.removeEventListener("keydown", onKeyDown); }; }, [feedback.dismiss, feedback.notifications, languageMenu, walletMenu]);
   const navigate = useCallback((nextRoute: AppRoute) => { setWalletMenu(false); const nextHash = hashForRoute(nextRoute); if (window.location.hash !== nextHash) window.location.hash = nextHash; else { setRoute(nextRoute); window.requestAnimationFrame(() => scrollToRoute(nextRoute)); } }, []);
 
-  const calculateMax = useCallback(async (targetAccount: Address, nextDynamic: GenesisDynamic): Promise<bigint | null> => { const requestedKey = sessionKey; if (demoMode || session?.kind !== "evm" || !publicClient || !manifest || !staticState || !requestedKey) return null; const value = await safeMaxAmount(publicClient, { account: targetAccount, contract: manifest.source.contract, phase: nextDynamic.phase, firstContributionMinimum: staticState.firstContributionMinimum, subsequentContributionMinimumExclusive: staticState.subsequentContributionMinimumExclusive }); if (sessionKeyRef.current !== requestedKey) return null; setMaxAmount(value); return value; }, [demoMode, manifest, publicClient, session, sessionKey, staticState]);
-  const calculateNativeMax = useCallback(async (nextDynamic: GenesisDynamic): Promise<bigint | null> => { const requestedKey = sessionKey; if (demoMode || session?.kind !== "polkadot" || !session.api || !nativeManifest || !staticState || !requestedKey) return null; const value = await estimateNativeMax(session.api, session.selectedAccountAddress, nativeManifest, nextDynamic.phase, staticState.firstContributionMinimum, staticState.subsequentContributionMinimumExclusive); if (sessionKeyRef.current !== requestedKey) return null; setNativeMaxAmount(value); return value; }, [demoMode, nativeManifest, session, sessionKey, staticState]);
+  // Genesis I is historical UI only; all current chain reads and writes use the Genesis II contract.
+  const phase1ContractAvailable = false;
+  const phase1ReadsEnabled = false;
+  const calculateMax = useCallback(async (_targetAccount: Address, _nextDynamic: GenesisDynamic): Promise<bigint | null> => null, []);
+  const calculateNativeMax = useCallback(async (nextDynamic: GenesisDynamic): Promise<bigint | null> => { const requestedKey = sessionKey; if (demoMode || !phase1ReadsEnabled || session?.kind !== "polkadot" || !session.api || !nativeManifest || !staticState || !requestedKey) return null; const value = await estimateNativeMax(session.api, session.selectedAccountAddress, nativeManifest, nextDynamic.phase, staticState.firstContributionMinimum, staticState.subsequentContributionMinimumExclusive); if (sessionKeyRef.current !== requestedKey) return null; setNativeMaxAmount(value); return value; }, [demoMode, nativeManifest, phase1ReadsEnabled, session, sessionKey, staticState]);
   const presentGlobalError = useCallback((error: unknown) => { const message = error instanceof Error ? error.message : String(error); if ((typeof navigator !== "undefined" && !navigator.onLine) || /http request failed|failed to fetch|fetch|timeout|rpc|network|gateway|connection/i.test(message)) feedback.presentCode("RPC_UNAVAILABLE", context("load-global")); else feedback.presentError(error, context("load-global")); }, [context, feedback.presentCode, feedback.presentError]);
-  const refreshDynamic = useCallback(async () => {
-    if (demoMode || !publicClient || !manifest || dynamicRunning.current) return { status: "error" } as const;
-    dynamicRunning.current = true;
-    try {
-      const next = await readGlobalDynamic(publicClient, manifest);
-      setDynamicState(next);
-      feedback.clearCode("RPC_UNAVAILABLE");
-      feedback.clearCode("GLOBAL_DATA_UNAVAILABLE");
-      return { status: "success" } as const;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (typeof navigator !== "undefined" && !navigator.onLine) {
-        feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));
-        return { status: "error" } as const;
-      }
-      if (isRateLimitError(error) || /429|Too Many Requests/i.test(message)) {
-        feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));
-        return { status: "rate_limited", retryAfterMs: getRetryAfterMs(error) ?? 60_000 } as const;
-      }
-      presentGlobalError(error);
-      return { status: "error" } as const;
-    } finally {
-      dynamicRunning.current = false;
-    }
-  }, [context, feedback.clearCode, feedback.presentCode, manifest, presentGlobalError, publicClient]);
-  useEffect(() => { if (demoMode || !publicClient || !manifest) return; let disposed = false; void readGlobalStatic(publicClient, manifest).then((next) => { if (!disposed) setStaticState(next); }).catch((error) => { if (!disposed) presentGlobalError(error); }); return () => { disposed = true; }; }, [manifest, presentGlobalError, publicClient]);
-  useEffect(() => {
-    if (demoMode || !publicClient || !manifest) return;
+  const refreshDynamic = useCallback(async () => ({ status: "success" as const }), []);
 
-    const controller = startVisiblePolling(async () => refreshDynamic());
-    globalPollingRef.current = controller;
-
-    return () => {
-      controller();
-      if (globalPollingRef.current === controller) {
-        globalPollingRef.current = null;
-      }
-    };
-  }, [manifest, publicClient, refreshDynamic]);
-  useEffect(() => {
-    if (demoMode) return;
-
-    const handleOffline = () => feedback.presentCode("RPC_UNAVAILABLE", context("load-global"));
-
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, [context, feedback.presentCode]);
-
-  const loadUser = useCallback(async (targetAccount: Address, requestedKey: string) => { if (demoMode || !publicClient || !manifest) return; setUserStateStatus("loading"); try { const next = await readGenesisUserState(publicClient, manifest, targetAccount); if (sessionKeyRef.current !== requestedKey) return; setUser(next); setUserStateStatus("ready"); feedback.clearCode("USER_DATA_UNAVAILABLE"); } catch (error) { if (sessionKeyRef.current === requestedKey) { setUserStateStatus("error"); feedback.presentError(error, context("load-user")); } } }, [context, demoMode, feedback.clearCode, feedback.presentError, manifest, publicClient]);
-  const loadHistory = useCallback(async (targetAccount: Address, requestedKey: string) => { if (demoMode || !publicClient || !manifest) return; setHistoryStatus("loading"); try { const finalized = await publicClient.request({ method: "eth_getBlockByNumber", params: ["finalized", false] } as any) as { number?: string } | null; if (finalized?.number) { const next = await readContributionHistory(publicClient, manifest, targetAccount, BigInt(finalized.number)); if (sessionKeyRef.current !== requestedKey) return; setHistory(next); setHistoryStatus("ready"); } feedback.clearCode("HISTORY_UNAVAILABLE"); } catch (error) { if (sessionKeyRef.current === requestedKey) { setHistoryStatus("error"); feedback.presentError(error, context("load-history")); } } }, [context, demoMode, feedback.clearCode, feedback.presentError, manifest, publicClient]);
-  const clearUser = useCallback(() => { reconciliationRef.current?.abort(); setUser(demoMode ? demoUser : null); setHistory([]); setUserStateStatus(demoMode ? "ready" : "idle"); setHistoryStatus(demoMode ? "ready" : "idle"); setMaxAmount(demoMode ? demoGenesis.walletBalance : null); feedback.clearCode("USER_DATA_UNAVAILABLE"); feedback.clearCode("HISTORY_UNAVAILABLE"); }, [feedback.clearCode]);
+  const loadUser = useCallback(async (targetAccount: Address, requestedKey: string) => { if (demoMode) return; if (!phase1ReadsEnabled || !publicClient || !manifest) { setUser(null); setUserStateStatus("ready"); return; } setUserStateStatus("loading"); try { const next = await readGenesisUserState(publicClient, manifest, targetAccount); if (sessionKeyRef.current !== requestedKey) return; setUser(next); setUserStateStatus("ready"); feedback.clearCode("USER_DATA_UNAVAILABLE"); } catch (error) { if (sessionKeyRef.current === requestedKey) { setUserStateStatus("error"); feedback.presentError(error, context("load-user")); } } }, [context, demoMode, feedback.clearCode, feedback.presentError, manifest, phase1ReadsEnabled, publicClient]);
+  const loadHistory = useCallback(async (targetAccount: Address, requestedKey: string) => { if (demoMode) return; if (!phase1ReadsEnabled || !publicClient || !manifest) { setHistory([]); setHistoryStatus("ready"); return; } setHistoryStatus("loading"); try { const finalized = await publicClient.request({ method: "eth_getBlockByNumber", params: ["finalized", false] } as any) as { number?: string } | null; if (finalized?.number) { const next = await readContributionHistory(publicClient, manifest, targetAccount, BigInt(finalized.number)); if (sessionKeyRef.current !== requestedKey) return; setHistory(next); setHistoryStatus("ready"); } feedback.clearCode("HISTORY_UNAVAILABLE"); } catch (error) { if (sessionKeyRef.current === requestedKey) { setHistoryStatus("error"); feedback.presentError(error, context("load-history")); } } }, [context, demoMode, feedback.clearCode, feedback.presentError, manifest, phase1ReadsEnabled, publicClient]);
+  const clearUser = useCallback(() => { reconciliationRef.current?.abort(); setUser(demoMode ? demoUser : null); setHistory([]); setUserStateStatus(demoMode || !phase1ContractAvailable ? "ready" : "idle"); setHistoryStatus(demoMode || !phase1ContractAvailable ? "ready" : "idle"); setMaxAmount(demoMode ? demoGenesis.walletBalance : null); feedback.clearCode("USER_DATA_UNAVAILABLE"); feedback.clearCode("HISTORY_UNAVAILABLE"); }, [demoMode, feedback.clearCode, phase1ContractAvailable]);
   const maxRefreshKey = useRef<string | null>(null);
   useEffect(() => {
     if (demoMode) return;
@@ -266,6 +216,7 @@ function App() {
   const startPriceX18 = staticState && dynamicState ? calculateStartPriceX18({ totalRaisedDot: dynamicState.totalRaisedDot, lastSettledBlock: dynamicState.lastSettledBlock, startBlock: dynamicState.startBlock, genesisAllocation: staticState.genesisAllocation, totalEmissionBlocks: staticState.totalEmissionBlocks }) : null;
   const contributionBusy = ["validating", "checking_mapping", "mapping_required", "awaiting_mapping_signature", "mapping_submitted", "mapping_finalized", "verifying_mapping", "simulating", "awaiting_signature", "submitted", "included", "finalized", "verifying_event", "success", "demo_processing"].includes(contributionState);
   const submit = async () => {
+    if (!phase1ContractAvailable) return;
     if (contributionBusy || !session) return;
     setAmountFeedback(null);
     feedback.clearOperation("submit-contribution");
@@ -347,7 +298,7 @@ function App() {
   const assetsPage = <main className="assets-page"><div className="assets-heading"><span className="section-index">{text.account}</span><h1>{text.mine}</h1><p className="my-address">{shortHash(selectedSourceAddress)}</p></div>{!session && !demoMode ? <section className="assets-empty"><p>{text.assetsEmpty}</p><button className="submit-button" type="button" onClick={() => setWalletMenu(true)}>{text.connect}</button></section> : session && !paymentReady && !demoMode ? <section className="assets-empty"><p>Loading…</p></section> : <><div className={`my-grid ${isNativeAssets ? "native-assets-grid" : ""}`}>{miniAssetCard}{isNativeAssets ? <>{ecosystemAssetCard}{contributedAssetCard}</> : ecosystemAssetCard}</div>{!isNativeAssets && <article className="history-card"><div className="history-head"><strong>{text.history}</strong><span>{text.status}</span><span>{nativeSymbol}</span><span>Block</span></div>{historyItems.length ? historyItems.map((item) => <div className="tx-row" key={`${item.transactionHash}-${item.logIndex}`}><div><div className="tx-type">{text.contribution.replace("DOT", nativeSymbol)}</div><div className="tx-time">{shortHash(item.transactionHash)}</div></div><div className="tx-amount">{formatAmount(item.amount)} {nativeSymbol}</div><div className="tx-status">{text.confirmed}</div><div className="tx-block">#{item.blockNumber.toString()}</div></div>) : historyStatus === "loading" || historyStatus === "idle" ? <div className="empty-history">Loading…</div> : <div className="empty-history">{text.noHistory}</div>}</article>}</>}</main>;
   const initialWalletLoading = !demoMode && !paymentReady && walletStatus !== "disconnected";
   const genesisPage = <main><section className="hero" id="genesis"><div className="genesis-card"><div className="demo-badge" hidden={!demoMode}>{text.demo}</div><h1 className="pool-title">{text.pool}</h1><div className="status-row"><div><span className="label">{text.startPrice}</span><div className="price"><Price value={startPriceX18} /><span className="price-unit">{nativeSymbol} / {MINI_SYMBOL}</span></div></div>{progressMarkup}</div><div className="input-panel"><div className="input-top"><span>{text.contribution.replace("DOT", nativeSymbol)}</span>{(paymentReady || demoMode) && <span>{text.balance} <span className="balance-value">{`${formatDotBalance(demoMode ? demoGenesis.walletBalance : selectedBalance, selectedBalanceDecimals)} ${nativeSymbol}`}</span>{(session?.kind === "evm" || nativeMaxAmount !== null) && <><span> · </span><button className="all-button" type="button" disabled={contributionBusy} onClick={() => void setAll()}>{text.all}</button></>}</span>}{initialWalletLoading && <span>{text.balance} <span className="balance-value">Loading…</span></span>}</div><div className={`amount-control ${amountFeedback ? "has-error" : ""}`}><button className="step-button" type="button" disabled={contributionBusy || initialWalletLoading} onClick={() => stepAmount(-1)} aria-label={`Decrease 1 ${nativeSymbol}`}>−</button><input className="amount-field" disabled={contributionBusy || initialWalletLoading} value={amount} onChange={(event) => onAmountChange(event.target.value)} inputMode="decimal" placeholder="0" aria-label={`${nativeSymbol} amount`} aria-invalid={Boolean(amountFeedback)} /><button className="step-button" type="button" disabled={contributionBusy || initialWalletLoading} onClick={() => stepAmount(1)} aria-label={`Increase 1 ${nativeSymbol}`}>+</button></div><FieldFeedback feedback={amountFeedback} /><div className="quick-row"><button className="quick-button" type="button" disabled={contributionBusy || initialWalletLoading} onClick={() => stepAmount(10)}>+10 {nativeSymbol}</button><button className="quick-button" type="button" disabled={contributionBusy || initialWalletLoading} onClick={() => stepAmount(100)}>+100 {nativeSymbol}</button></div><button className={`submit-button ${contributionBusy || initialWalletLoading ? "loading" : ""}`} type="button" onClick={() => void (paymentReady || demoMode ? submit() : setWalletMenu(true))} disabled={contributionBusy || initialWalletLoading}>{(contributionBusy || initialWalletLoading) && <span className="button-spinner" aria-hidden="true" />}<span>{contributionBusy ? stateLabel(contributionState, text) : initialWalletLoading ? "Loading…" : paymentReady || demoMode ? text.join : text.connectAction}</span></button></div></div></section>{SHOW_GENESIS_STATS && <section className="stats-strip"><div><span>{text.phase}</span><strong>{dynamicState ? phaseLabel(dynamicState.phase, text) : "—"}</strong></div><div><span>{text.raised}</span><strong>{dynamicState ? `${formatAmount(dynamicState.totalRaisedDot)} ${nativeSymbol}` : "—"}</strong></div><div><span>{text.contributors}</span><strong>{dynamicState?.contributorCount.toLocaleString() ?? "—"}</strong></div></section>}<section className="section" id="rules"><div className="rule-list">{text.ruleTitles.map((title, index) => <article className={`rule-item ${openRule === index ? "open" : ""}`} key={title}><button className="rule-summary" type="button" aria-expanded={openRule === index} onClick={() => setOpenRule(openRule === index ? null : index)}><span className="rule-num">{String(index + 1).padStart(2, "0")}</span><span className="rule-title">{title}</span><span className="rule-desc">{text.ruleDescs[index].replaceAll("DOT", nativeSymbol)}</span><span className="rule-arrow">＋</span></button><div className="rule-detail"><div className="rule-detail-inner"><div className="rule-detail-content">{text.ruleDetails[index].replaceAll("DOT", nativeSymbol)}</div></div></div></article>)}</div></section>{footer}</main>;
-  const genesisStagesPage = <GenesisStages language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} phase1Static={staticState} phase1Dynamic={dynamicState} phase1UserMini={user?.pendingMini ?? null} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onRefresh={() => { void refreshDynamic(); }} />;
+  const genesisStagesPage = <GenesisStages language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onRefresh={() => { void refreshDynamic(); }} />;
   const smokePage = NATIVE_SMOKE_ENABLED ? <NativeSignerSmoke manifest={manifest} session={session} availablePolkadotWallets={availablePolkadotWallets} connectPolkadot={connectPolkadot} /> : null;
   return <><NotificationCenter items={feedback.notifications.filter((item) => route === "assets" || item.code !== "HISTORY_UNAVAILABLE")} onDismiss={feedback.dismiss} onAction={handleFeedbackAction} /><SystemBanner items={feedback.banners} onAction={handleFeedbackAction} />{header}{route === "native-signer-smoke" ? smokePage : route === "assets" ? assetsPage : genesisStagesPage}</>;
 }

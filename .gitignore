@@ -11,3 +11,5 @@ deployments/*
 .env
 packages/web/node_modules/
 packages/web/dist/
+packages/web/playwright-report/
+packages/web/test-results/

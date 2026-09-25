@@ -1,5 +1,5 @@
 import type { Address, PublicClient } from "viem";
-import type { DeploymentManifest } from "../config/manifest";
+import { hasLivePhase1Contract, type DeploymentManifest } from "../config/manifest";
 import { genesisAbi } from "./abi";
 import { streamPhaseName, type StreamPhaseName } from "./stream-phase";
 
@@ -32,32 +32,40 @@ export type GenesisUser = { contributedDot: bigint; pendingMini: bigint; nativeB
 const read = (client: PublicClient, address: Address, functionName: string, args?: readonly unknown[]) =>
   client.readContract({ address, abi: genesisAbi, functionName, args } as any) as Promise<any>;
 
+function phase1Address(manifest: DeploymentManifest): Address {
+  if (!hasLivePhase1Contract(manifest)) throw new Error("PHASE1_CONTRACT_UNAVAILABLE");
+  return manifest.source.contract;
+}
+
 export async function readGlobalStatic(client: PublicClient, manifest: DeploymentManifest): Promise<GenesisStatic> {
+  const address = phase1Address(manifest);
   const names = ["genesisAllocation", "contributionBlocks", "protectionBlocks", "totalEmissionBlocks", "firstContributionMinimum", "subsequentContributionMinimumExclusive", "treasury", "protectionEmissionMini"];
-  const values = await Promise.all(names.map((name) => read(client, manifest.source.contract, name)));
+  const values = await Promise.all(names.map((name) => read(client, address, name)));
   const [genesisAllocation, contributionBlocks, protectionBlocks, totalEmissionBlocks, firstContributionMinimum, subsequentContributionMinimumExclusive, treasury, protectionEmissionMini] = values;
   return { genesisAllocation, contributionBlocks, protectionBlocks, totalEmissionBlocks, firstContributionMinimum, subsequentContributionMinimumExclusive, treasury, protectionEmissionMini };
 }
 
 export async function readGlobalDynamic(client: PublicClient, manifest: DeploymentManifest): Promise<GenesisDynamic> {
+  const address = phase1Address(manifest);
   const [rawPhase, startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, emittedMini, observedBlockNumber] = await Promise.all([
-    read(client, manifest.source.contract, "phase"),
-    read(client, manifest.source.contract, "startBlock"),
-    read(client, manifest.source.contract, "contributionEndBlock"),
-    read(client, manifest.source.contract, "emissionEndBlock"),
-    read(client, manifest.source.contract, "lastSettledBlock"),
-    read(client, manifest.source.contract, "totalRaisedDot"),
-    read(client, manifest.source.contract, "contributorCount"),
-    read(client, manifest.source.contract, "emittedMini"),
+    read(client, address, "phase"),
+    read(client, address, "startBlock"),
+    read(client, address, "contributionEndBlock"),
+    read(client, address, "emissionEndBlock"),
+    read(client, address, "lastSettledBlock"),
+    read(client, address, "totalRaisedDot"),
+    read(client, address, "contributorCount"),
+    read(client, address, "emittedMini"),
     client.getBlockNumber(),
   ]);
   return { phase: Number(rawPhase), phaseName: streamPhaseName(rawPhase), startBlock, contributionEndBlock, emissionEndBlock, lastSettledBlock, totalRaisedDot, contributorCount, emittedMini, observedBlockNumber };
 }
 
 export async function readGenesisUserState(client: PublicClient, manifest: DeploymentManifest, contractAddress: Address): Promise<GenesisUser> {
+  const address = phase1Address(manifest);
   const [userInfo, pendingMini] = await Promise.all([
-    read(client, manifest.source.contract, "userInfo", [contractAddress]),
-    read(client, manifest.source.contract, "pendingMini", [contractAddress]),
+    read(client, address, "userInfo", [contractAddress]),
+    read(client, address, "pendingMini", [contractAddress]),
   ]);
   return { contributedDot: userInfo.contributedDot ?? userInfo[0], pendingMini };
 }
