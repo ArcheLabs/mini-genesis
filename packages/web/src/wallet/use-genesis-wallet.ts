@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { bytesToHex, getAddress, type Address, type PublicClient } from "viem";
-import { useAppKit, useAppKitAccount, useAppKitNetwork, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
+import { useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
 import type { DeploymentManifest } from "../config/manifest";
-import { polkadotHubNetwork } from "./appkit";
-import type { Eip1193Provider } from "./eip1193";
+import { appKit, polkadotHubNetwork } from "./appkit";
+import { parseEip1193ChainId, readEip1193ChainId, switchEip1193Chain, type Eip1193Provider } from "./eip1193";
 import { accountId32FromSs58, resolveContractAddress } from "./substrate/account";
 import { readNativeBalance } from "./substrate/balance";
 import { getSubstrateApi } from "./substrate/client";
@@ -88,7 +88,6 @@ export function supportedAccounts(accounts: InjectedPolkadotAccount[]): Polkadot
 export function useGenesisWallet(manifest: DeploymentManifest | null, publicClient: PublicClient | null = null, nativeManifest: DeploymentManifest | null = manifest) {
   const { open } = useAppKit();
   const { address, isConnected, status } = useAppKitAccount({ namespace: "eip155" });
-  const { chainId, switchNetwork } = useAppKitNetwork();
   const { walletProvider } = useAppKitProvider<unknown>("eip155");
   const { disconnect: disconnectAppKit } = useDisconnect();
   const expectedChainId = Number(manifest?.source.chainId ?? polkadotHubNetwork.id);
@@ -104,6 +103,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const [substrateContractAddress, setSubstrateContractAddress] = useState<Address | null>(null);
   const [contractIdentityStatus, setContractIdentityStatus] = useState<PolkadotWalletSession["contractIdentityStatus"]>("loading");
   const [evmBalance, setEvmBalance] = useState<bigint | null>(null);
+  const [evmProviderChain, setEvmProviderChain] = useState<{ provider: Eip1193Provider; chainId: number | null } | null>(null);
   const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions().map(describePolkadotWallet));
   const [restoreStatus, setRestoreStatus] = useState<PolkadotRestoreStatus>(() => readStoredPolkadotSession() ? "restoring" : "idle");
   const restorationAttempted = useRef(false);
@@ -118,6 +118,36 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     return () => window.removeEventListener("focus", refreshPolkadotWallets);
   }, [refreshPolkadotWallets]);
 
+  useEffect(() => {
+    if (!provider) {
+      setEvmProviderChain(null);
+      return;
+    }
+    let disposed = false;
+    const update = (value: unknown) => {
+      if (!disposed) setEvmProviderChain({ provider, chainId: parseEip1193ChainId(value) });
+    };
+    const onChainChanged = (value: unknown) => update(value);
+    provider.on?.("chainChanged", onChainChanged);
+    void readEip1193ChainId(provider).then(update).catch(() => update(null));
+    return () => {
+      disposed = true;
+      provider.removeListener?.("chainChanged", onChainChanged);
+    };
+  }, [provider]);
+
+  const providerChainId = evmProviderChain?.provider === provider ? evmProviderChain.chainId : null;
+
+  useEffect(() => {
+    if (provider && providerChainId === expectedChainId) {
+      // The provider can switch successfully before AppKit updates its own
+      // active network. Reconcile that UI state without issuing another
+      // wallet_switchEthereumChain request.
+      const network = appKit.getCaipNetworks().find((candidate) => candidate.chainNamespace === "eip155" && Number(candidate.id) === expectedChainId);
+      if (network) appKit.setCaipNetwork(network);
+    }
+  }, [expectedChainId, provider, providerChainId]);
+
   const evmSession = useMemo<EvmWalletSession | null>(() => {
     if (!evmAddress || !provider) return null;
     return {
@@ -125,11 +155,11 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       status: "connected",
       address: evmAddress,
       provider,
-      chainId: chainId == null ? null : Number(chainId),
-      correctChain: Number(chainId) === expectedChainId,
+      chainId: providerChainId,
+      correctChain: providerChainId === expectedChainId,
       balance: evmBalance,
     };
-  }, [chainId, evmAddress, evmBalance, expectedChainId, provider]);
+  }, [evmAddress, evmBalance, expectedChainId, provider, providerChainId]);
 
   const selectedPolkadotAccount = substrateAccounts.find((account) => account.address === selectedPolkadotAddress) ?? null;
   const polkadotSession = useMemo<PolkadotWalletSession | null>(() => {
@@ -228,7 +258,23 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     open({ view: "Connect" });
   }, [open, substrateExtension]);
   const openAccount = useCallback(() => open({ view: "Account" }), [open]);
-  const switchToGenesisChain = useCallback(() => switchNetwork(polkadotHubNetwork), [switchNetwork]);
+  const switchToGenesisChain = useCallback(async () => {
+    if (!provider || !manifest) throw new Error("BROWSER_WALLET_UNAVAILABLE");
+    const currencySymbol = manifest.source.currencySymbol ?? "DOT";
+    await switchEip1193Chain(provider, {
+      chainId: expectedChainId,
+      name: manifest.source.name,
+      nativeCurrency: {
+        name: currencySymbol,
+        symbol: currencySymbol,
+        decimals: manifest.source.evmNativeDecimals,
+      },
+      rpcUrls: manifest.source.rpcHttpUrls.filter(Boolean),
+    });
+    const actualChainId = await readEip1193ChainId(provider);
+    if (actualChainId !== expectedChainId) throw new Error("CHAIN_SWITCH_REJECTED");
+    setEvmProviderChain({ provider, chainId: actualChainId });
+  }, [expectedChainId, manifest, provider]);
 
   const connectPolkadot = useCallback(async (extensionId?: string, preferredAccountId32?: `0x${string}`) => {
     if (isConnected) throw new Error("WALLET_DISCONNECT_REQUIRED");
@@ -335,6 +381,6 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     provider,
     isConnected,
     status,
-    chainId,
+    chainId: providerChainId,
   };
 }
