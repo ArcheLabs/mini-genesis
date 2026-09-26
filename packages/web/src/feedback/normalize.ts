@@ -26,7 +26,9 @@ function codeFromUnknown(error: unknown, context: FeedbackContext): FeedbackCode
   if (context.operation === "load-user" || context.operation === "calculate-max") return "USER_DATA_UNAVAILABLE";
   if (context.operation === "load-global") return "GLOBAL_DATA_UNAVAILABLE";
   if (/reject|denied|user/i.test(candidate)) return context.operation === "connect-wallet" ? "WALLET_CONNECTION_REJECTED" : context.operation === "switch-network" ? "CHAIN_SWITCH_REJECTED" : "USER_REJECTED_TRANSACTION";
-  if (/network|rpc|fetch|timeout|gateway|connection|execution/i.test(candidate)) return "RPC_UNAVAILABLE";
+  if (/insufficient funds|insufficient balance|exceeds (the )?balance|not enough funds/i.test(candidate)) return "INSUFFICIENT_BALANCE";
+  if (/revert|execution reverted|contract function .* failed|custom error/i.test(candidate)) return "TRANSACTION_REVERTED";
+  if (/failed to fetch|fetch failed|network request failed|connection refused|econnrefused|timed? ?out|timeout|gateway|http request failed|\b50[234]\b|socket error|network unavailable|rpc unavailable/i.test(candidate)) return "RPC_UNAVAILABLE";
   return "UNKNOWN_ERROR";
 }
 export function normalizeFeedback(error: unknown, context: FeedbackContext): NormalizedFeedback {

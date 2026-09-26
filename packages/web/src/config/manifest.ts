@@ -1,5 +1,6 @@
 import { getAddress, isAddress, type Address, type Hex } from "viem";
 import { deploymentManifests } from "../generated/deployment-manifests";
+import { currentRuntimeSelection } from "./runtime-selection";
 
 export type DeploymentEnvironment = "local" | "staging" | "production";
 export type ManifestStatus = "template" | "deployed";
@@ -14,12 +15,18 @@ export type ContractConfig = Partial<Record<
 
 export type GenesisWorkStatus = "planned" | "active" | "delivered" | "investigated" | "discontinued";
 export type GenesisLocalizedText = { "zh-CN": string; en: string };
+export type GenesisExecutionTask = {
+  id: string;
+  name: string | GenesisLocalizedText;
+  status: "delivered" | "active" | "planned";
+};
 export type GenesisWorkItem = {
   id: string;
   name: string;
   status: GenesisWorkStatus;
   summary: string | GenesisLocalizedText;
   evidenceUrl?: string;
+  tasks?: GenesisExecutionTask[];
 };
 /** Backward-compatible name used by older Phase I manifests. */
 export type GenesisAchievement = GenesisWorkItem;
@@ -108,9 +115,7 @@ export type RuntimeDiagnostic = {
 };
 
 export function selectedEnvironment(mode: string, value = import.meta.env.VITE_DEPLOYMENT_ENV): DeploymentEnvironment | null {
-  if (value && value in deploymentManifests) return value as DeploymentEnvironment;
-  if (mode === "development") return "local";
-  return null;
+  return currentRuntimeSelection(mode, value).environment;
 }
 
 export function getManifest(environment: DeploymentEnvironment | null): DeploymentManifest | null {

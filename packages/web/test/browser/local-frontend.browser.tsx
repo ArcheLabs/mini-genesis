@@ -80,7 +80,7 @@ function LocalFrontend() {
 
   return <>
     <GenesisStageNavigation language="en" stage={stage} phase2Status="LIVE" onSelect={setStage} />
-    <GenesisStages language="en" stage={stage} onPhase2StatusChange={() => {}} manifest={manifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />
+    <GenesisStages language="en" stage={stage} refreshKey={0} onPhase2StatusChange={() => {}} manifest={manifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />
   </>;
 }
 

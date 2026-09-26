@@ -7,6 +7,7 @@ import { GenesisStages } from "../src/genesis/GenesisStages";
 import { GenesisStageNavigation, type GenesisStageId } from "../src/genesis/GenesisStageNavigation";
 import { readContributionHistory } from "../src/genesis/history";
 import { readGlobalDynamic, readGlobalStatic, readGenesisUserState } from "../src/genesis/reads";
+import { deriveWalletState } from "../src/wallet/wallet-state";
 
 const localManifest = getManifest("local")!;
 const phase2Address = localManifest.genesis!.phases.phase2.contract!;
@@ -26,6 +27,15 @@ vi.mock("@reown/appkit/react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@reown/appkit/react")>();
   return {
     ...actual,
+    createAppKit: (options: { networks: unknown[]; defaultNetwork?: unknown }) => {
+      let activeNetwork = options.defaultNetwork;
+      return {
+        options,
+        getCaipNetworks: () => options.networks,
+        getCaipNetwork: () => activeNetwork,
+        setCaipNetwork: (network: unknown) => { activeNetwork = network; },
+      };
+    },
     useAppKit: () => ({ open: vi.fn() }),
     useAppKitAccount: () => ({ address: "0x544Ac734C6B113789Ea97ac145B1a141bB7e0c65", isConnected: true, status: "connected" }),
     useAppKitProvider: () => ({ walletProvider: walletMock.provider }),
@@ -61,13 +71,14 @@ function LocalReadLifecycle({ client }: { client: PublicClient }) {
   const [stage, setStage] = useState<GenesisStageId>("phase2");
   return <>
     <GenesisStageNavigation language="en" stage={stage} phase2Status="LIVE" onSelect={setStage} />
-    <GenesisStages language="en" stage={stage} onPhase2StatusChange={() => {}} manifest={localManifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />
+    <GenesisStages language="en" stage={stage} refreshKey={0} onPhase2StatusChange={() => {}} manifest={localManifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />
   </>;
 }
 
 describe("local frontend browser integration", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    window.history.replaceState(null, "", "/");
     document.body.replaceChildren();
   });
 
@@ -108,15 +119,20 @@ describe("local frontend browser integration", () => {
   });
 
   it("registers Development as an AppKit CAIP EVM network and marks the matching wallet chain ready", async () => {
-    vi.stubEnv("VITE_DEPLOYMENT_ENV", "local");
+    window.history.replaceState(null, "", "/?network=local");
+    vi.stubEnv("VITE_DEPLOYMENT_ENV", "staging");
     vi.resetModules();
-    const [{ appKit, customRpcUrls, polkadotHubNetwork, wagmiAdapter }, walletModule, manifestModule, adapterModule] = await Promise.all([
+    const [{ appKit, customRpcUrls, polkadotHubNetwork, runtimeSelection, wagmiAdapter }, manifestModule, adapterModule, selectionModule, chainModule] = await Promise.all([
       import("../src/wallet/appkit"),
-      import("../src/wallet/use-genesis-wallet"),
       import("../src/config/manifest"),
       import("@reown/appkit-adapter-wagmi"),
+      import("../src/config/runtime-selection"),
+      import("../src/config/chain"),
     ]);
-    const manifest = manifestModule.getManifest("local")!;
+    expect(runtimeSelection.environment).toBe("local");
+    expect(selectionModule.currentRuntimeSelection("production", "staging").environment).toBe("local");
+    const manifest = manifestModule.getManifest(runtimeSelection.environment)!;
+    const publicClientChain = chainModule.genesisChain(manifest);
     const caipId = `eip155:${manifest.source.chainId}`;
     const supported = appKit.getCaipNetworks().find((network) => network.caipNetworkId === caipId);
 
@@ -127,6 +143,8 @@ describe("local frontend browser integration", () => {
     expect(supported?.chainNamespace).toBe("eip155");
     expect((appKit as typeof appKit & { options: { defaultNetwork?: unknown } }).options.defaultNetwork).toBe(polkadotHubNetwork);
     expect(customRpcUrls[caipId]).toEqual([{ url: "http://127.0.0.1:8545" }]);
+    expect(publicClientChain.id).toBe(polkadotHubNetwork.id);
+    expect(publicClientChain.rpcUrls.default.http).toEqual(polkadotHubNetwork.rpcUrls.default.http);
     expect((appKit as typeof appKit & { options: { allowUnsupportedChain?: boolean; enableNetworkSwitch?: boolean } }).options).toMatchObject({
       allowUnsupportedChain: true,
       enableNetworkSwitch: false,
@@ -142,17 +160,9 @@ describe("local frontend browser integration", () => {
     expect(adapterConnect).toHaveBeenCalledWith(expect.objectContaining({ chainId: undefined }));
     adapterConnect.mockRestore();
 
-    let correctChain = false;
-    function WalletProbe() {
-      const { session } = walletModule.useGenesisWallet(manifest, null, manifest);
-      correctChain = session?.kind === "evm" && session.chainId === 420420420 && session.correctChain;
-      return <output data-testid="wallet-chain">{session?.kind === "evm" ? `${session.chainId}:${session.correctChain}` : "not connected"}</output>;
-    }
-    const { root, container } = mount();
-    await act(async () => { root.render(createElement(WalletProbe)); await new Promise((resolve) => setTimeout(resolve, 0)); });
-    expect(container.querySelector('[data-testid="wallet-chain"]')?.textContent).toBe("420420420:true");
-    expect(correctChain).toBe(true);
+    const walletState = deriveWalletState({ isConnected: true, address: "0x544Ac734C6B113789Ea97ac145B1a141bB7e0c65", chainId: manifest.source.chainId, expectedChainId: Number(manifest.source.chainId), hasProvider: true });
+    expect(walletState.correctChain).toBe(true);
+    expect(walletState.walletReady).toBe(true);
     expect(Number(appKit.getCaipNetwork()?.id)).toBe(420420420);
-    await act(async () => root.unmount());
-  }, 15_000);
+  });
 });

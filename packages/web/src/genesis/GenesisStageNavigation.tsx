@@ -1,4 +1,5 @@
-export type GenesisStageId = "phase1" | "phase2" | "phase3";
+import { StatusBadge, type ProductStatus } from "../components/StatusBadge";
+import type { GenesisStageId } from "../navigation/routing";
 
 type Props = {
   language: "zh-CN" | "en";
@@ -7,30 +8,40 @@ type Props = {
   onSelect: (stage: GenesisStageId) => void;
 };
 
-const stages: readonly { id: GenesisStageId; title: string; status: string }[] = [
-  { id: "phase1", title: "Genesis I", status: "COMPLETED" },
-  { id: "phase2", title: "Genesis II", status: "LIVE" },
-  { id: "phase3", title: "Genesis III", status: "LOCKED" },
+const stages: readonly { id: GenesisStageId; title: string; status: ProductStatus }[] = [
+  { id: "phase1", title: "Genesis I", status: "delivered" },
+  { id: "phase2", title: "Genesis II", status: "active" },
+  { id: "phase3", title: "Genesis III", status: "locked" },
 ];
 
+const paths: Record<GenesisStageId, string> = {
+  phase1: "#/genesis/i",
+  phase2: "#/genesis/ii",
+  phase3: "#/genesis/iii",
+};
+
 export function GenesisStageNavigation({ language, stage, phase2Status, onSelect }: Props) {
-  return <div className="nav-center stage-nav" role="group" aria-label={language === "zh-CN" ? "Genesis 阶段" : "Genesis stages"}>
+  return <nav className="nav-center stage-nav" aria-label={language === "zh-CN" ? "Genesis 阶段" : "Genesis stages"}>
     {stages.map((item) => {
       const current = stage === item.id;
-      const status = item.id === "phase2" ? phase2Status : item.status;
-      return <button
+      const status: ProductStatus = item.id !== "phase2"
+        ? item.status
+        : phase2Status === "WAITING"
+          ? "planned"
+          : phase2Status.startsWith("COMPLETED")
+            ? "delivered"
+            : "active";
+      return <a
         key={item.id}
-        type="button"
+        href={paths[item.id]}
         className={`stage-nav-link ${current ? "active" : ""}`}
         aria-current={current ? "page" : undefined}
-        aria-label={`${item.title} ${status}`}
-        aria-pressed={current}
         data-testid={`stage-nav-${item.id}`}
         onClick={() => onSelect(item.id)}
       >
         <span>{item.title}</span>
-        <small><i className={current && item.id === "phase2" && status === "LIVE" ? "live-dot" : ""} aria-hidden="true" />{status}</small>
-      </button>;
+        <StatusBadge status={status} language={language} />
+      </a>;
     })}
-  </div>;
+  </nav>;
 }

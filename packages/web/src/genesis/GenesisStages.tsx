@@ -7,12 +7,13 @@ import type { WalletSession } from "../wallet/types";
 import { GenesisPhase1 } from "./GenesisPhase1";
 import { GenesisPhase2 } from "./GenesisPhase2";
 import { GenesisPhase3 } from "./GenesisPhase3";
-import type { GenesisStageId } from "./GenesisStageNavigation";
+import type { GenesisStageId } from "../navigation/routing";
 
 type Language = "zh-CN" | "en";
 type Props = {
   language: Language;
   stage: GenesisStageId;
+  refreshKey: number;
   onPhase2StatusChange: (status: string) => void;
   manifest: DeploymentManifest | null;
   publicClient: PublicClient | null;
@@ -56,7 +57,7 @@ export function phase2Status(dynamic: GenesisCurveDynamic | null, manifest: Depl
   return "WAITING";
 }
 
-export function GenesisStages({ language, stage, onPhase2StatusChange, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onRefresh }: Props) {
+export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChange, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onRefresh }: Props) {
   const [dynamic, setDynamic] = useState<GenesisCurveDynamic | null>(null);
   const [error, setError] = useState<string | null>(null);
   const snapshot = useMemo(() => phase2Snapshot(manifest), [manifest]);
@@ -74,7 +75,7 @@ export function GenesisStages({ language, stage, onPhase2StatusChange, manifest,
       setDynamic(snapshot);
       setError(language === "zh-CN" ? "Genesis II 链上数据暂不可用。" : "Genesis II chain data is temporarily unavailable.");
     }
-  }, [language, manifest, phase2Contract, publicClient, snapshot]);
+  }, [language, manifest, phase2Contract, publicClient, refreshKey, snapshot]);
 
   useEffect(() => {
     void refresh();
@@ -87,7 +88,7 @@ export function GenesisStages({ language, stage, onPhase2StatusChange, manifest,
 
   return <main className="genesis-stages">
     {error && <p className="genesis-data-note" role="status">{error}</p>}
-    {stage === "phase1" && <GenesisPhase1 language={language} />}
+    {stage === "phase1" && <GenesisPhase1 language={language} workItems={manifest?.genesis?.phases.phase1.workItems ?? manifest?.genesis?.phases.phase1.achievements} />}
     {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onRefresh={() => { onRefresh(); void refresh(); }} />}
     {stage === "phase3" && <GenesisPhase3 language={language} />}
   </main>;

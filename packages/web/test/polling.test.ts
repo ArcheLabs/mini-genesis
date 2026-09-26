@@ -131,14 +131,14 @@ describe("visible polling", () => {
 
     expect(src).not.toContain("readGlobalStatic");
     expect(src).not.toContain("readGlobalDynamic");
-    expect(src).toContain("const phase1ReadsEnabled = false;");
+    expect(src).not.toContain("phase1ReadsEnabled");
+    expect(src).not.toContain("readGenesisUserState");
+    expect(src).not.toContain("readContributionHistory");
     expect(stages).toContain("readCurveDynamic(publicClient, manifest)");
     expect(stages).toContain("window.setInterval(() => void refresh(), 10_000)");
     expect(src).not.toMatch(/setInterval\s*\(\s*\(\)\s*=>\s*void\s*loadUser\s*\(account\)/);
-    expect(src).toContain("void loadUser(genesisIdentity, sessionKey);");
-    expect(src).toContain("if (shouldLoadContributionHistory(session?.kind ?? null)) void loadHistory(genesisIdentity, sessionKey);");
-    expect(src).toContain("result.contributorH160");
-    expect(src).toContain("reconcileGenesisUserState");
+    expect(src).toContain("readCurveUser(publicClient, manifest, genesisIdentity)");
+    expect(src).toContain("const miniAssetCard = <MyMini");
     expect(src).not.toContain("balance-source-wrap");
     expect(src).not.toContain("selectedPaymentSource");
   });

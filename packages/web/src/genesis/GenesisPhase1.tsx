@@ -1,21 +1,23 @@
 import { formatDot } from "./curve";
+import { BasisInfo } from "./BasisInfo";
 import { GenesisWorkItems } from "./GenesisWorkItems";
 import { genesisPhase1WorkItems } from "./work-items";
+import type { GenesisWorkItem } from "../config/manifest";
 
 type Language = "zh-CN" | "en";
 type Props = {
   language: Language;
+  workItems?: readonly GenesisWorkItem[];
 };
 
-export const GENESIS1_FINAL_REFERENCE_PRICE_X18 = 89_460_000_000_000n;
+export const GENESIS1_CLOSING_BASIS_X18 = 89_460_000_000_000n;
 
-export function GenesisPhase1({ language }: Props) {
+export function GenesisPhase1({ language, workItems = genesisPhase1WorkItems }: Props) {
   const zh = language === "zh-CN";
 
-  return <section className="stage-panel phase1-panel">
-    <div className="stage-eyebrow">COMPLETED</div>
-    <h1>Genesis I</h1>
-    <div className="phase1-reference-price"><span>{zh ? "最终参考价格" : "Final reference price"}</span><strong>{formatDot(GENESIS1_FINAL_REFERENCE_PRICE_X18, 18, 8)} DOT / MINI</strong></div>
-    <GenesisWorkItems language={language} mode="phase1-enabled" workItems={genesisPhase1WorkItems} />
+  return <section className="stage-panel phase1-panel" data-testid="genesis-phase1">
+    <h1 className="sr-only">Genesis I</h1>
+    <div className="phase1-closing-basis"><span>{zh ? "阶段结束基准" : "Closing basis"}<BasisInfo kind="closing" language={language} /></span><strong>{formatDot(GENESIS1_CLOSING_BASIS_X18, 18, 8)} DOT / MINI</strong></div>
+    <GenesisWorkItems language={language} mode="phase1-enabled" workItems={workItems} />
   </section>;
 }

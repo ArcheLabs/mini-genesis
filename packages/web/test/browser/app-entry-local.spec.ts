@@ -22,31 +22,15 @@ const encodedValues = new Map(Object.entries(values).map(([functionName, value])
 ]));
 const zeroWord = `0x${"00".repeat(32)}`;
 const block = {
-  number: "0x1",
-  hash: `0x${"11".repeat(32)}`,
-  parentHash: `0x${"22".repeat(32)}`,
-  nonce: "0x0000000000000000",
-  sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-  logsBloom: `0x${"00".repeat(256)}`,
-  transactions: [],
-  stateRoot: `0x${"33".repeat(32)}`,
-  receiptsRoot: `0x${"44".repeat(32)}`,
-  miner: "0x0000000000000000000000000000000000000000",
-  difficulty: "0x0",
-  totalDifficulty: "0x0",
-  extraData: "0x",
-  size: "0x1",
-  gasLimit: "0x1c9c380",
-  gasUsed: "0x0",
-  timestamp: "0x6aa00000",
-  transactionsRoot: `0x${"55".repeat(32)}`,
-  uncles: [],
-  baseFeePerGas: "0x0",
-  mixHash: `0x${"66".repeat(32)}`,
+  number: "0x1", hash: `0x${"11".repeat(32)}`, parentHash: `0x${"22".repeat(32)}`, nonce: "0x0000000000000000",
+  sha3Uncles: "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347", logsBloom: `0x${"00".repeat(256)}`,
+  transactions: [], stateRoot: `0x${"33".repeat(32)}`, receiptsRoot: `0x${"44".repeat(32)}`, miner: zeroAddress,
+  difficulty: "0x0", totalDifficulty: "0x0", extraData: "0x", size: "0x1", gasLimit: "0x1c9c380", gasUsed: "0x0",
+  timestamp: "0x6aa00000", transactionsRoot: `0x${"55".repeat(32)}`, uncles: [], baseFeePerGas: "0x0", mixHash: `0x${"66".repeat(32)}`,
 };
 
-test("real app startup never touches Genesis I and keeps Genesis II reads alive", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
+test("Genesis stages route from the URL and the first viewport centers the live purchase", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   const readAddresses: string[] = [];
   await page.route((url) => url.hostname === "127.0.0.1" && url.port === "8545", async (route) => {
     if (route.request().method() === "OPTIONS") {
@@ -64,48 +48,63 @@ test("real app startup never touches Genesis I and keeps Genesis II reads alive"
       readAddresses.push(address);
       result = encodedValues.get(call?.data?.slice(0, 10) ?? "") ?? zeroWord;
     }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      headers: { "access-control-allow-origin": "*" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: incoming.id, result }),
-    });
+    await route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ jsonrpc: "2.0", id: incoming.id, result }) });
   });
 
-  await page.goto("/");
-  await expect(page.locator(".phase2-panel h1")).toHaveText("Genesis II");
+  await page.goto("/?network=local");
+  await expect(page).toHaveURL(/\?network=local#\/genesis\/ii$/);
   await expect(page.locator('[data-testid="stage-nav-phase2"]')).toHaveAttribute("aria-current", "page");
-  await expect(page.locator('[data-testid="phase2-current-price"]')).toContainText("0.003500");
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis II");
+  await expect(page.locator('[data-testid="phase2-current-basis"]')).toContainText("0.003500");
   await expect(page.locator('[data-testid="phase2-holder-count"]')).toHaveText("0");
   await expect(page.locator('[data-testid="phase2-time-remaining"]')).not.toHaveText("—");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  const lightBackground = await page.locator("html").evaluate((element) => getComputedStyle(element).getPropertyValue("--bg").trim());
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  const darkBackground = await page.locator("html").evaluate((element) => getComputedStyle(element).getPropertyValue("--bg").trim());
+  expect(darkBackground).not.toBe(lightBackground);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.getByText("Current acquisition basis")).toBeVisible();
+  await expect(page.getByText("Current price", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Estimated cost", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Price after purchase", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Early Operations Reserve")).toHaveCount(0);
+  const rulesHeading = page.getByRole("heading", { name: "Rules" });
+  await rulesHeading.scrollIntoViewIfNeeded();
+  await expect(rulesHeading).toBeVisible();
   await expect(page.locator(".reserve-banner")).toHaveCount(0);
   await expect(page.getByText("DOT raised", { exact: true })).toHaveCount(0);
   await expect(page.getByText("MINI distributed", { exact: true })).toHaveCount(0);
   await expect(page.getByText("MINI remaining", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("Rules", { exact: true })).toHaveCount(0);
-  const curve = page.locator(".curve-chart svg");
+
+  const curve = page.locator('[data-testid="bonding-curve-interaction"]');
   await expect(page.locator('[data-testid="curve-current-point"]')).toBeVisible();
-  await expect(page.locator('[data-testid="curve-after-buy-point"]')).toBeVisible();
-  const afterOneDot = Number(await curve.getAttribute("data-after-buy-position"));
+  await expect(page.getByLabel("DOT budget")).toHaveValue("1.00");
+  await expect(page.getByTestId("phase2-mini-quote")).toContainText("MINI");
+  await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
   await page.getByRole("button", { name: "20 DOT", exact: true }).click();
-  const afterTwentyDot = Number(await curve.getAttribute("data-after-buy-position"));
-  expect(afterTwentyDot).toBeGreaterThan(afterOneDot);
-  await page.getByRole("button", { name: "1 DOT", exact: true }).click();
+  await expect(page.getByLabel("DOT budget")).toHaveValue("20");
+  await expect(page.getByRole("button", { name: "1 DOT", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
+
   const curveBox = await curve.boundingBox();
   const purchaseBox = await page.locator(".purchase-panel").boundingBox();
   expect(curveBox && purchaseBox && purchaseBox.x > curveBox.x && purchaseBox.y <= curveBox.y + 20).toBe(true);
-  expect(purchaseBox && purchaseBox.y + purchaseBox.height).toBeLessThan(1000);
+  expect(purchaseBox && purchaseBox.y + purchaseBox.height).toBeLessThan(900);
+  const getButtonBox = await page.getByRole("button", { name: "Connect wallet" }).boundingBox();
+  expect(getButtonBox && getButtonBox.y + getButtonBox.height).toBeLessThan(900);
 
-  const hoverTarget = await curve.evaluate((svg: SVGSVGElement) => {
+  const center = await curve.evaluate((svg: SVGSVGElement) => {
     const point = svg.createSVGPoint();
-    point.x = 306;
-    point.y = 130;
+    point.x = 309;
+    point.y = 125;
     const screen = point.matrixTransform(svg.getScreenCTM()!);
     return { x: screen.x, y: screen.y };
   });
-  await page.mouse.move(hoverTarget.x, hoverTarget.y);
+  await page.mouse.move(center.x, center.y);
   await expect(page.getByTestId("curve-tooltip")).toContainText("50.00%");
-  await expect(page.getByTestId("curve-tooltip")).toContainText("1,000,000 MINI sold");
+  await expect(page.getByTestId("curve-tooltip")).toContainText("1,000,000 MINI");
   await expect(page.getByTestId("curve-tooltip")).toContainText("0.004500 DOT / MINI");
 
   await expect(page.locator(".genesis-data-note")).toHaveCount(0);
@@ -113,26 +112,59 @@ test("real app startup never touches Genesis I and keeps Genesis II reads alive"
   expect(readAddresses).not.toContain(zeroAddress);
   expect(readAddresses.every((address) => address === phase2Address)).toBe(true);
 
-  const firstPollCount = readAddresses.length;
-  await page.waitForTimeout(10_100);
-  expect(readAddresses.length).toBeGreaterThan(firstPollCount);
-  expect(readAddresses).not.toContain(zeroAddress);
-  expect(readAddresses.every((address) => address === phase2Address)).toBe(true);
-
   await page.setViewportSize({ width: 390, height: 844 });
-  const mobileCurve = await page.locator(".curve-chart svg").boundingBox();
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const mobileCurve = await curve.boundingBox();
   const mobilePurchase = await page.locator(".purchase-panel").boundingBox();
   expect(mobileCurve && mobilePurchase && mobilePurchase.x === mobileCurve.x && mobilePurchase.y > mobileCurve.y).toBe(true);
+  await page.locator("[data-testid='bonding-curve-interaction']").dispatchEvent("pointerdown", { pointerType: "touch", clientX: 200, clientY: 150 });
+  await expect(page.getByTestId("curve-tooltip")).toBeVisible();
 
-  await page.locator('[data-testid="stage-nav-phase1"]').click();
+  await page.setViewportSize({ width: 430, height: 932 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
+  await expect(page.locator('[data-testid="stage-nav-phase2"]')).toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
+
+  await page.goto("/?network=local#/genesis/i");
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
+  await expect(page.locator(".phase1-closing-basis > span")).toContainText("Closing basis");
   await expect(page.locator(".phase1-panel")).toContainText("0.00008946 DOT / MINI");
-  await expect(page.locator(".phase1-panel")).not.toContainText("is complete");
-  await expect(page.getByText("Total DOT raised")).toHaveCount(0);
-  await expect(page.getByText("MINI allocation")).toHaveCount(0);
-  await expect(page.getByText("Start / end blocks")).toHaveCount(0);
-  await page.locator('[data-testid="stage-nav-phase3"]').click();
-  await expect(page.locator(".phase3-panel")).toContainText("LOCKED");
-  await expect(page.locator(".phase3-panel")).toContainText("Liquidity Accumulation");
-  await expect(page.locator(".phase3-panel")).not.toContainText("No supply");
-  expect(readAddresses).not.toContain(zeroAddress);
+  await expect(page.getByText("Final reference price", { exact: true })).toHaveCount(0);
+  expect(readAddresses.every((address) => address === phase2Address)).toBe(true);
+  await page.reload();
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
+
+  await page.goto("/?network=local#/genesis/iii");
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis III");
+  await expect(page.getByText("Liquidity Accumulation", { exact: true })).toBeVisible();
+  await expect(page.locator('[data-testid="genesis-phase3"]')).not.toContainText("LOCKED");
+
+  await page.goto("/?network=local#/rules");
+  await expect(page).toHaveURL(/\?network=local#\/genesis\/ii$/);
+});
+
+test("stage URL survives reload, browser history, and a new tab; invalid network fails closed", async ({ page }) => {
+  await page.goto("/?network=local#/genesis/ii");
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis II");
+  await page.locator('[data-testid="stage-nav-phase1"]').click();
+  await expect(page).toHaveURL(/#\/genesis\/i$/);
+  await page.locator('[data-testid="stage-nav-phase2"]').click();
+  await expect(page).toHaveURL(/#\/genesis\/ii$/);
+  await page.goBack();
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
+  await page.goForward();
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis II");
+  await page.reload();
+  await expect(page.locator("h1.sr-only")).toHaveText("Genesis II");
+
+  const copiedRoute = await page.context().newPage();
+  await copiedRoute.goto("/?network=local#/genesis/iii");
+  await expect(copiedRoute.locator("h1.sr-only")).toHaveText("Genesis III");
+  await copiedRoute.close();
+
+  await page.goto("/?network=tesnet#/genesis/ii");
+  await expect(page.getByRole("heading", { name: "Configuration mismatch" })).toBeVisible();
+  await expect(page.locator('[data-testid="stage-nav-phase2"]')).toHaveAttribute("aria-current", "page");
+  await expect(page.locator('[data-testid="phase2-current-basis"]')).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Connect wallet" })).toHaveCount(0);
 });
