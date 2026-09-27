@@ -135,7 +135,7 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
 
   await page.goto("/?network=local#/genesis/iii");
-  await expect(page.locator("h1.sr-only")).toHaveText("Genesis III");
+  await expect(page.getByRole("heading", { name: "Genesis III" })).toBeVisible();
   await expect(page.getByText("Liquidity Accumulation", { exact: true })).toBeVisible();
   await expect(page.locator('[data-testid="genesis-phase3"]')).not.toContainText("LOCKED");
 
@@ -159,7 +159,7 @@ test("stage URL survives reload, browser history, and a new tab; invalid network
 
   const copiedRoute = await page.context().newPage();
   await copiedRoute.goto("/?network=local#/genesis/iii");
-  await expect(copiedRoute.locator("h1.sr-only")).toHaveText("Genesis III");
+  await expect(copiedRoute.getByRole("heading", { name: "Genesis III" })).toBeVisible();
   await copiedRoute.close();
 
   await page.goto("/?network=tesnet#/genesis/ii");

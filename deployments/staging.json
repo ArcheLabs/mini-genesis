@@ -4,11 +4,12 @@
   "evmNativeDecimals": 18,
   "source": {
     "chainId": "420420417",
-    "name": "Polkadot Hub Staging",
+    "name": "Polkadot Hub TestNet",
     "currencySymbol": "PAS",
     "nativeDecimals": 10,
     "evmNativeDecimals": 18,
     "rpcHttpUrls": [
+      "https://services.polkadothub-rpc.com/testnet/",
       "https://eth-rpc-testnet.polkadot.io/"
     ],
     "substrateWsUrls": [

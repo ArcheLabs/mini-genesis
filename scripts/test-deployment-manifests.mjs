@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { validateManifest } from "./deployment-manifest.mjs";
+import { validateStagingPagesManifest } from "./validate-staging-pages.mjs";
 
 for (const environment of ["local", "staging", "production"]) {
   const manifest = JSON.parse(await readFile(`deployments/${environment}.json`, "utf8"));
@@ -58,6 +59,7 @@ for (const environment of ["staging", "production"]) {
     status: "active",
     mechanism: "linear-bonding-curve",
     contract: "0x1111111111111111111111111111111111111111",
+    treasury: "0x2222222222222222222222222222222222222222",
     deploymentBlock: "1",
     runtimeCodeHash: `0x${"11".repeat(32)}`,
     allocationMini: (2_000_000n * 10n ** 18n).toString(),
@@ -87,7 +89,40 @@ for (const environment of ["staging", "production"]) {
     }, "production"),
     /INVALID_GENESIS_PHASE2_DURATION_production/,
   );
+
+  const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
+  const stagingWithPhase2 = {
+    ...staging,
+    genesis: {
+      ...staging.genesis,
+      phases: {
+        ...staging.genesis.phases,
+        phase2: { ...activePhase2, workItems: staging.genesis.phases.phase2.workItems },
+      },
+    },
+  };
+  validateManifest(stagingWithPhase2, "staging");
+  validateStagingPagesManifest(stagingWithPhase2);
+  assert.throws(
+    () => validateStagingPagesManifest({
+      ...stagingWithPhase2,
+      source: { ...stagingWithPhase2.source, rpcHttpUrls: ["https://eth-rpc-testnet.polkadot.io/"] },
+    }),
+  );
+  assert.throws(
+    () => validateManifest({
+      ...stagingWithPhase2,
+      genesis: {
+        ...stagingWithPhase2.genesis,
+        phases: {
+          ...stagingWithPhase2.genesis.phases,
+          phase2: { ...activePhase2, endTime: (BigInt(activePhase2.endTime) + 1n).toString() },
+        },
+      },
+    }, "staging"),
+    /INVALID_GENESIS_PHASE2_DURATION_staging/,
+  );
 }
 
 console.log("Template readiness tests passed: staging and production placeholders are not runtime-ready");
-console.log("Production Phase II duration gate passed: only an exact seven-day window is accepted");
+console.log("Staging and production Phase II duration gates passed: only an exact seven-day window is accepted");

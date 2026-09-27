@@ -60,6 +60,8 @@
   .genesis-stages{padding:20px 18px 60px}
   .phase2-facts span{font-size:12px}
   .phase3-panel>h1{font-size:32px}
+  .curve-title-row{align-items:flex-start;flex-direction:column;gap:4px}
+  .curve-title-row>span{white-space:normal}
 }
 @media(max-width:420px){
   .stage-nav-link>span:first-child{font-size:12px}

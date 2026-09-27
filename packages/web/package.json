@@ -6,9 +6,12 @@
     "dev": "vite",
     "prebuild": "node ../../scripts/generate-web-abi.mjs && node ../../scripts/generate-deployment-config.mjs",
     "build": "tsc --noEmit && vite build",
+    "postbuild": "node ../../scripts/generate-deployment-config.mjs --all",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
+    "pretest": "node ../../scripts/generate-deployment-config.mjs --all",
     "test": "vitest run",
+    "pretest:browser": "node ../../scripts/generate-deployment-config.mjs --all",
     "test:browser": "playwright test",
     "test:watch": "vitest"
   },

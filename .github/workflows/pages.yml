@@ -2,11 +2,14 @@ name: deploy staging pages
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type DEPLOY_TESTNET to confirm"
+        required: true
+        type: string
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: github-pages
@@ -14,15 +17,47 @@ concurrency:
 
 jobs:
   build:
-    name: Build frontend
+    name: Validate and build TestNet frontend
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
 
     steps:
+      - name: TestNet deployment guard
+        env:
+          CONFIRMATION: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" != "refs/heads/codex/genesis2-product-closure" ]]; then
+            echo "::error::TestNet Pages may only be deployed from codex/genesis2-product-closure."
+            exit 1
+          fi
+
+          if [[ "$CONFIRMATION" != "DEPLOY_TESTNET" ]]; then
+            echo "::error::Confirmation must exactly equal DEPLOY_TESTNET."
+            exit 1
+          fi
+
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "GITHUB_REF=$GITHUB_REF"
+          {
+            echo "## TestNet Pages release"
+            echo "- GITHUB_SHA: `$GITHUB_SHA`"
+            echo "- GITHUB_REF: `$GITHUB_REF`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          ref: ${{ github.sha }}
           submodules: recursive
+
+      - name: Confirm checked out source
+        run: |
+          set -euo pipefail
+          CHECKED_OUT_SHA="$(git rev-parse HEAD)"
+          [[ "$CHECKED_OUT_SHA" == "$GITHUB_SHA" ]]
+          echo "CHECKED_OUT_SHA=$CHECKED_OUT_SHA"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
@@ -36,16 +71,172 @@ jobs:
           cache: pnpm
           cache-dependency-path: packages/web/pnpm-lock.yaml
 
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@b00af27efadbc7b4ca8b82abbd903b17cc874d2a # v1
+        with:
+          version: v0.3.0
+
+      - name: Validate TestNet manifest
+        run: |
+          set -euo pipefail
+          make manifest-check
+          make manifest-test
+          node scripts/validate-staging-pages.mjs
+
+      - name: Verify Genesis II contract on TestNet
+        run: |
+          set -euo pipefail
+
+          MANIFEST="deployments/staging.json"
+          CONTRACT="$(jq -r '.genesis.phases.phase2.contract' "$MANIFEST")"
+          EXPECTED_CODE_HASH="$(jq -r '.genesis.phases.phase2.runtimeCodeHash' "$MANIFEST")"
+          EXPECTED_TREASURY="$(jq -r '.genesis.phases.phase2.treasury' "$MANIFEST")"
+          EXPECTED_ALLOCATION="$(jq -r '.genesis.phases.phase2.allocationMini' "$MANIFEST")"
+          EXPECTED_START_PRICE="$(jq -r '.genesis.phases.phase2.startPriceX18' "$MANIFEST")"
+          EXPECTED_END_PRICE="$(jq -r '.genesis.phases.phase2.endPriceX18' "$MANIFEST")"
+          EXPECTED_START_TIME="$(jq -r '.genesis.phases.phase2.startTime' "$MANIFEST")"
+          EXPECTED_END_TIME="$(jq -r '.genesis.phases.phase2.endTime' "$MANIFEST")"
+          EXPECTED_CHAIN_ID="420420417"
+
+          read_call() {
+            local rpc_url="$1"
+            local signature="$2"
+            cast call "$CONTRACT" "$signature" --rpc-url "$rpc_url" 2>/dev/null | awk 'NF { print $1; exit }'
+          }
+
+          VERIFIED_RPCS=0
+          CONFIGURED_RPCS="$(jq -r '.source.rpcHttpUrls | length' "$MANIFEST")"
+          while IFS= read -r candidate; do
+            echo "Checking TestNet RPC: $candidate"
+
+            if ! actual_chain_id="$(cast chain-id --rpc-url "$candidate" 2>/dev/null | awk 'NF { print $1; exit }')"; then
+              echo "::warning::TestNet RPC unavailable: $candidate"
+              continue
+            fi
+            if [[ "$actual_chain_id" != "$EXPECTED_CHAIN_ID" ]]; then
+              echo "::error::RPC returned unexpected chain ID $actual_chain_id."
+              exit 1
+            fi
+
+            if ! runtime_code="$(cast code "$CONTRACT" --rpc-url "$candidate" 2>/dev/null)"; then
+              echo "::warning::Could not read contract code from $candidate"
+              continue
+            fi
+            if [[ -z "$runtime_code" || "$runtime_code" == "0x" ]]; then
+              echo "::error::Genesis II contract has no runtime bytecode on $candidate."
+              exit 1
+            fi
+            actual_code_hash="$(cast keccak "$runtime_code")"
+            if [[ "${actual_code_hash,,}" != "${EXPECTED_CODE_HASH,,}" ]]; then
+              echo "::error::Runtime code hash does not match staging manifest."
+              exit 1
+            fi
+
+            if ! actual_treasury="$(read_call "$candidate" 'treasury()(address)')" || \
+              ! actual_allocation="$(read_call "$candidate" 'allocation()(uint256)')" || \
+              ! actual_start_price="$(read_call "$candidate" 'startPrice()(uint256)')" || \
+              ! actual_end_price="$(read_call "$candidate" 'endPrice()(uint256)')" || \
+              ! actual_start_time="$(read_call "$candidate" 'startTime()(uint64)')" || \
+              ! actual_end_time="$(read_call "$candidate" 'endTime()(uint64)')"; then
+              echo "::warning::Could not read every immutable getter from $candidate"
+              continue
+            fi
+
+            [[ "${actual_treasury,,}" == "${EXPECTED_TREASURY,,}" ]] || { echo "::error::Treasury does not match staging manifest."; exit 1; }
+            [[ "$actual_allocation" == "$EXPECTED_ALLOCATION" ]] || { echo "::error::Allocation does not match staging manifest."; exit 1; }
+            [[ "$actual_start_price" == "$EXPECTED_START_PRICE" ]] || { echo "::error::Start price does not match staging manifest."; exit 1; }
+            [[ "$actual_end_price" == "$EXPECTED_END_PRICE" ]] || { echo "::error::End price does not match staging manifest."; exit 1; }
+            [[ "$actual_start_time" == "$EXPECTED_START_TIME" ]] || { echo "::error::Start time does not match staging manifest."; exit 1; }
+            [[ "$actual_end_time" == "$EXPECTED_END_TIME" ]] || { echo "::error::End time does not match staging manifest."; exit 1; }
+
+            VERIFIED_RPCS=$((VERIFIED_RPCS + 1))
+            echo "STAGING_CONTRACT_RPC_VERIFIED=$candidate"
+          done < <(jq -r '.source.rpcHttpUrls[]' "$MANIFEST")
+
+          if [[ "$VERIFIED_RPCS" -eq 0 ]]; then
+            echo "::error::No TestNet RPC fully verified the Genesis II contract."
+            exit 1
+          fi
+          if [[ "$VERIFIED_RPCS" -lt "$CONFIGURED_RPCS" ]]; then
+            echo "RPC_REDUNDANCY=DEGRADED"
+            echo "::warning::The contract was fully verified, but not by every configured TestNet RPC."
+          else
+            echo "RPC_REDUNDANCY=PASS"
+          fi
+
       - name: Install frontend dependencies
         run: pnpm --dir packages/web install --frozen-lockfile
 
-      - name: Build staging frontend
+      - name: Install Chromium for browser tests
+        run: pnpm --dir packages/web exec playwright install --with-deps chromium
+
+      - name: Typecheck frontend
+        run: pnpm --dir packages/web typecheck
+
+      - name: Test frontend
+        run: pnpm --dir packages/web test
+
+      - name: Test frontend in browser
+        run: pnpm --dir packages/web test:browser
+
+      - name: Build TestNet frontend
         env:
           VITE_DEPLOYMENT_ENV: staging
           VITE_DEMO_MODE: "false"
+        run: pnpm --dir packages/web build --base=/mini-genesis/ --emptyOutDir
+
+      - name: Add no-Jekyll marker
+        run: touch packages/web/dist/.nojekyll
+
+      - name: Smoke check static artifact
         run: |
           set -euo pipefail
-          pnpm --dir packages/web build -- --base=/mini-genesis/
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import { existsSync, readdirSync, readFileSync } from "node:fs";
+          import { resolve, relative, sep } from "node:path";
+
+          const dist = resolve("packages/web/dist");
+          const manifest = JSON.parse(readFileSync("deployments/staging.json", "utf8"));
+          const localManifest = JSON.parse(readFileSync("deployments/local.json", "utf8"));
+          const htmlPath = resolve(dist, "index.html");
+          assert.ok(existsSync(htmlPath), "index.html is missing");
+          assert.ok(existsSync(resolve(dist, ".nojekyll")), ".nojekyll is missing");
+
+          const html = readFileSync(htmlPath, "utf8");
+          const refs = [...html.matchAll(/\b(?:src|href)="([^"]+)"/g)].map((match) => match[1]);
+          const localRefs = refs.filter((value) => !/^(?:https?:|data:|#)/i.test(value));
+          assert.ok(localRefs.some((value) => value.endsWith(".js")), "JavaScript bundle reference is missing");
+          assert.ok(localRefs.some((value) => value.endsWith(".css")), "CSS bundle reference is missing");
+          for (const value of localRefs) {
+            if (value.startsWith("/")) assert.ok(value.startsWith("/mini-genesis/"), `root-relative asset is outside the Pages base path: ${value}`);
+            const assetPath = value.startsWith("/mini-genesis/")
+              ? resolve(dist, value.slice("/mini-genesis/".length))
+              : resolve(dist, value);
+            assert.ok(existsSync(assetPath), `referenced asset is missing: ${value}`);
+          }
+
+          const files = [];
+          const visit = (directory) => {
+            for (const entry of readdirSync(directory, { withFileTypes: true })) {
+              const path = resolve(directory, entry.name);
+              if (entry.isDirectory()) visit(path);
+              else files.push(path);
+            }
+          };
+          visit(dist);
+          const bundles = files.filter((path) => /\.(?:js|css)$/.test(path));
+          assert.ok(bundles.length > 0, "no compiled JS or CSS assets were generated");
+          const bundleText = bundles.map((path) => readFileSync(path, "utf8")).join("\n");
+          for (const url of localManifest.source.rpcHttpUrls) {
+            if (url) assert.ok(!bundleText.includes(url), `published artifact contains local-only RPC URL ${url}`);
+          }
+          assert.ok(bundleText.toLowerCase().includes(manifest.genesis.phases.phase2.contract.toLowerCase()), "published bundle does not contain the staging Genesis II contract");
+          assert.ok(bundleText.includes("420420417"), "published bundle does not contain the TestNet chain ID");
+          for (const rpc of manifest.source.rpcHttpUrls) assert.ok(bundleText.includes(rpc), `published bundle is missing RPC ${rpc}`);
+
+          console.log(`Static Pages artifact passed: ${relative(process.cwd(), dist).split(sep).join("/")}`);
+          NODE
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
@@ -54,17 +245,23 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: packages/web/dist
+          retention-days: 1
 
   deploy:
-    name: Deploy GitHub Pages
+    name: Deploy TestNet frontend
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      pages: write
+      id-token: write
 
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Deploy
+      - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

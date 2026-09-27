@@ -35,6 +35,7 @@ export type GenesisPhase2Manifest = {
   status: "template" | "active" | "ended";
   mechanism: "linear-bonding-curve";
   contract?: Address;
+  treasury?: Address;
   deploymentBlock?: string;
   runtimeCodeHash?: Hex;
   allocationMini?: string;
@@ -120,7 +121,8 @@ export function selectedEnvironment(mode: string, value = import.meta.env.VITE_D
 
 export function getManifest(environment: DeploymentEnvironment | null): DeploymentManifest | null {
   if (!environment) return null;
-  return deploymentManifests[environment] as unknown as DeploymentManifest;
+  const manifests = deploymentManifests as unknown as Partial<Record<DeploymentEnvironment, DeploymentManifest>>;
+  return manifests[environment] ?? null;
 }
 
 export function assertManifestRuntime(manifest: DeploymentManifest): void {

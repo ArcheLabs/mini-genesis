@@ -6,7 +6,7 @@ const ZERO = /^0x0+$/i;
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const DECIMAL = /^\d+$/;
-const PRODUCTION_PHASE2_DURATION = 7n * 24n * 60n * 60n;
+const PHASE2_DURATION = 7n * 24n * 60n * 60n;
 const required = (value, name) => { if (value === undefined || value === "") throw new Error(`MISSING_${name}`); return value; };
 const check = (value, pattern, name) => { if (typeof value !== "string" || !pattern.test(value)) throw new Error(`INVALID_${name}`); return value; };
 const isLoopback = (value, protocols) => {
@@ -24,6 +24,8 @@ export function validateManifest(manifest, environment, options = {}) {
   const { source, destination, product } = manifest;
   if (!source || !destination) throw new Error("MISSING_NETWORK");
   check(required(source.chainId, "SOURCE_CHAIN_ID"), DECIMAL, "SOURCE_CHAIN_ID");
+  const expectedChainIds = { staging: "420420417", production: "420420419" };
+  if (expectedChainIds[environment] && source.chainId !== expectedChainIds[environment]) throw new Error(`INVALID_SOURCE_CHAIN_ID_${environment}`);
   check(source.contract, ADDRESS, "SOURCE_CONTRACT");
   check(source.runtimeCodeHash, HASH, "SOURCE_RUNTIME_CODE_HASH");
   check(required(source.deploymentBlock, "SOURCE_DEPLOYMENT_BLOCK"), DECIMAL, "SOURCE_DEPLOYMENT_BLOCK");
@@ -87,9 +89,10 @@ function validateGenesisPhases(genesis, environment) {
   validateWorkItems(phase2.workItems, `GENESIS_PHASE2_WORK_ITEMS_${environment}`);
   if (phase2.status === "template") return;
   check(phase2.contract, ADDRESS, "GENESIS_PHASE2_CONTRACT");
+  if (environment !== "local") check(phase2.treasury, ADDRESS, "GENESIS_PHASE2_TREASURY");
   check(required(phase2.deploymentBlock, "GENESIS_PHASE2_DEPLOYMENT_BLOCK"), DECIMAL, "GENESIS_PHASE2_DEPLOYMENT_BLOCK");
   check(phase2.runtimeCodeHash, HASH, "GENESIS_PHASE2_RUNTIME_CODE_HASH");
-  if (ZERO.test(phase2.contract) || ZERO.test(phase2.runtimeCodeHash) || phase2.deploymentBlock === "0") throw new Error(`ZERO_GENESIS_PHASE2_DEPLOYMENT_${environment}`);
+  if (ZERO.test(phase2.contract) || (environment !== "local" && ZERO.test(phase2.treasury)) || ZERO.test(phase2.runtimeCodeHash) || phase2.deploymentBlock === "0") throw new Error(`ZERO_GENESIS_PHASE2_DEPLOYMENT_${environment}`);
   for (const [value, name] of [
     [phase2.allocationMini, "GENESIS_PHASE2_ALLOCATION"],
     [phase2.startPriceX18, "GENESIS_PHASE2_START_PRICE"],
@@ -97,11 +100,11 @@ function validateGenesisPhases(genesis, environment) {
     [phase2.startTime, "GENESIS_PHASE2_START_TIME"],
     [phase2.endTime, "GENESIS_PHASE2_END_TIME"],
   ]) check(required(value, name), DECIMAL, name);
-  if (environment === "production" && BigInt(phase2.allocationMini) !== 2_000_000n * 10n ** 18n) throw new Error(`INVALID_GENESIS_PHASE2_ALLOCATION_${environment}`);
-  if (environment === "production" && (BigInt(phase2.startPriceX18) !== 3_500_000_000_000_000n || BigInt(phase2.endPriceX18) !== 5_500_000_000_000_000n)) throw new Error(`INVALID_GENESIS_PHASE2_PRICES_${environment}`);
+  if (environment !== "local" && BigInt(phase2.allocationMini) !== 2_000_000n * 10n ** 18n) throw new Error(`INVALID_GENESIS_PHASE2_ALLOCATION_${environment}`);
+  if (environment !== "local" && (BigInt(phase2.startPriceX18) !== 3_500_000_000_000_000n || BigInt(phase2.endPriceX18) !== 5_500_000_000_000_000n)) throw new Error(`INVALID_GENESIS_PHASE2_PRICES_${environment}`);
   if (BigInt(phase2.allocationMini) === 0n || BigInt(phase2.startPriceX18) === 0n || BigInt(phase2.endPriceX18) <= BigInt(phase2.startPriceX18)) throw new Error(`INVALID_GENESIS_PHASE2_ECONOMICS_${environment}`);
   if (BigInt(phase2.endTime) <= BigInt(phase2.startTime)) throw new Error(`INVALID_GENESIS_PHASE2_TIME_${environment}`);
-  if (environment === "production" && BigInt(phase2.endTime) - BigInt(phase2.startTime) !== PRODUCTION_PHASE2_DURATION) throw new Error(`INVALID_GENESIS_PHASE2_DURATION_${environment}`);
+  if (environment !== "local" && BigInt(phase2.endTime) - BigInt(phase2.startTime) !== PHASE2_DURATION) throw new Error(`INVALID_GENESIS_PHASE2_DURATION_${environment}`);
   if (phase2.status !== "ended") return;
   const snapshot = phase2.snapshot;
   if (!snapshot || snapshot.phase !== 2 || snapshot.status !== "ended") throw new Error(`MISSING_GENESIS_PHASE2_SNAPSHOT_${environment}`);

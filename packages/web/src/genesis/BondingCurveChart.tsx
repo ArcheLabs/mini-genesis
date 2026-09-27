@@ -16,6 +16,7 @@ const RIGHT = 570;
 const TOP = 30;
 const BOTTOM = 218;
 const SCALE = 1_000_000_000n;
+const COORDINATE_SCALE = 100;
 
 function grouped(value: bigint): string { return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 
@@ -70,8 +71,11 @@ export function BondingCurveChart({ allocation, sold, startBasis, endBasis, curr
       point.y = event.clientY;
       chartX = point.matrixTransform(transform).x;
     }
-    const fraction = Math.max(0, Math.min(1, (chartX - LEFT) / (RIGHT - LEFT)));
-    setInspection(BigInt(Math.round(fraction * Number(SCALE))));
+    const coordinate = BigInt(Math.round(chartX * COORDINATE_SCALE));
+    const left = BigInt(LEFT * COORDINATE_SCALE);
+    const width = BigInt((RIGHT - LEFT) * COORDINATE_SCALE);
+    const offset = coordinate <= left ? 0n : coordinate >= left + width ? width : coordinate - left;
+    setInspection((offset * SCALE + width / 2n) / width);
   };
 
   const inspectKey = (event: KeyboardEvent<SVGSVGElement>) => {

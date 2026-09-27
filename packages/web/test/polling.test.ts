@@ -132,7 +132,8 @@ describe("visible polling", () => {
     expect(src).not.toContain("readGlobalStatic");
     expect(src).not.toContain("readGlobalDynamic");
     expect(src).not.toContain("phase1ReadsEnabled");
-    expect(src).not.toContain("readGenesisUserState");
+    expect(src).toContain('if (route !== "assets" || !session || !genesisIdentity || !productionManifest || !productionClient)');
+    expect(src).toContain("readGenesisUserState(productionClient, productionManifest, genesisIdentity)");
     expect(src).not.toContain("readContributionHistory");
     expect(stages).toContain("readCurveDynamic(publicClient, manifest)");
     expect(stages).toContain("window.setInterval(() => void refresh(), 10_000)");
