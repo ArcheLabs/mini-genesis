@@ -11,6 +11,8 @@ for (const environment of ["local", "staging", "production"]) {
     assert.equal(manifest.genesis.phases.phase2.status, "active");
     assert.match(manifest.source.rpcHttpUrls[0], /^http:\/\/127\.0\.0\.1:8545\/?$/);
     assert.match(manifest.source.substrateWsUrls[0], /^ws:\/\/127\.0\.0\.1:9944\/?$/);
+  } else if (environment === "staging" && manifest.status === "deployed") {
+    validateStagingPagesManifest(manifest);
   } else {
     assert.equal(manifest.genesis.phases.phase2.status, "template");
   }
@@ -124,5 +126,5 @@ for (const environment of ["staging", "production"]) {
   );
 }
 
-console.log("Template readiness tests passed: staging and production placeholders are not runtime-ready");
+console.log("Deployment manifest readiness tests passed: staging and production states are validated");
 console.log("Staging and production Phase II duration gates passed: only an exact seven-day window is accepted");

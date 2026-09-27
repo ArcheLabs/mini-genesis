@@ -49,7 +49,11 @@ function runJson(command, args) {
 }
 
 function decimal(value) {
-  return BigInt(value).toString();
+  // Foundry's human-readable uint output can append a bracketed SI hint,
+  // e.g. `2000000000000000000000000 [2e24]`. Only parse the exact leading
+  // integer so deployment finalization preserves the contract's full value.
+  const exactValue = String(value).trim().split(/\s+/, 1)[0];
+  return BigInt(exactValue).toString();
 }
 
 function normalizedAddress(value) {

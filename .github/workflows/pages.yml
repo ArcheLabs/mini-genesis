@@ -234,6 +234,8 @@ jobs:
           assert.ok(bundleText.toLowerCase().includes(manifest.genesis.phases.phase2.contract.toLowerCase()), "published bundle does not contain the staging Genesis II contract");
           assert.ok(bundleText.includes("420420417"), "published bundle does not contain the TestNet chain ID");
           for (const rpc of manifest.source.rpcHttpUrls) assert.ok(bundleText.includes(rpc), `published bundle is missing RPC ${rpc}`);
+          for (const ws of manifest.source.substrateWsUrls) assert.ok(bundleText.includes(ws), `published bundle is missing native TestNet WS ${ws}`);
+          assert.ok(!bundleText.includes("PRIVATE_KEY"), "published bundle contains a private-key environment reference");
 
           console.log(`Static Pages artifact passed: ${relative(process.cwd(), dist).split(sep).join("/")}`);
           NODE
