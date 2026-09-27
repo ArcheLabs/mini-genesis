@@ -87,7 +87,7 @@ describe("Genesis product closure", () => {
     expect(phase2Status(dynamic("Ended", 2_000_000n * 10n ** 18n), null, false)).toBe("COMPLETED · SOLD OUT");
     const locked = renderToStaticMarkup(createElement(GenesisPhase3, { language: "en" }));
     expect(locked).toContain("Liquidity Accumulation");
-    expect(locked).toContain('<h1 class="sr-only">Genesis III</h1>');
+    expect(locked).toContain("<h1>Genesis III</h1>");
     expect(locked).not.toContain("LOCKED");
     expect(locked.match(/Genesis III/g)).toHaveLength(1);
   });
@@ -129,11 +129,15 @@ describe("Genesis product closure", () => {
   });
 
   it("separates Genesis I historical MINI from current-environment Genesis II holdings", () => {
-    const local = renderToStaticMarkup(createElement(MyMini, { language: "en", environment: "local", genesis1Holding: null, genesis1SnapshotRequired: true, genesis2Holding: 282_775_000_000_000_000_000n, genesis2Loading: false, genesis2Error: false }));
-    expect(local).toContain("Genesis I · Production historical");
-    expect(local).toContain("Genesis II · Local");
+    const local = renderToStaticMarkup(createElement(MyMini, { language: "en", genesis1Holding: 12_000n * 10n ** 18n, genesis1Loading: false, genesis1Error: false, genesis2Holding: 282_775_000_000_000_000_000n, genesis2Loading: false, genesis2Error: false }));
+    expect(local).toContain("Genesis I");
+    expect(local).toContain("Genesis II");
+    expect(local).toContain("12,000.00 MINI");
     expect(local).toContain("282.78 MINI");
-    expect(local).toContain("snapshot has not been provided");
+    expect(local).not.toContain("本地");
+    expect(local).not.toContain("Local");
+    expect(local).not.toContain("Production historical");
+    expect(local).not.toContain("snapshot");
     expect(local).not.toContain("Total MINI");
     expect(local).not.toContain("ecosystem");
   });

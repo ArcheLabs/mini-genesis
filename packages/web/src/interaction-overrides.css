@@ -24,3 +24,49 @@
 @media(prefers-reduced-motion:reduce){.notification{animation:none;transition:none}}
 @media(max-width:640px){.notification-center{right:12px;left:12px;width:auto}}
 .configuration-error-page{width:min(680px,calc(100% - 36px));margin:12vh auto;padding:26px 0}.configuration-error-page h1{margin:0;color:var(--text);font-size:clamp(22px,3vw,30px);line-height:1.2}.configuration-error-page p{margin:12px 0 0;color:var(--muted);font-size:13px;line-height:1.6}
+
+
+/* Center the stage workspace and keep the interface comfortable to read. */
+.genesis-stages{margin-inline:auto}
+.stage-nav-link>span:first-child{font-size:14px}
+.status-badge{font-size:12px}
+.phase2-price-block>span,.phase1-closing-basis>span{font-size:14px}
+.phase2-price-block small{font-size:13px}
+.phase2-facts span{font-size:13px}
+.basis-tooltip{font-size:13px}
+.curve-title-row h2,.purchase-panel h2,.genesis-rules h2{font-size:18px}
+.curve-title-row>span,.curve-axis{font-size:12px}
+.curve-range{font-size:11px}
+.curve-tooltip{font-size:12px}
+.budget-label{font-size:14px}
+.purchase-balance{font-size:12px}
+.purchase-panel .budget-presets button{font-size:12px}
+.purchase-receive>span{font-size:13px}
+.purchase-closed p,.campaign-closed{font-size:14px}
+.purchase-message{font-size:13px}
+.genesis-rules ul{font-size:14px}
+.work-items-section.phase1-work-items h2{font-size:18px}
+.work-items-section .work-item-head strong{font-size:15px}
+.work-items-section .work-item p{font-size:14px}
+.work-items-section .work-item-evidence,.work-item-tasks li{font-size:13px}
+.phase3-panel>h1{margin:0;color:var(--text);font-size:clamp(30px,4vw,42px);line-height:1.15;letter-spacing:-.04em}
+.phase3-panel>p{font-size:20px}
+.mini-holding-row span{font-size:14px}
+.mini-asset .asset-note{font-size:13px}
+.phase3-panel{align-content:center;gap:12px}
+@media(max-width:760px){
+  .stage-nav-link>span:first-child{font-size:13px}
+  .stage-nav-link .status-badge{font-size:11px}
+  .genesis-stages{padding:20px 18px 60px}
+  .phase2-facts span{font-size:12px}
+  .phase3-panel>h1{font-size:32px}
+}
+@media(max-width:420px){
+  .stage-nav-link>span:first-child{font-size:12px}
+  .stage-nav-link .status-badge{font-size:10px}
+  .stage-nav-link .status-badge svg{width:12px;height:12px;flex-basis:12px}
+  .curve-title-row>span,.curve-range{font-size:10px}
+  .phase2-price-block>strong{font-size:27px}
+  .phase2-facts{gap:14px}
+  .phase2-facts span{font-size:11px}
+}

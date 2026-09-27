@@ -97,14 +97,14 @@
       "phase2": {
         "status": "active",
         "mechanism": "linear-bonding-curve",
-        "contract": "0x970951a12f975e6762482aca81e57d5a2a4e73f4",
-        "deploymentBlock": "8",
-        "runtimeCodeHash": "0xe38de2beab8e0ee08c371d1a104fa480943433c41946faadf4de46d31bef9f68",
+        "contract": "0x3ed62137c5db927cb137c26455969116bf0c23cb",
+        "deploymentBlock": "14",
+        "runtimeCodeHash": "0x707c272763399a0a9d94fa82cbad1ef436ebebc0e7f26632c8b66193a4a7066f",
         "allocationMini": "2000000000000000000000000",
         "startPriceX18": "3500000000000000",
         "endPriceX18": "5500000000000000",
-        "startTime": "1790309748",
-        "endTime": "1790914548",
+        "startTime": "1790309948",
+        "endTime": "1790914748",
         "workItems": [
           {
             "id": "jamscript",
