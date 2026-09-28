@@ -28,8 +28,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "$GITHUB_REF" != "refs/heads/codex/genesis2-product-closure" ]]; then
-            echo "::error::TestNet Pages may only be deployed from codex/genesis2-product-closure."
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::TestNet Pages may only be deployed from main."
             exit 1
           fi
 
