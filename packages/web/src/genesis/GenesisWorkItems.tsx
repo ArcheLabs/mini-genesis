@@ -34,11 +34,10 @@ export function GenesisWorkItems({ language, mode, workItems }: Props) {
         </div>
         <p>{localized(item.summary, language)}</p>
         {item.tasks && item.tasks.length > 0 && <ul className="work-item-tasks">{item.tasks.map((task) => <li key={task.id} data-status={task.status}>
-          <span className="work-item-task-name">{localized(task.name, language)}</span>
-          <span className={`work-item-task-status work-item-task-status-${task.status}`}>
+          <span className={`work-item-task-status work-item-task-status-${task.status}`} role="img" aria-label={productStatusLabel(task.status, language)}>
             <StatusIcon status={task.status} size="sm" />
-            <span>{productStatusLabel(task.status, language)}</span>
           </span>
+          <span className="work-item-task-name">{localized(task.name, language)}</span>
         </li>)}</ul>}
         {item.evidenceUrl && <a className="work-item-evidence" href={item.evidenceUrl} target="_blank" rel="noreferrer">{language === "zh-CN" ? "查看证据 ↗" : "View evidence ↗"}</a>}
       </article>)}

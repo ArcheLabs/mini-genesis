@@ -58,7 +58,6 @@ let container: HTMLDivElement | null = null;
 
 function PurchaseHarness() {
   const [state, setState] = useState({
-    userMini: 100n * UNIT,
     walletBalance: 20n * UNIT,
     sold: 0n,
     raised: 0n,
@@ -67,7 +66,7 @@ function PurchaseHarness() {
   });
   const session = { kind: "evm" as const, status: "connected" as const, address: ACCOUNT, provider: {} as any, chainId: 420420417, correctChain: true, balance: state.walletBalance };
   const onReconcile = async () => {
-    setState({ userMini: 200n * UNIT, walletBalance: 15n * UNIT, sold: 500_000n * UNIT, raised: 1_875n * UNIT, buyers: 2n, spot: 4_000_000_000_000_000n });
+    setState({ walletBalance: 15n * UNIT, sold: 500_000n * UNIT, raised: 1_875n * UNIT, buyers: 2n, spot: 4_000_000_000_000_000n });
   };
   return createElement(GenesisPhase2, {
     language: "en",
@@ -81,9 +80,6 @@ function PurchaseHarness() {
     demoMode: false,
     onConnect: () => {},
     onReconcile,
-    userMini: state.userMini,
-    userMiniLoading: false,
-    userMiniError: false,
   });
 }
 
@@ -103,7 +99,7 @@ describe("Genesis II purchase reconciliation", () => {
     container = null;
   });
 
-  it("updates MINI, native balance, curve price, sold, raised, holders, and remaining after finalized purchase", async () => {
+  it("reconciles native balance, curve price, holders, and remaining after finalized purchase", async () => {
     await act(async () => { root!.render(createElement(PurchaseHarness)); });
     const button = container!.querySelector(".submit-button")!;
     await act(async () => {
@@ -112,11 +108,8 @@ describe("Genesis II purchase reconciliation", () => {
     });
 
     expect(buyExactMiniMock).toHaveBeenCalledOnce();
-    expect(container!.querySelector('[data-testid="phase2-user-mini"]')?.textContent).toContain("200.00 MINI");
     expect(container!.querySelector('[data-testid="phase2-wallet-balance"]')?.textContent).toContain("15 PAS");
     expect(container!.querySelector('[data-testid="phase2-current-basis"]')?.textContent).toContain("0.004000 PAS / MINI");
-    expect(container!.querySelector('[data-testid="phase2-total-sold"]')?.textContent).toContain("500,000.00 MINI");
-    expect(container!.querySelector('[data-testid="phase2-total-raised"]')?.textContent).toContain("1,875.00 PAS");
     expect(container!.querySelector('[data-testid="phase2-holder-count"]')?.textContent).toBe("2");
     expect(container!.querySelector('[data-testid="phase2-remaining-mini"]')?.textContent).toContain("1,500,000.00 MINI");
     expect(container!.querySelector('[data-testid="bonding-curve-interaction"]')?.getAttribute("data-current-position")).toBe("25.000000%");

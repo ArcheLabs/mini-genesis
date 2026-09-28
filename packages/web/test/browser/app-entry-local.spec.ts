@@ -80,11 +80,32 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   const rulesHeading = page.getByRole("heading", { name: "Rules" });
   await rulesHeading.scrollIntoViewIfNeeded();
   await expect(rulesHeading).toBeVisible();
+  await expect(rulesHeading).toHaveCSS("font-size", "20px");
+  await expect(page.locator(".phase2-work-items .section-heading h2")).toHaveCSS("font-size", "20px");
+  const taskLayout = await page.locator(".phase2-work-items .work-item-tasks li").first().evaluate((row) => {
+    const icon = row.querySelector(".work-item-task-status")!.getBoundingClientRect();
+    const taskName = row.querySelector(".work-item-task-name")!;
+    const label = taskName.getBoundingClientRect();
+    const workItem = row.closest(".work-item")!;
+    const summary = workItem.querySelector("p")!;
+    return {
+      iconBeforeLabel: icon.right <= label.left,
+      visibleStatusText: row.querySelector(".work-item-task-status")!.textContent?.trim(),
+      taskFont: getComputedStyle(taskName).fontSize,
+      summaryFont: getComputedStyle(summary).fontSize,
+      taskColor: getComputedStyle(taskName).color,
+      textColor: getComputedStyle(workItem.querySelector(".work-item-head strong")!).color,
+    };
+  });
+  expect(taskLayout).toMatchObject({ iconBeforeLabel: true, visibleStatusText: "", taskFont: "14px", summaryFont: "14px" });
+  expect(taskLayout.taskColor).toBe(taskLayout.textColor);
+  await expect(page.locator(".phase2-work-items .work-item-head .status-badge").first()).toHaveCSS("border-top-style", "solid");
   await expect(page.locator(".reserve-banner")).toHaveCount(0);
   await expect(page.getByText("DOT raised", { exact: true })).toHaveCount(0);
   await expect(page.getByText("MINI distributed", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("MINI sold", { exact: true })).toBeVisible();
-  await expect(page.getByText("Raised", { exact: true })).toBeVisible();
+  await expect(page.getByText("MINI sold", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Raised", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("My MINI", { exact: true })).toHaveCount(0);
   await expect(page.getByText("MINI remaining", { exact: true })).toBeVisible();
 
   const curve = page.locator('[data-testid="bonding-curve-interaction"]');
@@ -123,6 +144,8 @@ test("Genesis stages route from the URL and the first viewport centers the live 
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await expect(page.locator(".genesis-rules .section-heading h2")).toHaveCSS("font-size", "18px");
+  await expect(page.locator(".phase2-work-items .section-heading h2")).toHaveCSS("font-size", "18px");
   await page.getByRole("button", { name: "Switch appearance" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -153,6 +176,14 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await expect(page.locator(".phase1-closing-basis > span")).toContainText("Closing basis");
   await expect(page.locator(".phase1-panel")).toContainText("0.00008946 DOT / MINI");
   await expect(page.getByText("Final reference price", { exact: true })).toHaveCount(0);
+  const phase1Hierarchy = await page.locator(".phase1-work-items .work-item").first().evaluate((item) => {
+    const summary = item.querySelector("p")!.getBoundingClientRect();
+    const tasks = item.querySelector(".work-item-tasks")!.getBoundingClientRect();
+    const status = item.querySelector(".work-item-head .status-badge")!.getBoundingClientRect();
+    const heading = item.querySelector(".work-item-head strong")!.getBoundingClientRect();
+    return { tasksBelowSummary: tasks.top >= summary.bottom, statusToRight: status.left >= heading.right };
+  });
+  expect(phase1Hierarchy).toEqual({ tasksBelowSummary: true, statusToRight: true });
   expect(readAddresses.every((address) => address === phase2Address)).toBe(true);
   await page.reload();
   await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
