@@ -125,17 +125,21 @@ describe("visible polling", () => {
     stop();
   });
 
-  it("app source keeps the 30s global poll and removes the fixed asset timer", () => {
+  it("removes Phase I polling from the app and keeps Genesis II polling in its stage", () => {
     const src = readFileSync(resolve(__dirname, "../src.tsx"), "utf8");
+    const stages = readFileSync(resolve(__dirname, "../src/genesis/GenesisStages.tsx"), "utf8");
 
-    expect(src).toMatch(/startVisiblePolling\s*\(\s*async\s*\(\)\s*=>\s*refreshDynamic\(\)\s*\)/);
-    expect(src).toContain("globalPollingRef");
-    expect(src).toContain("controller.retryNow();");
+    expect(src).not.toContain("readGlobalStatic");
+    expect(src).not.toContain("readGlobalDynamic");
+    expect(src).not.toContain("phase1ReadsEnabled");
+    expect(src).toContain('if (route !== "assets" || !session || !genesisIdentity || !productionManifest || !productionClient)');
+    expect(src).toContain("readGenesisUserState(productionClient, productionManifest, genesisIdentity)");
+    expect(src).not.toContain("readContributionHistory");
+    expect(stages).toContain("readCurveDynamic(publicClient, manifest)");
+    expect(stages).toContain("window.setInterval(() => void refresh(), 10_000)");
     expect(src).not.toMatch(/setInterval\s*\(\s*\(\)\s*=>\s*void\s*loadUser\s*\(account\)/);
-    expect(src).toContain("void loadUser(genesisIdentity, sessionKey);");
-    expect(src).toContain("if (shouldLoadContributionHistory(session?.kind ?? null)) void loadHistory(genesisIdentity, sessionKey);");
-    expect(src).toContain("result.contributorH160");
-    expect(src).toContain("reconcileGenesisUserState");
+    expect(src).toContain("readCurveUser(publicClient, manifest, genesisIdentity)");
+    expect(src).toContain("const miniAssetCard = <MyMini");
     expect(src).not.toContain("balance-source-wrap");
     expect(src).not.toContain("selectedPaymentSource");
   });

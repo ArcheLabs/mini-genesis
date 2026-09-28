@@ -1,6 +1,7 @@
 import { decodeEventLog, type Address, type Hash, type PublicClient, type WalletClient } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
 import { curveAbi } from "./curve-abi.generated";
+import { normalizePurchaseError } from "./purchase-error";
 
 export type CurvePurchaseUpdate = { state: "simulating" | "awaiting_signature" | "submitted" | "included" | "failed"; hash?: Hash; error?: string };
 export type CurvePurchaseResult = { hash: Hash; blockNumber: bigint; miniAmount: bigint; dotCost: bigint };
@@ -35,8 +36,8 @@ export async function buyExactMini(
     onUpdate({ state: "included", hash });
     return { hash, blockNumber: receipt.blockNumber, miniAmount, dotCost };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    onUpdate({ state: "failed", error: message });
-    throw new Error(message.includes("_") ? message : "RPC_UNAVAILABLE");
+    const code = normalizePurchaseError(error);
+    onUpdate({ state: "failed", error: code });
+    throw new Error(code, { cause: error });
   }
 }

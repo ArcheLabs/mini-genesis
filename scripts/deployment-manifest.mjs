@@ -6,27 +6,43 @@ const ZERO = /^0x0+$/i;
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const DECIMAL = /^\d+$/;
-const PRODUCTION_PHASE2_DURATION = 7n * 24n * 60n * 60n;
+const PHASE2_DURATION = 7n * 24n * 60n * 60n;
 const required = (value, name) => { if (value === undefined || value === "") throw new Error(`MISSING_${name}`); return value; };
 const check = (value, pattern, name) => { if (typeof value !== "string" || !pattern.test(value)) throw new Error(`INVALID_${name}`); return value; };
+const isLoopback = (value, protocols) => {
+  try {
+    const url = new URL(value);
+    return protocols.includes(url.protocol) && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+      && !url.username && !url.password;
+  } catch { return false; }
+};
 
 export function validateManifest(manifest, environment, options = {}) {
   if (manifest?.environment !== environment) throw new Error(`INVALID_ENVIRONMENT_${environment}`);
   if (!["template", "deployed"].includes(manifest.status)) throw new Error(`INVALID_STATUS_${environment}`);
+  const localRevive = environment === "local" && manifest.status === "deployed";
   const { source, destination, product } = manifest;
   if (!source || !destination) throw new Error("MISSING_NETWORK");
   check(required(source.chainId, "SOURCE_CHAIN_ID"), DECIMAL, "SOURCE_CHAIN_ID");
+  const expectedChainIds = { staging: "420420417", production: "420420419" };
+  if (expectedChainIds[environment] && source.chainId !== expectedChainIds[environment]) throw new Error(`INVALID_SOURCE_CHAIN_ID_${environment}`);
   check(source.contract, ADDRESS, "SOURCE_CONTRACT");
   check(source.runtimeCodeHash, HASH, "SOURCE_RUNTIME_CODE_HASH");
   check(required(source.deploymentBlock, "SOURCE_DEPLOYMENT_BLOCK"), DECIMAL, "SOURCE_DEPLOYMENT_BLOCK");
   if (typeof source.name !== "string" || !source.name) throw new Error("MISSING_SOURCE_NAME");
   if (typeof source.currencySymbol !== "string" || !source.currencySymbol) throw new Error("MISSING_SOURCE_CURRENCY");
-  if (source.nativeDecimals !== 10) throw new Error("INVALID_SOURCE_NATIVE_DECIMALS");
+  if (localRevive) {
+    if (!Number.isInteger(source.nativeDecimals) || source.nativeDecimals < 0 || source.nativeDecimals > 18) throw new Error("INVALID_SOURCE_NATIVE_DECIMALS");
+    if (!Number.isInteger(source.ss58Prefix) || source.ss58Prefix < 0 || source.ss58Prefix > 16383) throw new Error("INVALID_SOURCE_SS58_PREFIX");
+  } else {
+    if (source.nativeDecimals !== 10) throw new Error("INVALID_SOURCE_NATIVE_DECIMALS");
+    if (source.ss58Prefix !== 0) throw new Error("INVALID_SOURCE_SS58_PREFIX");
+  }
   if (source.evmNativeDecimals !== 18) throw new Error("INVALID_SOURCE_EVM_NATIVE_DECIMALS");
-  if (source.ss58Prefix !== 0) throw new Error("INVALID_SOURCE_SS58_PREFIX");
-  if (!Array.isArray(source.rpcHttpUrls) || source.rpcHttpUrls.some((url) => typeof url !== "string" || (url && !/^https:\/\//.test(url)))) throw new Error("INVALID_SOURCE_RPC_URLS");
-  if (!Array.isArray(source.substrateWsUrls) || source.substrateWsUrls.some((url) => typeof url !== "string" || (url && !/^wss:\/\//.test(url)))) throw new Error("INVALID_SOURCE_SUBSTRATE_WS_URLS");
-  if (typeof source.explorerUrl !== "string" || (source.explorerUrl && !/^https:\/\//.test(source.explorerUrl))) throw new Error("INVALID_SOURCE_EXPLORER_URL");
+  if (!Array.isArray(source.rpcHttpUrls) || source.rpcHttpUrls.some((url) => typeof url !== "string" || (localRevive ? !isLoopback(url, ["http:"]) : (url && !/^https:\/\//.test(url))))) throw new Error("INVALID_SOURCE_RPC_URLS");
+  if (!Array.isArray(source.substrateWsUrls) || source.substrateWsUrls.some((url) => typeof url !== "string" || (localRevive ? !isLoopback(url, ["ws:"]) : (url && !/^wss:\/\//.test(url))))) throw new Error("INVALID_SOURCE_SUBSTRATE_WS_URLS");
+  if (typeof source.explorerUrl !== "string" || (source.explorerUrl && (localRevive ? !isLoopback(source.explorerUrl, ["http:"]) : !/^https:\/\//.test(source.explorerUrl)))) throw new Error("INVALID_SOURCE_EXPLORER_URL");
+  if (localRevive) check(source.substrateGenesisHash, HASH, "SOURCE_SUBSTRATE_GENESIS_HASH");
   check(required(destination.chainId, "DESTINATION_CHAIN_ID"), DECIMAL, "DESTINATION_CHAIN_ID");
   check(destination.genesisHash, HASH, "DESTINATION_GENESIS_HASH");
   check(destination.miniLucky, ADDRESS, "DESTINATION_MINI_LUCKY");
@@ -35,6 +51,7 @@ export function validateManifest(manifest, environment, options = {}) {
   check(required(destination.deploymentBlock, "DESTINATION_DEPLOYMENT_BLOCK"), DECIMAL, "DESTINATION_DEPLOYMENT_BLOCK");
   if (environment === "local") {
     if (product !== null) throw new Error("LOCAL_PRODUCT_MUST_BE_NULL");
+    if (manifest.status === "deployed" && !["active", "ended"].includes(manifest.genesis?.phases?.phase2?.status)) throw new Error("LOCAL_PHASE2_MUST_BE_DEPLOYED");
   } else {
     if (!product || product.dotName !== (environment === "staging" ? "mini-lucky-dev.dot" : "mini-lucky.dot")) throw new Error(`INVALID_${environment.toUpperCase()}_PRODUCT`);
     check(product.ownerH160, ADDRESS, "PRODUCT_OWNER_H160");
@@ -43,11 +60,16 @@ export function validateManifest(manifest, environment, options = {}) {
   validateGenesisPhases(manifest.genesis, environment);
   if (manifest.status === "deployed" || options.runtimeReady) {
     if (manifest.status !== "deployed") throw new Error(`TEMPLATE_MANIFEST_NOT_RUNTIME_READY_${environment}`);
-    for (const value of [source.contract, source.runtimeCodeHash, source.deploymentBlock]) if (value === "0" || ZERO.test(value)) throw new Error(`ZERO_DEPLOYMENT_VALUE_${environment}`);
     if (source.rpcHttpUrls.length === 0 || source.rpcHttpUrls.some((url) => !url)) throw new Error(`MISSING_SOURCE_RPC_${environment}`);
-    if (!source.explorerUrl) throw new Error(`MISSING_SOURCE_EXPLORER_${environment}`);
-    const supported = options.supportedChainIds ?? [];
-    if (supported.length && (!supported.includes(source.chainId) || !supported.includes(destination.chainId))) throw new Error(`UNSUPPORTED_CHAIN_ID_${environment}`);
+    if (localRevive) {
+      if (!source.substrateWsUrls.length || source.substrateWsUrls.some((url) => !url)) throw new Error(`MISSING_SOURCE_SUBSTRATE_RPC_${environment}`);
+      if (source.substrateGenesisHash === "0x" + "0".repeat(64)) throw new Error(`MISSING_SOURCE_GENESIS_HASH_${environment}`);
+    } else {
+      for (const value of [source.contract, source.runtimeCodeHash, source.deploymentBlock]) if (value === "0" || ZERO.test(value)) throw new Error(`ZERO_DEPLOYMENT_VALUE_${environment}`);
+      if (!source.explorerUrl) throw new Error(`MISSING_SOURCE_EXPLORER_${environment}`);
+      const supported = options.supportedChainIds ?? [];
+      if (supported.length && (!supported.includes(source.chainId) || !supported.includes(destination.chainId))) throw new Error(`UNSUPPORTED_CHAIN_ID_${environment}`);
+    }
   }
   return manifest;
 }
@@ -59,14 +81,18 @@ function validateGenesisPhases(genesis, environment) {
   const phaseNames = Object.keys(phases).sort();
   if (phaseNames.length !== 3 || phaseNames.join(",") !== "phase1,phase2,phase3") throw new Error(`INVALID_GENESIS_PHASE_SET_${environment}`);
   if (phases.phase1?.status !== "ended" || phases.phase1?.mechanism !== "stream") throw new Error(`INVALID_GENESIS_PHASE1_${environment}`);
+  validateWorkItems(phases.phase1?.workItems, `GENESIS_PHASE1_WORK_ITEMS_${environment}`);
+  validateWorkItems(phases.phase1?.researchHistory, `GENESIS_PHASE1_RESEARCH_HISTORY_${environment}`);
   if (phases.phase3?.status !== "locked") throw new Error(`INVALID_GENESIS_PHASE3_${environment}`);
   const phase2 = phases.phase2;
   if (!phase2 || !["template", "active", "ended"].includes(phase2.status) || phase2.mechanism !== "linear-bonding-curve") throw new Error(`INVALID_GENESIS_PHASE2_${environment}`);
+  validateWorkItems(phase2.workItems, `GENESIS_PHASE2_WORK_ITEMS_${environment}`);
   if (phase2.status === "template") return;
   check(phase2.contract, ADDRESS, "GENESIS_PHASE2_CONTRACT");
+  if (environment !== "local") check(phase2.treasury, ADDRESS, "GENESIS_PHASE2_TREASURY");
   check(required(phase2.deploymentBlock, "GENESIS_PHASE2_DEPLOYMENT_BLOCK"), DECIMAL, "GENESIS_PHASE2_DEPLOYMENT_BLOCK");
   check(phase2.runtimeCodeHash, HASH, "GENESIS_PHASE2_RUNTIME_CODE_HASH");
-  if (ZERO.test(phase2.contract) || ZERO.test(phase2.runtimeCodeHash) || phase2.deploymentBlock === "0") throw new Error(`ZERO_GENESIS_PHASE2_DEPLOYMENT_${environment}`);
+  if (ZERO.test(phase2.contract) || (environment !== "local" && ZERO.test(phase2.treasury)) || ZERO.test(phase2.runtimeCodeHash) || phase2.deploymentBlock === "0") throw new Error(`ZERO_GENESIS_PHASE2_DEPLOYMENT_${environment}`);
   for (const [value, name] of [
     [phase2.allocationMini, "GENESIS_PHASE2_ALLOCATION"],
     [phase2.startPriceX18, "GENESIS_PHASE2_START_PRICE"],
@@ -74,11 +100,11 @@ function validateGenesisPhases(genesis, environment) {
     [phase2.startTime, "GENESIS_PHASE2_START_TIME"],
     [phase2.endTime, "GENESIS_PHASE2_END_TIME"],
   ]) check(required(value, name), DECIMAL, name);
-  if (environment === "production" && BigInt(phase2.allocationMini) !== 2_000_000n * 10n ** 18n) throw new Error(`INVALID_GENESIS_PHASE2_ALLOCATION_${environment}`);
-  if (environment === "production" && (BigInt(phase2.startPriceX18) !== 750_000_000_000_000n || BigInt(phase2.endPriceX18) !== 1_250_000_000_000_000n)) throw new Error(`INVALID_GENESIS_PHASE2_PRICES_${environment}`);
+  if (environment !== "local" && BigInt(phase2.allocationMini) !== 2_000_000n * 10n ** 18n) throw new Error(`INVALID_GENESIS_PHASE2_ALLOCATION_${environment}`);
+  if (environment !== "local" && (BigInt(phase2.startPriceX18) !== 3_500_000_000_000_000n || BigInt(phase2.endPriceX18) !== 5_500_000_000_000_000n)) throw new Error(`INVALID_GENESIS_PHASE2_PRICES_${environment}`);
   if (BigInt(phase2.allocationMini) === 0n || BigInt(phase2.startPriceX18) === 0n || BigInt(phase2.endPriceX18) <= BigInt(phase2.startPriceX18)) throw new Error(`INVALID_GENESIS_PHASE2_ECONOMICS_${environment}`);
   if (BigInt(phase2.endTime) <= BigInt(phase2.startTime)) throw new Error(`INVALID_GENESIS_PHASE2_TIME_${environment}`);
-  if (environment === "production" && BigInt(phase2.endTime) - BigInt(phase2.startTime) !== PRODUCTION_PHASE2_DURATION) throw new Error(`INVALID_GENESIS_PHASE2_DURATION_${environment}`);
+  if (environment !== "local" && BigInt(phase2.endTime) - BigInt(phase2.startTime) !== PHASE2_DURATION) throw new Error(`INVALID_GENESIS_PHASE2_DURATION_${environment}`);
   if (phase2.status !== "ended") return;
   const snapshot = phase2.snapshot;
   if (!snapshot || snapshot.phase !== 2 || snapshot.status !== "ended") throw new Error(`MISSING_GENESIS_PHASE2_SNAPSHOT_${environment}`);
@@ -104,6 +130,20 @@ function validateGenesisPhases(genesis, environment) {
     [snapshot.endTime, phase2.endTime, "END_TIME"],
   ]) if (snapshotValue !== phaseValue) throw new Error(`MISMATCHED_GENESIS_PHASE2_SNAPSHOT_${name}_${environment}`);
   if (BigInt(snapshot.soldMini) > BigInt(snapshot.allocationMini) || BigInt(snapshot.terminalPriceX18) < BigInt(snapshot.startPriceX18) || BigInt(snapshot.terminalPriceX18) > BigInt(snapshot.endPriceX18)) throw new Error(`INVALID_GENESIS_PHASE2_SNAPSHOT_VALUES_${environment}`);
+}
+
+function validateWorkItems(items, name) {
+  if (items === undefined) return;
+  if (!Array.isArray(items)) throw new Error(`INVALID_${name}`);
+  const statuses = new Set(["planned", "active", "delivered", "investigated", "discontinued"]);
+  for (const item of items) {
+    if (!item || typeof item.id !== "string" || !item.id || typeof item.name !== "string" || !item.name || !statuses.has(item.status)) {
+      throw new Error(`INVALID_${name}`);
+    }
+    if (typeof item.summary !== "string" && (!item.summary || typeof item.summary.en !== "string" || typeof item.summary["zh-CN"] !== "string")) {
+      throw new Error(`INVALID_${name}`);
+    }
+  }
 }
 
 export async function readManifest(environment, options) {

@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install Slither
-        run: python -m pip install slither-analyzer==0.10.4
+        run: python -m pip install -r requirements-slither.txt
 
       - name: Set up pnpm
         uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10

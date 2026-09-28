@@ -3,7 +3,7 @@
 MINI Genesis is a finite, three-phase Genesis application for MINI:
 
 * **Genesis I — COMPLETED:** immutable time-weighted stream distribution through `MiniGenesisStream`.
-* **Genesis II — IMPLEMENTED / NOT YET LIVE:** a separate, limited 2,000,000 MINI Early Operations Reserve allocation through a deterministic quantity-based linear bonding curve.
+* **Genesis II — WAITING / LIVE / COMPLETED:** a separate, limited 2,000,000 MINI Early Operations Reserve allocation through a deterministic quantity-based linear bonding curve.
 * **Genesis III — LOCKED:** the final Genesis phase, with no allocation, date, or price determined in this release.
 
 Phase I and Phase II are different mechanisms. Phase I emits MINI by block and
@@ -18,8 +18,8 @@ The repository contains:
 * the standalone Genesis frontend;
 * staging and production release workflows.
 
-Phase II production parameters are fixed at 0.000750 → 0.001250 DOT/MINI,
-with a full-sale capacity of 2,000 DOT. The displayed Genesis I value
+Phase II production parameters are fixed at 0.003500 → 0.005500 DOT/MINI,
+with a full-sale capacity of 9,000 DOT. The displayed Genesis I value
 0.00008946 DOT/MINI is a historical final reference price, not an exchange spot
 price.
 
@@ -29,7 +29,10 @@ price.
 * Foundry `v0.3.0`
 * Node.js `24`
 * pnpm `10`
-* Python `3.12` and Slither
+* Python `3.12` and Slither `0.10.4`
+
+The pinned local toolchain is recorded in `.tool-versions`; CI installs the
+same Foundry and Slither versions.
 
 Clone the repository with its submodules:
 

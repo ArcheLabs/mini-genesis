@@ -2,6 +2,9 @@
   "name": "mini-genesis",
   "private": true,
   "scripts": {
+    "setup:revive-local": "node scripts/setup-revive-local.mjs",
+    "revive:local": "node scripts/run-revive-local.mjs",
+    "e2e:phase2:local": "forge build && node scripts/e2e-phase2-local.mjs && node scripts/generate-deployment-config.mjs && pnpm --dir packages/web typecheck && pnpm --dir packages/web test && VITE_DEPLOYMENT_ENV=local pnpm --dir packages/web build",
     "deploy:staging": "node scripts/deploy.mjs staging",
     "finalize:staging": "node scripts/deploy.mjs staging --finalize-only",
     "deploy:production": "node scripts/deploy.mjs production",

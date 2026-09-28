@@ -14,7 +14,7 @@ The page is read-only and records the earliest participants' risk and the work
 that followed. The displayed `0.00008946 DOT/MINI` value is the **Genesis I final
 reference price**, not an exchange spot price.
 
-## Genesis II — IMPLEMENTED / NOT YET LIVE
+## Genesis II — WAITING / LIVE / COMPLETED
 
 Genesis II is a separate `MiniGenesisCurve` contract. It distributes a fixed
 2,000,000 MINI credit from the 10,000,000 MINI Early Operations Reserve through a
@@ -26,6 +26,17 @@ Reserve. The contract records the authoritative on-chain credit in
 
 The contract is non-upgradeable and has no owner pricing control, whitelist,
 deadline extension, or allocation increase path.
+
+The production allocation is 2,000,000 MINI, drawn from the 10,000,000 MINI
+Early Operations Reserve. Its immutable quantity-based curve runs from
+0.003500 to 0.005500 DOT/MINI. Full-sale capacity is 9,000 DOT; this is a
+capacity, not an all-or-nothing fundraising target or soft cap.
+
+The page has three runtime states: WAITING before `startTime`, LIVE during the
+immutable time window, and COMPLETED after `endTime` or sell-out. A completed
+campaign retains its actual on-chain economic result. Campaign completion does
+not mark every work item as delivered: work status comes from explicit
+manifest data.
 
 The implementation must not be described as LIVE until a production deployment
 has been completed and the production manifest contains the deployed Phase II
@@ -42,3 +53,13 @@ The only standing policy rule is:
 ```text
 Genesis III start price >= Genesis II actual terminal price
 ```
+
+Genesis III has no allocation, price, date, end price, valuation, or mechanism
+in this release.
+
+## Funding and execution are separate states
+
+Genesis I is a historical outcome page: it shows the immutable historical
+accounting and the delivered results of the first execution cycle. Genesis II
+shows the current funding curve and explicit work items. `COMPLETED` means that
+funding ended; it does not mean that all listed work has been completed.

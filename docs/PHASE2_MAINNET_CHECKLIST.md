@@ -13,8 +13,8 @@ Do not mark production ready until every item is evidenced.
 - [ ] Staging Substrate Native purchase and account-mapping checks pass.
 - [ ] Staging deadline rejection and accounting checks pass.
 - [ ] Production verifier reads the deployed immutable values directly.
-- [ ] Allocation is 2,000,000 MINI; prices are 0.000750 and 0.001250 DOT/MINI.
-- [ ] Full-sale capacity is 2,000 DOT; treasury address is independently reviewed.
+- [ ] Allocation is 2,000,000 MINI; prices are 0.003500 and 0.005500 DOT/MINI.
+- [ ] Full-sale capacity is 9,000 DOT; treasury address is independently reviewed.
 - [ ] Start and end timestamps are public, correct, and exactly seven days apart.
 - [ ] Network is Polkadot Hub Mainnet.
 - [ ] `deployments/production.json` and generated frontend config are committed.

@@ -55,7 +55,9 @@ describe("native wallet session persistence", () => {
     expect(walletSource).toContain('if (!isConnected) return;\n    restorationAttempted.current = true;\n    setRestoreStatus("done");');
     expect(walletSource).toContain("if (evmConnectedRef.current) {");
     expect(walletSource).toContain("const session = selectWalletSession(isConnected, evmSession, polkadotSession);");
-    expect(appSource).toContain('const initialWalletLoading = !demoMode && !paymentReady && walletStatus !== "disconnected";');
+    expect(appSource).not.toContain("initialWalletLoading");
+    expect(appSource).toContain('walletStatus === "restoring" ? "Loading…" : text.connect');
+    expect(appSource).toContain('disabled={walletStatus === "restoring" || Boolean(runtimeSelection.error) || !manifest}');
   });
 });
 

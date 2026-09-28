@@ -28,13 +28,18 @@ describe("mobile responsive layout", () => {
     expect(styleCss).toMatch(/text-overflow\s*:\s*ellipsis/);
   });
 
-  it("removes the fixed mobile history table width in favor of card layout", () => {
-    expect(styleCss).not.toContain("min-width:620px");
-    expect(styleCss).toContain(".history-head");
+  it("removes layout rules for retired dashboard and accordion UI", () => {
+    const styles = `${styleCss}\n${interactionCss}`;
+    for (const selector of [".hero", ".stage-tabs", ".reserve-banner", ".stats-strip", ".history-head", ".rule-item.open"]) {
+      expect(styles).not.toContain(selector);
+    }
+    expect(appSource).not.toContain("openRule");
+    expect(appSource).not.toContain("SHOW_GENESIS_STATS");
   });
 
-  it("keeps stats-strip from forcing three columns at small widths", () => {
-    expect(interactionCss).toContain("@media (max-width: 420px)");
-    expect(interactionCss).toMatch(/grid-template-columns\s*:\s*1fr/);
+  it("uses a stacked trade layout and narrow-screen rules", () => {
+    expect(interactionCss).toContain(".phase2-trade-layout");
+    expect(interactionCss).toMatch(/@media\s*\(max-width:\s*420px\)/);
+    expect(interactionCss).toMatch(/grid-template-columns\s*:\s*minmax\(0,1fr\)/);
   });
 });
