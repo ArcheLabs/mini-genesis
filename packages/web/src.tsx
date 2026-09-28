@@ -190,7 +190,7 @@ function App() {
   const configurationErrorPage = <main className="configuration-error-page" role="alert"><h1>{language === "zh-CN" ? "页面配置不匹配" : "Configuration mismatch"}</h1><p>{language === "zh-CN" ? "所选网络未包含在此页面的部署配置中。" : "The selected network is not included in this page deployment."}</p></main>;
   const genesisStagesPage = isGenesisRoute ? <GenesisStages language={language} stage={activeStage} refreshKey={phase2RefreshKey} onPhase2StatusChange={setPhase2HeaderStatus} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onRefresh={refreshPhase2Mini} /> : null;
   const smokePage = NATIVE_SMOKE_ENABLED ? <NativeSignerSmoke manifest={manifest} session={session} availablePolkadotWallets={availablePolkadotWallets} connectPolkadot={connectPolkadot} /> : null;
-  return <><NotificationCenter items={feedback.notifications} onDismiss={feedback.dismiss} onAction={handleFeedbackAction} /><SystemBanner items={feedback.banners} onAction={handleFeedbackAction} />{header}{runtimeSelection.error ? configurationErrorPage : route === "native-signer-smoke" ? smokePage : route === "assets" ? assetsPage : genesisStagesPage}</>;
+  return <><NotificationCenter items={feedback.notifications} onDismiss={feedback.dismiss} onAction={handleFeedbackAction} />{header}<SystemBanner items={feedback.banners} onAction={handleFeedbackAction} />{runtimeSelection.error ? configurationErrorPage : route === "native-signer-smoke" ? smokePage : route === "assets" ? assetsPage : genesisStagesPage}</>;
 }
 
 createRoot(document.getElementById("root")!).render(<GenesisWalletProvider><App /></GenesisWalletProvider>);
