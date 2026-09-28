@@ -31,9 +31,6 @@ type Props = {
   demoMode: boolean;
   onConnect: () => void;
   onReconcile: () => Promise<void>;
-  userMini: bigint | null;
-  userMiniLoading: boolean;
-  userMiniError: boolean;
 };
 
 const NATIVE_TO_EVM_RATIO = 100_000_000n;
@@ -75,7 +72,7 @@ function errorText(code: string, zh: boolean): string {
   return localized ? localized[zh ? 0 : 1] : code;
 }
 
-export function GenesisPhase2({ language, manifest, publicClient, session, provider, walletReady, correctChain, dynamic, demoMode, onConnect, onReconcile, userMini, userMiniLoading, userMiniError }: Props) {
+export function GenesisPhase2({ language, manifest, publicClient, session, provider, walletReady, correctChain, dynamic, demoMode, onConnect, onReconcile }: Props) {
   const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
   const [budget, setBudget] = useState("1.00");
   const [busy, setBusy] = useState(false);
@@ -109,7 +106,6 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
   const configuredWorkItems = manifest?.genesis?.phases.phase2?.workItems ?? [];
   const workItems = useMemo(() => mergeGenesisWorkItems(genesisPhase2WorkItems, configuredWorkItems), [configuredWorkItems]);
   const nativeSymbol = manifest?.source.currencySymbol ?? "DOT";
-  const userMiniLabel = userMiniLoading ? (zh ? "读取中…" : "Loading…") : userMiniError || userMini === null ? "—" : `${formatTokenAmount(userMini)} MINI`;
   const balanceLabel = (() => {
     if (!session || session.balance === null) return "—";
     const decimals = session.kind === "polkadot" ? manifest?.source.nativeDecimals ?? 10 : manifest?.evmNativeDecimals ?? 18;
@@ -180,8 +176,6 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         <strong data-testid="phase2-current-basis">{formatBasis(currentBasis)} <small>{nativeSymbol} / MINI</small></strong>
       </div>
       <div className="phase2-facts" aria-label={zh ? "Genesis II 状态" : "Genesis II status"}>
-        <div><strong data-testid="phase2-total-sold">{dynamic ? `${formatTokenAmount(dynamic.totalSoldMini)} MINI` : "—"}</strong><span>{zh ? "已售 MINI" : "MINI sold"}</span></div>
-        <div><strong data-testid="phase2-total-raised">{dynamic ? `${formatTokenAmount(dynamic.totalRaisedDot)} ${nativeSymbol}` : "—"}</strong><span>{zh ? "已筹集" : "Raised"}</span></div>
         <div><strong data-testid="phase2-holder-count">{dynamic?.buyerCount.toLocaleString() ?? "—"}</strong><span>{zh ? "参与者" : "Holders"}</span></div>
         <div><strong data-testid="phase2-remaining-mini">{remainingMini === null ? "—" : `${formatTokenAmount(remainingMini)} MINI`}</strong><span>{zh ? "剩余 MINI" : "MINI remaining"}</span></div>
         <div><strong data-testid="phase2-time-remaining">{dynamic ? countdown(remaining, zh) : "—"}</strong><span>{timeLabel}</span></div>
@@ -194,7 +188,6 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
       <BondingCurveChart allocation={parameters.allocation} sold={sold} startBasis={parameters.startPrice} endBasis={parameters.endPrice} currentBasis={currentBasis} language={language} nativeSymbol={nativeSymbol} />
       {ended ? <section className="curve-purchase purchase-panel purchase-closed"><SectionHeading size="compact" icon={<MiniIcon />}>{zh ? "获得 MINI" : "Get MINI"}</SectionHeading><p>{zh ? "当前阶段已结束。" : "This stage has ended."}</p></section> : <section className="curve-purchase purchase-panel" aria-label={zh ? "获得 MINI" : "Get MINI"}>
         <SectionHeading size="compact" icon={<MiniIcon />}>{zh ? "获得 MINI" : "Get MINI"}</SectionHeading>
-        <div className="purchase-user-mini" data-testid="phase2-user-mini"><span>{zh ? "我的 MINI" : "My MINI"}</span><strong>{userMiniLabel}</strong></div>
         <label className="budget-label" htmlFor="phase2-native-budget">{zh ? "支付" : "Pay"}</label>
         <div className="budget-input-wrap">
           <input id="phase2-native-budget" aria-label={zh ? `支付 ${nativeSymbol} 数量` : `${nativeSymbol} budget`} inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="0.00" />

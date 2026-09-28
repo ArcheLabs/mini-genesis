@@ -107,9 +107,6 @@
 .phase2-facts strong{font-size:12px;overflow-wrap:anywhere}
 .phase2-facts span{font-size:11px;line-height:1.35}
 .purchase-panel>.section-heading{margin-bottom:0}
-.purchase-user-mini{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
-.purchase-user-mini>span{color:var(--muted);font-size:12px}
-.purchase-user-mini>strong{color:var(--text);font:600 13px/1.3 var(--font-mono);text-align:right;white-space:nowrap}
 .mini-total{display:grid;gap:4px;margin:16px 0 8px;padding:12px 0 16px;border-bottom:1px solid var(--line)}
 .mini-total>strong{color:var(--accent);font:700 clamp(20px,5vw,30px)/1.15 var(--font-mono);letter-spacing:-.045em;white-space:nowrap}
 .mini-total>span{color:var(--muted);font-size:12px}
@@ -167,4 +164,26 @@
   .phase3-panel{min-height:370px;padding:20px 10px}
   .phase3-copy{padding:24px 14px}
   .phase3-subtitle{font-size:18px}
+}
+
+/* Keep workstreams in one reading order across Genesis I and Genesis II. */
+.work-items-section.phase1-work-items .work-item{grid-template-columns:minmax(0,1fr);align-items:stretch;column-gap:0}
+.work-items-section.phase1-work-items .work-item-head,.work-items-section.phase1-work-items .work-item p{grid-column:auto;grid-row:auto}
+.work-items-section .work-item-head>.status-badge{padding:4px 8px;border:1px solid color-mix(in srgb,currentColor 42%,var(--line));border-radius:999px}
+.work-items-section .work-item-head strong{font-size:16px}
+.work-items-section .work-item p{font-size:14px}
+.work-items-section .work-item-tasks li{align-items:flex-start;justify-content:flex-start;gap:9px;color:var(--text);font-size:14px;line-height:1.45}
+.work-items-section .work-item-task-status{display:grid;place-items:center;justify-self:start;flex:0 0 16px;width:16px;height:18px;margin-top:1px;color:var(--subtle)}
+.work-items-section .work-item-task-status .status-icon{width:15px;height:15px;flex-basis:15px}
+.work-items-section .work-item-task-status-delivered{color:var(--success)}
+.work-items-section .work-item-task-status-active{color:var(--accent)}
+.work-items-section .work-item-task-status-planned{color:var(--muted)}
+.work-items-section .work-item-task-status-discontinued{color:var(--subtle)}
+.work-items-section .work-item-tasks li[data-status="discontinued"] .work-item-task-name{color:var(--muted)}
+.genesis-rules>.section-heading .section-heading-copy>h2,.phase2-work-items>.section-heading .section-heading-copy>h2{font-size:20px}
+.phase2-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:420px){
+  .work-items-section .work-item-head{align-items:center!important}
+  .genesis-rules>.section-heading .section-heading-copy>h2,.phase2-work-items>.section-heading .section-heading-copy>h2{font-size:18px}
+  .phase2-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
 }

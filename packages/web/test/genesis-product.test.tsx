@@ -53,7 +53,7 @@ describe("Genesis product closure", () => {
     expect(chinese).toContain("计划中");
   });
 
-  it("renders compact nested status icons for all four task states", () => {
+  it("renders task status icons before task names without repeating status text", () => {
     const item = { ...genesisPhase2WorkItems[0], tasks: [
       { id: "compiler", name: "Compiler", status: "delivered" as const },
       { id: "runtime", name: { en: "Runtime integration", "zh-CN": "运行时集成" }, status: "active" as const },
@@ -63,12 +63,18 @@ describe("Genesis product closure", () => {
     const markup = renderToStaticMarkup(createElement(GenesisWorkItems, { language: "en", mode: "phase2-funds", workItems: [item] }));
     expect(markup).toContain("Compiler");
     expect(markup).toContain("Runtime integration");
-    expect(markup).toContain("Completed");
-    expect(markup).toContain("In progress");
-    expect(markup).toContain("Planned");
-    expect(markup).toContain("Cancelled");
+    expect(markup).toContain('role="img" aria-label="Completed"');
+    expect(markup).toContain('role="img" aria-label="In progress"');
+    expect(markup).toContain('role="img" aria-label="Planned"');
+    expect(markup).toContain('role="img" aria-label="Cancelled"');
     expect(markup.match(/class="status-badge /g)).toHaveLength(1);
     expect(markup).toContain("work-item-task-status-discontinued");
+    expect(markup).toContain('class="status-icon status-icon-sm status-icon-planned"');
+    expect(markup).toContain('d="M8 4.7v3.5l2.3 1.4"></path>');
+    expect(markup).toContain('class="status-icon status-icon-sm status-icon-discontinued"');
+    expect(markup.indexOf('aria-label="Planned"')).toBeLessThan(markup.indexOf(">Developer SDK</span>"));
+    expect(markup).not.toContain("<span>Planned</span>");
+    expect(markup).not.toContain("<span>Cancelled</span>");
     expect(genesisPhase2WorkItems.some((workItem) => workItem.tasks?.length)).toBe(true);
   });
 
@@ -104,12 +110,10 @@ describe("Genesis product closure", () => {
     expect(locked.match(/Genesis III/g)).toHaveLength(1);
   });
 
-  it("keeps only the current acquisition basis, holders, time, curve, purchase, rules, and execution", () => {
-    const markup = renderToStaticMarkup(createElement(GenesisPhase2, { language: "en", manifest: null, publicClient: null, session: null, provider: null, walletReady: false, correctChain: false, dynamic: dynamic("Active", 500_000n * 10n ** 18n), demoMode: false, onConnect: () => {}, onReconcile: async () => {}, userMini: 0n, userMiniLoading: false, userMiniError: false }));
+  it("keeps the current basis, holders, time, curve, purchase, rules, and execution without redundant stats", () => {
+    const markup = renderToStaticMarkup(createElement(GenesisPhase2, { language: "en", manifest: null, publicClient: null, session: null, provider: null, walletReady: false, correctChain: false, dynamic: dynamic("Active", 500_000n * 10n ** 18n), demoMode: false, onConnect: () => {}, onReconcile: async () => {} }));
     expect(markup).toContain("Current acquisition basis");
     expect(markup).toContain("Holders");
-    expect(markup).toContain("MINI sold");
-    expect(markup).toContain("Raised");
     expect(markup).toContain("MINI remaining");
     expect(markup).toContain("Remaining");
     expect(markup).toContain("Starting acquisition basis");
@@ -117,6 +121,12 @@ describe("Genesis product closure", () => {
     expect(markup).toContain("Pay");
     expect(markup).toContain("You receive");
     expect(markup).toContain("Get MINI");
+    expect(markup).not.toContain("MINI sold");
+    expect(markup).not.toContain("Raised");
+    expect(markup).not.toContain("phase2-total-sold");
+    expect(markup).not.toContain("phase2-total-raised");
+    expect(markup).not.toContain("My MINI");
+    expect(markup).not.toContain("phase2-user-mini");
     expect(markup).toContain("Rules");
     expect(markup).toContain("Genesis II Execution");
     expect(markup).toContain("data-current-position=\"25.000000%\"");
