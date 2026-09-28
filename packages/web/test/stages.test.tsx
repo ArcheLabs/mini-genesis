@@ -26,7 +26,7 @@ describe("Genesis stage navigation", () => {
     expect(markup).toContain("Genesis I");
     expect(markup).toContain("Genesis II");
     expect(markup).toContain("Genesis III");
-    expect(markup).toContain("Delivered");
+    expect(markup).toContain("Completed");
     expect(markup).toContain("In progress");
     expect(markup).toContain("Locked");
     expect(markup).toContain('href="#/genesis/ii" class="stage-nav-link active" aria-current="page"');

@@ -337,8 +337,24 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     try {
       const balance = await readNativeBalance(substrateApi, requestedAddress);
       if (selectedAddressRef.current === requestedAddress) { setNativeBalance(balance.free); setNativeBalanceStatus("ready"); }
-    } catch { if (selectedAddressRef.current === requestedAddress) setNativeBalanceStatus((current) => current === "refreshing" ? "ready" : "error"); }
+    } catch { if (selectedAddressRef.current === requestedAddress) { setNativeBalance(null); setNativeBalanceStatus("error"); } }
   }, [selectedPolkadotAddress, substrateApi]);
+
+  const refreshEvmBalance = useCallback(async () => {
+    if (session?.kind !== "evm" || !publicClient) return;
+    const requestedAddress = session.address;
+    try {
+      const balance = await publicClient.getBalance({ address: requestedAddress });
+      if (evmAddress?.toLowerCase() === requestedAddress.toLowerCase()) setEvmBalance(balance);
+    } catch {
+      if (evmAddress?.toLowerCase() === requestedAddress.toLowerCase()) setEvmBalance(null);
+    }
+  }, [evmAddress, publicClient, session]);
+
+  const refreshWalletBalance = useCallback(async () => {
+    if (session?.kind === "evm") await refreshEvmBalance();
+    else if (session?.kind === "polkadot") await refreshNativeBalance();
+  }, [refreshEvmBalance, refreshNativeBalance, session]);
 
   useEffect(() => {
     if (!isConnected) return;
@@ -376,6 +392,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     switchToGenesisChain,
     selectPolkadotAccount,
     refreshNativeBalance,
+    refreshWalletBalance,
     availablePolkadotWallets,
     polkadotAccounts: substrateAccounts,
     provider,

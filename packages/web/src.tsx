@@ -20,6 +20,9 @@ import { canonicalizeHash, routeFromHash, hashForRoute, type AppRoute } from "./
 import { readCurveUser } from "./src/genesis/curve-reads";
 import { readGenesisUserState } from "./src/genesis/reads";
 import { MyMini } from "./src/assets/MyMini";
+import { EcosystemAssets } from "./src/assets/EcosystemAssets";
+import { MiniHistory } from "./src/assets/MiniHistory";
+import { readContributionHistory, readGenesis2PurchaseHistoryForSession, resolveHistoryH160, type ContributionHistoryItem, type Genesis2PurchaseHistoryItem } from "./src/genesis/history";
 import { syncWrongChainFeedback } from "./src/wallet/wrong-chain-feedback";
 import type { GenesisStageId } from "./src/navigation/routing";
 import "./style.css";
@@ -32,11 +35,11 @@ const NATIVE_SMOKE_ENABLED = import.meta.env.MODE === "development" || import.me
 
 const copy = {
   "zh-CN": {
-    connect: "连接钱包", disconnect: "断开连接", myAssets: "我的资产", mine: "我的资产", vmini: "MINI 生态资产", assetsEmpty: "连接钱包后查看资产。", language: "语言", unavailableNote: "此模块将在后续协议阶段启用。", account: "切换账户",
+    connect: "连接钱包", disconnect: "断开连接", myAssets: "我的资产", mine: "我的资产", assetsEmpty: "连接钱包后查看资产。", language: "语言", account: "切换账户",
     evmWallet: "EVM", polkadotWallet: "Polkadot", switchAccount: "切换账户", back: "返回",
   },
   en: {
-    connect: "Connect", disconnect: "Disconnect", myAssets: "My assets", mine: "My Assets", vmini: "MINI ecosystem asset", assetsEmpty: "Connect your wallet to view your assets.", language: "Language", unavailableNote: "This module will be enabled in a later protocol phase.", account: "Switch account",
+    connect: "Connect", disconnect: "Disconnect", myAssets: "My assets", mine: "My Assets", assetsEmpty: "Connect your wallet to view your assets.", language: "Language", account: "Switch account",
     evmWallet: "EVM", polkadotWallet: "Polkadot", switchAccount: "Switch account", back: "Back",
   },
 } as const;
@@ -54,7 +57,7 @@ function App() {
   const nativeManifest = useMemo(() => manifest ? resolveNativeManifest(manifest, import.meta.env.MODE) : null, [manifest]);
   const nativeMainnetOverride = Boolean(manifest && nativeNetworkOverride(manifest.environment, import.meta.env.MODE) === "polkadot-mainnet");
   const publicClient = useMemo<PublicClient | null>(() => demoMode || !manifest || manifest.status !== "deployed" ? null : createPublicClient({ chain: genesisChain(manifest), transport: publicTransport(manifest) }), [manifest]);
-  const { session, walletReady, walletStatus, connectEvm, connectPolkadot, availablePolkadotWallets, openAccount, selectPolkadotAccount, switchToGenesisChain, disconnect, status } = useGenesisWallet(manifest, publicClient, nativeManifest);
+  const { session, sessionKey, walletReady, walletStatus, connectEvm, connectPolkadot, availablePolkadotWallets, openAccount, selectPolkadotAccount, switchToGenesisChain, disconnect, refreshWalletBalance, status } = useGenesisWallet(manifest, publicClient, nativeManifest);
   const account = session?.kind === "evm" ? session.address : null;
   const provider = session?.kind === "evm" ? session.provider : null;
   const correctChain = session?.kind === "evm" ? session.correctChain : true;
@@ -69,6 +72,11 @@ function App() {
   const [phase2MiniRefresh, setPhase2MiniRefresh] = useState(0);
   const [phase1Mini, setPhase1Mini] = useState<bigint | null>(null);
   const [phase1MiniStatus, setPhase1MiniStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [genesis1History, setGenesis1History] = useState<ContributionHistoryItem[]>([]);
+  const [genesis1HistoryStatus, setGenesis1HistoryStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [genesis2History, setGenesis2History] = useState<Genesis2PurchaseHistoryItem[]>([]);
+  const [genesis2HistoryStatus, setGenesis2HistoryStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [historyRefresh, setHistoryRefresh] = useState(0);
   const [phase2RefreshKey, setPhase2RefreshKey] = useState(0);
   const walletWrapRef = useRef<HTMLDivElement | null>(null);
   const languageWrapRef = useRef<HTMLDivElement | null>(null);
@@ -119,7 +127,7 @@ function App() {
     return () => { cancelled = true; };
   }, [genesisIdentity, productionClient, productionManifest, route, session]);
   useEffect(() => {
-    if (route !== "assets" || !session || !publicClient || !manifest) {
+    if ((route !== "assets" && route !== "phase2") || !session || !publicClient || !manifest) {
       setPhase2Mini(null);
       setPhase2MiniStatus("idle");
       return;
@@ -144,6 +152,63 @@ function App() {
     });
     return () => { cancelled = true; };
   }, [context, feedback.clearCode, feedback.presentError, genesisIdentity, manifest, phase2MiniRefresh, publicClient, route, session]);
+
+  useEffect(() => {
+    if (route !== "assets" || !session || !productionClient || !productionManifest) {
+      setGenesis1History([]);
+      setGenesis1HistoryStatus("idle");
+      return;
+    }
+    let cancelled = false;
+    setGenesis1HistoryStatus("loading");
+    void (async () => {
+      try {
+        const buyer = session.kind === "evm" ? session.address : (await resolveHistoryH160(session));
+        const finalized = await productionClient.getBlock({ blockTag: "finalized" });
+        const items = await readContributionHistory(productionClient, productionManifest, buyer, finalized.number);
+        if (!cancelled) { setGenesis1History(items); setGenesis1HistoryStatus("ready"); }
+      } catch {
+        if (!cancelled) { setGenesis1History([]); setGenesis1HistoryStatus("error"); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [historyRefresh, productionClient, productionManifest, route, session, sessionKey]);
+
+  useEffect(() => {
+    if (route !== "assets" || !session || !publicClient || !manifest) {
+      setGenesis2History([]);
+      setGenesis2HistoryStatus("idle");
+      return;
+    }
+    let cancelled = false;
+    setGenesis2HistoryStatus("loading");
+    void (async () => {
+      try {
+        const finalized = await publicClient.getBlock({ blockTag: "finalized" });
+        const items = await readGenesis2PurchaseHistoryForSession(publicClient, manifest, session, finalized.number);
+        if (!cancelled) { setGenesis2History(items); setGenesis2HistoryStatus("ready"); }
+      } catch {
+        if (!cancelled) { setGenesis2History([]); setGenesis2HistoryStatus("error"); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [historyRefresh, manifest, publicClient, route, session, sessionKey]);
+
+  const onReconcile = useCallback(async () => {
+    refreshGenesisII();
+    setHistoryRefresh((value) => value + 1);
+    setPhase2MiniStatus("loading");
+    const refreshUserMini = session && publicClient && manifest && genesisIdentity
+      ? readCurveUser(publicClient, manifest, genesisIdentity).then((value) => {
+          setPhase2Mini(value);
+          setPhase2MiniStatus("ready");
+        }).catch(() => {
+          setPhase2Mini(null);
+          setPhase2MiniStatus("error");
+        })
+      : Promise.resolve();
+    await Promise.allSettled([refreshUserMini, refreshWalletBalance()]);
+  }, [genesisIdentity, manifest, publicClient, refreshGenesisII, refreshWalletBalance, session]);
   useEffect(() => { const onPointerDown = (event: PointerEvent) => { if (walletMenu && walletWrapRef.current && !walletWrapRef.current.contains(event.target as Node)) setWalletMenu(false); if (languageMenu && languageWrapRef.current && !languageWrapRef.current.contains(event.target as Node)) setLanguageMenu(false); }; const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") { setWalletMenu(false); setPolkadotWalletMenu(false); setAccountMenu(false); setLanguageMenu(false); feedback.notifications.filter((item) => !item.persistent).forEach((item) => feedback.dismiss(item.dedupeKey)); } }; document.addEventListener("pointerdown", onPointerDown); document.addEventListener("keydown", onKeyDown); return () => { document.removeEventListener("pointerdown", onPointerDown); document.removeEventListener("keydown", onKeyDown); }; }, [feedback.dismiss, feedback.notifications, languageMenu, walletMenu]);
   const navigate = useCallback((nextRoute: AppRoute) => { setWalletMenu(false); const nextHash = hashForRoute(nextRoute); if (window.location.hash !== nextHash) window.location.hash = nextHash; else setRoute(nextRoute); }, []);
 
@@ -185,10 +250,11 @@ function App() {
   const activeStage: GenesisStageId = isGenesisRoute ? route : "phase2";
   const header = <header className="site-header"><nav className="nav"><a className="brand" href="#/genesis/ii" onClick={(event) => { event.preventDefault(); navigate("phase2"); }} aria-label="MINI Home"><span className="brand-mark" aria-hidden="true" /><span className="brand-word">MINI</span></a>{isGenesisRoute && <GenesisStageNavigation language={language} stage={activeStage} phase2Status={phase2HeaderStatus} onSelect={navigate} />}<div className="nav-actions"><div className="language-wrap" ref={languageWrapRef}><button className="language-button" type="button" aria-label={text.language} aria-haspopup="listbox" aria-expanded={languageMenu} onClick={() => setLanguageMenu((value) => !value)}>{icons.globe}{icons.chevron}</button>{languageMenu && <div className="wallet-menu language-menu open" role="listbox" aria-label={text.language}>{([["zh-CN", "中文"], ["en", "EN"]] as const).map(([value, label]) => <button key={value} type="button" role="option" aria-selected={language === value} className={language === value ? "selected" : ""} onClick={() => { setLanguage(value); setLanguageMenu(false); }}>{icons.globe}{label}{language === value && <span className="check">✓</span>}</button>)}</div>}</div><button className="utility-button" type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} aria-label="Switch appearance"><span className="utility-icon">{theme === "dark" ? "☀" : "☾"}</span></button><div className="wallet-wrap" ref={walletWrapRef}><button className="wallet-button" type="button" disabled={walletStatus === "restoring" || Boolean(runtimeSelection.error) || !manifest} onClick={() => setWalletMenu((value) => !value)}><span className="wallet-dot" hidden={!session} />{!session && icons.wallet}<span className="wallet-label">{walletLabel}</span>{session && icons.chevron}</button>{walletMenu && <div className="wallet-menu open">{!session && !polkadotWalletMenu && <><button type="button" onClick={() => { setWalletMenu(false); connectEvm(); }}>{icons.evm}{text.evmWallet}</button><button type="button" onClick={() => { if (!availablePolkadotWallets.length) { void connectPolkadot().catch((error) => feedback.presentError(error, context("connect-wallet"))); } else if (availablePolkadotWallets.length === 1) { void connectPolkadot(availablePolkadotWallets[0].extensionId).then(() => setWalletMenu(false)).catch((error) => feedback.presentError(error, context("connect-wallet"))); } else setPolkadotWalletMenu(true); }}>{icons.polkadot}{text.polkadotWallet}</button></>}{!session && polkadotWalletMenu && <><button type="button" onClick={() => setPolkadotWalletMenu(false)}>← {text.back}</button>{availablePolkadotWallets.map((wallet) => <button key={wallet.extensionId} type="button" onClick={() => void connectPolkadot(wallet.extensionId).then(() => { setWalletMenu(false); setPolkadotWalletMenu(false); }).catch((error) => feedback.presentError(error, context("connect-wallet")))}>{wallet.displayName}</button>)}</>}{session && !accountMenu && <><button type="button" onClick={() => navigate("assets")}>{icons.wallet}{text.myAssets}</button><button type="button" onClick={() => void copySelectedAddress()}>{icons.copy}{language === "zh-CN" ? "复制地址" : "Copy address"}</button><button type="button" onClick={() => { if (session.kind === "evm") { setWalletMenu(false); openAccount(); } else setAccountMenu(true); }}>{icons.switchAccount}{text.switchAccount}</button><button type="button" className="danger" onClick={disconnect}>{icons.disconnect}{text.disconnect}</button></>}{session?.kind === "polkadot" && accountMenu && <><button type="button" onClick={() => setAccountMenu(false)}>← {text.back}</button>{session.accounts.map((accountItem) => <button key={accountItem.address} type="button" className={accountItem.address === session.selectedAccountAddress ? "selected" : ""} onClick={() => { selectPolkadotAccount(accountItem.address); setWalletMenu(false); setAccountMenu(false); }}><span className="account-menu-name">{accountItem.name || (language === "zh-CN" ? "未命名账户" : "Unnamed account")}</span><span className="account-menu-address">{shortHash(accountItem.address)}</span></button>)}</>}</div>}</div></div></nav></header>;
   const miniAssetCard = <MyMini language={language} genesis1Holding={phase1Mini} genesis1Loading={phase1MiniStatus === "loading" || phase1MiniStatus === "idle"} genesis1Error={phase1MiniStatus === "error"} genesis2Holding={phase2Mini} genesis2Loading={phase2MiniStatus === "loading" || phase2MiniStatus === "idle"} genesis2Error={phase2MiniStatus === "error"} />;
-  const ecosystemAssetCard = <article className="asset-card unavailable-asset" data-testid="ecosystem-assets"><span className="label">{text.vmini}</span><div className="asset-value">—</div><div className="asset-note">{text.unavailableNote}</div><button className="claim-button" type="button" disabled>Claim</button></article>;
-  const assetsPage = <main className="assets-page"><div className="assets-heading"><span className="section-index">{text.account}</span><h1>{text.mine}</h1><p className="my-address">{shortHash(selectedSourceAddress)}</p></div>{!session && !demoMode ? <section className="assets-empty"><p>{text.assetsEmpty}</p><button className="submit-button" type="button" onClick={() => setWalletMenu(true)}>{text.connect}</button></section> : <div className="my-grid">{miniAssetCard}{ecosystemAssetCard}</div>}</main>;
+  const ecosystemAssetCard = <EcosystemAssets language={language} />;
+  const miniHistory = session && <MiniHistory language={language} genesis1={genesis1History} genesis1Status={genesis1HistoryStatus} genesis1ExplorerUrl={productionManifest?.source.explorerUrl} genesis1Symbol={productionManifest?.source.currencySymbol ?? "DOT"} genesis2={genesis2History} genesis2Status={genesis2HistoryStatus} genesis2ExplorerUrl={manifest?.source.explorerUrl} genesis2Symbol={manifest?.source.currencySymbol ?? "DOT"} />;
+  const assetsPage = <main className="assets-page"><div className="assets-heading"><span className="section-index">{text.account}</span><h1>{text.mine}</h1><p className="my-address">{shortHash(selectedSourceAddress)}</p></div>{!session && !demoMode ? <section className="assets-empty"><p>{text.assetsEmpty}</p><button className="submit-button" type="button" onClick={() => setWalletMenu(true)}>{text.connect}</button></section> : <><div className="my-grid">{miniAssetCard}{ecosystemAssetCard}</div>{miniHistory}</>}</main>;
   const configurationErrorPage = <main className="configuration-error-page" role="alert"><h1>{language === "zh-CN" ? "页面配置不匹配" : "Configuration mismatch"}</h1><p>{language === "zh-CN" ? "所选网络未包含在此页面的部署配置中。" : "The selected network is not included in this page deployment."}</p></main>;
-  const genesisStagesPage = isGenesisRoute ? <GenesisStages language={language} stage={activeStage} refreshKey={phase2RefreshKey} onPhase2StatusChange={setPhase2HeaderStatus} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onRefresh={refreshPhase2Mini} /> : null;
+  const genesisStagesPage = isGenesisRoute ? <GenesisStages language={language} stage={activeStage} refreshKey={phase2RefreshKey} onPhase2StatusChange={setPhase2HeaderStatus} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onReconcile={onReconcile} userMini={phase2Mini} userMiniLoading={phase2MiniStatus === "loading" || (phase2MiniStatus === "idle" && Boolean(session))} userMiniError={phase2MiniStatus === "error"} /> : null;
   const smokePage = NATIVE_SMOKE_ENABLED ? <NativeSignerSmoke manifest={manifest} session={session} availablePolkadotWallets={availablePolkadotWallets} connectPolkadot={connectPolkadot} /> : null;
   return <><NotificationCenter items={feedback.notifications} onDismiss={feedback.dismiss} onAction={handleFeedbackAction} />{header}<SystemBanner items={feedback.banners} onAction={handleFeedbackAction} />{runtimeSelection.error ? configurationErrorPage : route === "native-signer-smoke" ? smokePage : route === "assets" ? assetsPage : genesisStagesPage}</>;
 }

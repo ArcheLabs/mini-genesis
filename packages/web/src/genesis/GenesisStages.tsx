@@ -23,7 +23,10 @@ type Props = {
   correctChain: boolean;
   demoMode?: boolean;
   onConnect: () => void;
-  onRefresh: () => void;
+  onReconcile: () => Promise<void>;
+  userMini: bigint | null;
+  userMiniLoading: boolean;
+  userMiniError: boolean;
 };
 
 function phase2Snapshot(manifest: DeploymentManifest | null): GenesisCurveDynamic | null {
@@ -57,7 +60,7 @@ export function phase2Status(dynamic: GenesisCurveDynamic | null, manifest: Depl
   return "WAITING";
 }
 
-export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChange, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onRefresh }: Props) {
+export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChange, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onReconcile, userMini, userMiniLoading, userMiniError }: Props) {
   const [dynamic, setDynamic] = useState<GenesisCurveDynamic | null>(null);
   const [error, setError] = useState<string | null>(null);
   const snapshot = useMemo(() => phase2Snapshot(manifest), [manifest]);
@@ -89,7 +92,7 @@ export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChang
   return <main className="genesis-stages">
     {error && <p className="genesis-data-note" role="status">{error}</p>}
     {stage === "phase1" && <GenesisPhase1 language={language} workItems={manifest?.genesis?.phases.phase1.workItems ?? manifest?.genesis?.phases.phase1.achievements} />}
-    {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onRefresh={() => { onRefresh(); void refresh(); }} />}
+    {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onReconcile={async () => { await onReconcile(); await refresh(); }} userMini={userMini} userMiniLoading={userMiniLoading} userMiniError={userMiniError} />}
     {stage === "phase3" && <GenesisPhase3 language={language} />}
   </main>;
 }

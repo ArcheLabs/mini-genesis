@@ -11,9 +11,10 @@ describe("wallet-specific My Assets", () => {
     expect(nativeAssetSummary({ pendingMini: 12_480n * 10n ** 18n, contributedDot: 10n * 10n ** 18n })).toEqual({ pendingMini: 12_480n * 10n ** 18n, contributedDot: 10n * 10n ** 18n });
   });
 
-  it("never loads contribution history for Polkadot and retains it for EVM", () => {
-    expect(shouldLoadContributionHistory("polkadot")).toBe(false);
+  it("loads history for either connected wallet through its EVM identity", () => {
+    expect(shouldLoadContributionHistory("polkadot")).toBe(true);
     expect(shouldLoadContributionHistory("evm")).toBe(true);
+    expect(shouldLoadContributionHistory(null)).toBe(false);
   });
 
   it("keeps historical Genesis I and current Genesis II holdings separate from ecosystem assets", () => {
@@ -23,15 +24,17 @@ describe("wallet-specific My Assets", () => {
     expect(src).toContain("readGenesisUserState(productionClient, productionManifest, genesisIdentity)");
     expect(src).toContain("const miniAssetCard");
     expect(src).toContain("const ecosystemAssetCard");
-    expect(src).toContain('<button className="claim-button" type="button" disabled>Claim</button>');
+    expect(src).toContain("const ecosystemAssetCard = <EcosystemAssets");
+    expect(src).toContain("<MiniHistory");
+    expect(src).not.toContain("claim-button");
     expect(markup).toContain("Genesis I");
     expect(markup).toContain("Genesis II");
     expect(markup).toContain("12,480.00 MINI");
     expect(markup).toContain("282.78 MINI");
     expect(markup).not.toContain("Production historical");
     expect(markup).not.toContain("holder snapshot");
-    expect(markup).not.toContain("Total MINI");
+    expect(markup).toContain("12,762.78 MINI");
     expect(markup).not.toContain("ecosystem");
-    expect(src).not.toContain("history-card");
+    expect(src).toContain("readGenesis2PurchaseHistoryForSession");
   });
 });

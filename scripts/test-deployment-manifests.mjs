@@ -37,6 +37,20 @@ for (const environment of ["staging", "production"]) {
 }
 
 {
+  const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
+  validateManifest(staging, "staging");
+  const tasks = staging.genesis.phases.phase2.workItems[0].tasks;
+  assert.equal(tasks.some((task) => task.status === "discontinued"), true);
+  assert.throws(() => validateManifest({
+    ...staging,
+    genesis: { ...staging.genesis, phases: { ...staging.genesis.phases, phase2: {
+      ...staging.genesis.phases.phase2,
+      workItems: [{ ...staging.genesis.phases.phase2.workItems[0], tasks: [{ ...tasks[0], status: "investigated" }] }],
+    } } },
+  }, "staging"), /INVALID_.*_TASK/);
+}
+
+{
   const local = JSON.parse(await readFile("deployments/local.json", "utf8"));
   if (local.status === "deployed") {
     assert.throws(

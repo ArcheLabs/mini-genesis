@@ -1,3 +1,6 @@
+import { SectionHeading } from "../components/SectionHeading";
+import { ShieldCheckIcon } from "../components/SectionIcons";
+
 type Props = { language: "zh-CN" | "en" };
 
 const rules = {
@@ -15,7 +18,7 @@ const rules = {
 
 export function GenesisRules({ language }: Props) {
   return <section className="genesis-rules" aria-labelledby="genesis-rules-heading">
-    <h2 id="genesis-rules-heading">{language === "zh-CN" ? "规则" : "Rules"}</h2>
+    <SectionHeading id="genesis-rules-heading" icon={<ShieldCheckIcon />}>{language === "zh-CN" ? "规则" : "Rules"}</SectionHeading>
     <ul>{rules[language].map((rule) => <li key={rule}>{rule}</li>)}</ul>
   </section>;
 }

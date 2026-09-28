@@ -18,7 +18,7 @@ export type GenesisLocalizedText = { "zh-CN": string; en: string };
 export type GenesisExecutionTask = {
   id: string;
   name: string | GenesisLocalizedText;
-  status: "delivered" | "active" | "planned";
+  status: "delivered" | "active" | "planned" | "discontinued";
 };
 export type GenesisWorkItem = {
   id: string;

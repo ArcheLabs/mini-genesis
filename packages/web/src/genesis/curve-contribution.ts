@@ -4,7 +4,19 @@ import { curveAbi } from "./curve-abi.generated";
 import { normalizePurchaseError } from "./purchase-error";
 
 export type CurvePurchaseUpdate = { state: "simulating" | "awaiting_signature" | "submitted" | "included" | "failed"; hash?: Hash; error?: string };
-export type CurvePurchaseResult = { hash: Hash; blockNumber: bigint; miniAmount: bigint; dotCost: bigint };
+export type CurvePurchaseResult = { hash: Hash; blockNumber: bigint; miniAmount: bigint; dotCost: bigint; finalized: boolean };
+
+export async function waitForTransactionFinality(client: PublicClient, blockNumber: bigint, timeoutMs = 60_000): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const finalized = await client.getBlock({ blockTag: "finalized" });
+      if (finalized.number !== null && finalized.number >= blockNumber) return true;
+    } catch { /* Keep checking while the finalized endpoint catches up. */ }
+    await new Promise((resolve) => setTimeout(resolve, 1_500));
+  }
+  return false;
+}
 
 export async function buyExactMini(
   client: PublicClient,
@@ -34,7 +46,8 @@ export async function buyExactMini(
     }
     if (dotCost === null) throw new Error("PURCHASED_EVENT_MISMATCH");
     onUpdate({ state: "included", hash });
-    return { hash, blockNumber: receipt.blockNumber, miniAmount, dotCost };
+    const finalized = await waitForTransactionFinality(client, receipt.blockNumber);
+    return { hash, blockNumber: receipt.blockNumber, miniAmount, dotCost, finalized };
   } catch (error) {
     const code = normalizePurchaseError(error);
     onUpdate({ state: "failed", error: code });
