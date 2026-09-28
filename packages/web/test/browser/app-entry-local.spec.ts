@@ -59,6 +59,13 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await expect(page.locator('[data-testid="phase2-holder-count"]')).toHaveText("0");
   await expect(page.locator('[data-testid="phase2-time-remaining"]')).not.toHaveText("—");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator(".curve-title-row h2")).toHaveCSS("font-weight", "500");
+  const titleAlignment = await page.locator(".purchase-panel .section-heading").evaluate((heading) => {
+    const icon = heading.querySelector(".section-heading-icon")!.getBoundingClientRect();
+    const text = heading.querySelector(".section-heading-copy")!.getBoundingClientRect();
+    return icon.right <= text.left;
+  });
+  expect(titleAlignment).toBe(true);
   const lightBackground = await page.locator("html").evaluate((element) => getComputedStyle(element).getPropertyValue("--bg").trim());
   await page.getByRole("button", { name: "Switch appearance" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -76,16 +83,18 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await expect(page.locator(".reserve-banner")).toHaveCount(0);
   await expect(page.getByText("DOT raised", { exact: true })).toHaveCount(0);
   await expect(page.getByText("MINI distributed", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("MINI remaining", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("MINI sold", { exact: true })).toBeVisible();
+  await expect(page.getByText("Raised", { exact: true })).toBeVisible();
+  await expect(page.getByText("MINI remaining", { exact: true })).toBeVisible();
 
   const curve = page.locator('[data-testid="bonding-curve-interaction"]');
   await expect(page.locator('[data-testid="curve-current-point"]')).toBeVisible();
-  await expect(page.getByLabel("DOT budget")).toHaveValue("1.00");
+  await expect(page.getByLabel("MINI budget")).toHaveValue("1.00");
   await expect(page.getByTestId("phase2-mini-quote")).toContainText("MINI");
   await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
-  await page.getByRole("button", { name: "20 DOT", exact: true }).click();
-  await expect(page.getByLabel("DOT budget")).toHaveValue("20");
-  await expect(page.getByRole("button", { name: "1 DOT", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "20 MINI", exact: true }).click();
+  await expect(page.getByLabel("MINI budget")).toHaveValue("20");
+  await expect(page.getByRole("button", { name: "1 MINI", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
 
   const curveBox = await curve.boundingBox();
@@ -105,7 +114,7 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await page.mouse.move(center.x, center.y);
   await expect(page.getByTestId("curve-tooltip")).toContainText("50.00%");
   await expect(page.getByTestId("curve-tooltip")).toContainText("1,000,000 MINI");
-  await expect(page.getByTestId("curve-tooltip")).toContainText("0.004500 DOT / MINI");
+  await expect(page.getByTestId("curve-tooltip")).toContainText("0.004500 MINI / MINI");
 
   await expect(page.locator(".genesis-data-note")).toHaveCount(0);
   await expect.poll(() => readAddresses.length).toBeGreaterThanOrEqual(10);
@@ -114,6 +123,14 @@ test("Genesis stages route from the URL and the first viewport centers the live 
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.locator(".phase2-work-items").scrollIntoViewIfNeeded();
+  const taskOverflow390 = await page.locator(".work-item-tasks li").evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
+  expect(taskOverflow390).toBe(false);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   const mobileCurve = await curve.boundingBox();
   const mobilePurchase = await page.locator(".purchase-panel").boundingBox();
   expect(mobileCurve && mobilePurchase && mobilePurchase.x === mobileCurve.x && mobilePurchase.y > mobileCurve.y).toBe(true);
@@ -122,8 +139,14 @@ test("Genesis stages route from the URL and the first viewport centers the live 
 
   await page.setViewportSize({ width: 430, height: 932 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
+  const taskOverflow430 = await page.locator(".work-item-tasks li").evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
+  expect(taskOverflow430).toBe(false);
   await expect(page.locator('[data-testid="stage-nav-phase2"]')).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
 
   await page.goto("/?network=local#/genesis/i");
   await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
@@ -137,7 +160,13 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await page.goto("/?network=local#/genesis/iii");
   await expect(page.getByRole("heading", { name: "Genesis III" })).toBeVisible();
   await expect(page.getByText("Liquidity Accumulation", { exact: true })).toBeVisible();
-  await expect(page.locator('[data-testid="genesis-phase3"]')).not.toContainText("LOCKED");
+  await expect(page.locator('[data-testid="genesis-phase3"]')).toHaveAttribute("data-phase-state", "locked");
+  await expect(page.locator('[data-testid="genesis-phase3"] button, [data-testid="genesis-phase3"] a')).toHaveCount(0);
+  const phase3Copy = await page.locator(".phase3-copy").boundingBox();
+  expect(phase3Copy?.width).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
 
   await page.goto("/?network=local#/rules");
   await expect(page).toHaveURL(/\?network=local#\/genesis\/ii$/);

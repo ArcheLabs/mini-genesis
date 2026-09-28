@@ -8,6 +8,7 @@ import { GenesisStageNavigation } from "../src/genesis/GenesisStageNavigation";
 import { GenesisWorkItems } from "../src/genesis/GenesisWorkItems";
 import { BondingCurveChart } from "../src/genesis/BondingCurveChart";
 import { MyMini } from "../src/assets/MyMini";
+import { EcosystemAssets } from "../src/assets/EcosystemAssets";
 import { genesisPhase2WorkItems } from "../src/genesis/work-items";
 import { phase2Status } from "../src/genesis/GenesisStages";
 
@@ -32,7 +33,7 @@ describe("Genesis product closure", () => {
     const markup = renderToStaticMarkup(createElement(GenesisPhase1, { language: "en" }));
     expect(markup).toContain("Closing basis");
     expect(markup).toContain("0.00008946 DOT / MINI");
-    expect(markup).toContain("Delivered");
+    expect(markup).toContain("Completed");
     expect(markup).toContain("MiniJAM");
     expect(markup).toContain("sr-only");
     expect(markup).not.toContain("Genesis I is complete");
@@ -52,16 +53,23 @@ describe("Genesis product closure", () => {
     expect(chinese).toContain("计划中");
   });
 
-  it("supports nested tasks without fabricating any in repository workstreams", () => {
+  it("renders compact nested status icons for all four task states", () => {
     const item = { ...genesisPhase2WorkItems[0], tasks: [
       { id: "compiler", name: "Compiler", status: "delivered" as const },
       { id: "runtime", name: { en: "Runtime integration", "zh-CN": "运行时集成" }, status: "active" as const },
+      { id: "sdk", name: "Developer SDK", status: "planned" as const },
+      { id: "legacy", name: "Legacy experimental path", status: "discontinued" as const },
     ] };
     const markup = renderToStaticMarkup(createElement(GenesisWorkItems, { language: "en", mode: "phase2-funds", workItems: [item] }));
     expect(markup).toContain("Compiler");
     expect(markup).toContain("Runtime integration");
-    expect(markup.match(/class="status-badge /g)).toHaveLength(3);
-    expect(genesisPhase2WorkItems.every((workItem) => !workItem.tasks?.length)).toBe(true);
+    expect(markup).toContain("Completed");
+    expect(markup).toContain("In progress");
+    expect(markup).toContain("Planned");
+    expect(markup).toContain("Cancelled");
+    expect(markup.match(/class="status-badge /g)).toHaveLength(1);
+    expect(markup).toContain("work-item-task-status-discontinued");
+    expect(genesisPhase2WorkItems.some((workItem) => workItem.tasks?.length)).toBe(true);
   });
 
   it("puts route links and localized statuses in the global stage navigation", () => {
@@ -77,10 +85,11 @@ describe("Genesis product closure", () => {
     expect(markup).not.toContain("Rules");
 
     const completed = renderToStaticMarkup(createElement(GenesisStageNavigation, { language: "en", stage: "phase2", phase2Status: "COMPLETED", onSelect: () => {} }));
-    expect(completed).toContain("Delivered");
+    expect(completed).toContain("Completed");
+    expect(completed).toContain("status-badge-historical");
   });
 
-  it("derives live phase status while Genesis III remains minimal", () => {
+  it("derives live phase status while Genesis III remains locked and non-interactive", () => {
     expect(phase2Status(dynamic("Waiting"), null, false)).toBe("WAITING");
     expect(phase2Status(dynamic("Active"), null, false)).toBe("LIVE");
     expect(phase2Status(dynamic("Ended", 1n), null, false)).toBe("COMPLETED");
@@ -88,14 +97,20 @@ describe("Genesis product closure", () => {
     const locked = renderToStaticMarkup(createElement(GenesisPhase3, { language: "en" }));
     expect(locked).toContain("Liquidity Accumulation");
     expect(locked).toContain("<h1>Genesis III</h1>");
-    expect(locked).not.toContain("LOCKED");
+    expect(locked).toContain("Not yet open");
+    expect(locked).toContain('data-phase-state="locked"');
+    expect(locked).not.toContain("<button");
+    expect(locked).not.toContain("<a ");
     expect(locked.match(/Genesis III/g)).toHaveLength(1);
   });
 
   it("keeps only the current acquisition basis, holders, time, curve, purchase, rules, and execution", () => {
-    const markup = renderToStaticMarkup(createElement(GenesisPhase2, { language: "en", manifest: null, publicClient: null, session: null, provider: null, walletReady: false, correctChain: false, dynamic: dynamic("Active", 500_000n * 10n ** 18n), demoMode: false, onConnect: () => {}, onRefresh: () => {} }));
+    const markup = renderToStaticMarkup(createElement(GenesisPhase2, { language: "en", manifest: null, publicClient: null, session: null, provider: null, walletReady: false, correctChain: false, dynamic: dynamic("Active", 500_000n * 10n ** 18n), demoMode: false, onConnect: () => {}, onReconcile: async () => {}, userMini: 0n, userMiniLoading: false, userMiniError: false }));
     expect(markup).toContain("Current acquisition basis");
     expect(markup).toContain("Holders");
+    expect(markup).toContain("MINI sold");
+    expect(markup).toContain("Raised");
+    expect(markup).toContain("MINI remaining");
     expect(markup).toContain("Remaining");
     expect(markup).toContain("Starting acquisition basis");
     expect(markup).toContain("Maximum acquisition basis");
@@ -109,7 +124,7 @@ describe("Genesis product closure", () => {
     for (const obsolete of ["Current price", "Maximum price", "Estimated cost", "After buy", "Price after purchase", "Early Operations Reserve", "COMPLETED", "LIVE"]) {
       expect(markup).not.toContain(obsolete);
     }
-    for (const oldStat of ["DOT raised", "MINI distributed", "MINI remaining", "participant addresses"]) expect(markup).not.toContain(oldStat);
+    for (const oldStat of ["participant addresses"]) expect(markup).not.toContain(oldStat);
   });
 
   it("exposes exact current position and native range labels to the curve chart", () => {
@@ -134,11 +149,35 @@ describe("Genesis product closure", () => {
     expect(local).toContain("Genesis II");
     expect(local).toContain("12,000.00 MINI");
     expect(local).toContain("282.78 MINI");
+    expect(local).toContain("12,282.78 MINI");
     expect(local).not.toContain("本地");
     expect(local).not.toContain("Local");
     expect(local).not.toContain("Production historical");
     expect(local).not.toContain("snapshot");
-    expect(local).not.toContain("Total MINI");
+    expect(local).toContain("Total");
     expect(local).not.toContain("ecosystem");
+  });
+
+  it("does not present a partial MINI sum while one chain is loading or unavailable", () => {
+    const partial = renderToStaticMarkup(createElement(MyMini, { language: "en", genesis1Holding: 100n * 10n ** 18n, genesis1Loading: false, genesis1Error: false, genesis2Holding: null, genesis2Loading: true, genesis2Error: false }));
+    expect(partial).toContain('data-testid="my-mini-total"><strong>Loading…</strong>');
+    expect(partial).toContain('data-testid="my-mini-genesis1"><span>Genesis I</span><strong>100.00 MINI</strong>');
+    const unavailable = renderToStaticMarkup(createElement(MyMini, { language: "en", genesis1Holding: 100n * 10n ** 18n, genesis1Loading: false, genesis1Error: false, genesis2Holding: null, genesis2Loading: false, genesis2Error: true }));
+    expect(unavailable).toContain('data-testid="my-mini-total"><strong>—</strong>');
+    expect(unavailable).toContain('data-testid="my-mini-genesis1"><span>Genesis I</span><strong>100.00 MINI</strong>');
+  });
+
+  it("uses shared compact headings for My MINI and ecosystem assets", () => {
+    const myMini = renderToStaticMarkup(createElement(MyMini, { language: "zh-CN", genesis1Holding: null, genesis1Loading: true, genesis1Error: false, genesis2Holding: null, genesis2Loading: true, genesis2Error: false }));
+    const ecosystem = renderToStaticMarkup(createElement(EcosystemAssets, { language: "zh-CN" }));
+    expect(myMini).toContain("section-heading-compact");
+    expect(myMini).toContain("我的 MINI");
+    expect(ecosystem).toContain("section-heading-compact");
+    expect(ecosystem).toContain("MINI 生态资产");
+    expect(ecosystem).toContain('role="img"');
+    expect(ecosystem).toContain('aria-label="尚未启用"');
+    expect(ecosystem).toContain("将在后续阶段开放");
+    expect(ecosystem).not.toContain("Claim");
+    expect(ecosystem).not.toContain("—");
   });
 });
