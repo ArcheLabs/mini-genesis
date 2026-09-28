@@ -183,7 +183,7 @@ jobs:
         env:
           VITE_DEPLOYMENT_ENV: staging
           VITE_DEMO_MODE: "false"
-        run: pnpm --dir packages/web build --base=/mini-genesis/ --emptyOutDir
+        run: pnpm --dir packages/web build --base=./ --emptyOutDir
 
       - name: Add no-Jekyll marker
         run: touch packages/web/dist/.nojekyll
@@ -209,10 +209,8 @@ jobs:
           assert.ok(localRefs.some((value) => value.endsWith(".js")), "JavaScript bundle reference is missing");
           assert.ok(localRefs.some((value) => value.endsWith(".css")), "CSS bundle reference is missing");
           for (const value of localRefs) {
-            if (value.startsWith("/")) assert.ok(value.startsWith("/mini-genesis/"), `root-relative asset is outside the Pages base path: ${value}`);
-            const assetPath = value.startsWith("/mini-genesis/")
-              ? resolve(dist, value.slice("/mini-genesis/".length))
-              : resolve(dist, value);
+            assert.ok(!value.startsWith("/"), `asset path must be relative so it works on both the custom domain root and the GitHub Pages project path: ${value}`);
+            const assetPath = resolve(dist, value);
             assert.ok(existsSync(assetPath), `referenced asset is missing: ${value}`);
           }
 
