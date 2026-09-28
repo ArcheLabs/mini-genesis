@@ -1,7 +1,7 @@
 import type { GenesisUser } from "./reads";
 
 export function shouldLoadContributionHistory(walletKind: "evm" | "polkadot" | null): boolean {
-  return walletKind === "evm";
+  return walletKind !== null;
 }
 
 export function nativeAssetSummary(user: GenesisUser | null): { pendingMini: bigint | null; contributedDot: bigint | null } {
