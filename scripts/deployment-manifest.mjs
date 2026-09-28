@@ -136,12 +136,20 @@ function validateWorkItems(items, name) {
   if (items === undefined) return;
   if (!Array.isArray(items)) throw new Error(`INVALID_${name}`);
   const statuses = new Set(["planned", "active", "delivered", "investigated", "discontinued"]);
+  const taskStatuses = new Set(["planned", "active", "delivered", "discontinued"]);
   for (const item of items) {
     if (!item || typeof item.id !== "string" || !item.id || typeof item.name !== "string" || !item.name || !statuses.has(item.status)) {
       throw new Error(`INVALID_${name}`);
     }
     if (typeof item.summary !== "string" && (!item.summary || typeof item.summary.en !== "string" || typeof item.summary["zh-CN"] !== "string")) {
       throw new Error(`INVALID_${name}`);
+    }
+    if (item.tasks !== undefined) {
+      if (!Array.isArray(item.tasks)) throw new Error(`INVALID_${name}_TASKS`);
+      for (const task of item.tasks) {
+        const validName = typeof task?.name === "string" || (task?.name && typeof task.name.en === "string" && typeof task.name["zh-CN"] === "string");
+        if (!task || typeof task.id !== "string" || !task.id || !validName || !taskStatuses.has(task.status)) throw new Error(`INVALID_${name}_TASK`);
+      }
     }
   }
 }

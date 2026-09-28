@@ -57,7 +57,25 @@
             "summary": {
               "en": "MiniJAM Stage-1 infrastructure and client generation delivered.",
               "zh-CN": "MiniJAM Stage-1 基础设施与客户端生成已交付。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "service-runtime",
+                "name": {
+                  "en": "Service runtime",
+                  "zh-CN": "服务运行时"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "client-generation",
+                "name": {
+                  "en": "Client generation",
+                  "zh-CN": "客户端生成"
+                },
+                "status": "delivered"
+              }
+            ]
           },
           {
             "id": "jamscript",
@@ -66,7 +84,25 @@
             "summary": {
               "en": "Language, toolchain, runtime integration, deployment flow, and backend delivered.",
               "zh-CN": "语言、工具链、运行时集成、部署流程与后端已形成并交付。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "language-runtime",
+                "name": {
+                  "en": "Language and runtime",
+                  "zh-CN": "语言与运行时"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "deployment-flow",
+                "name": {
+                  "en": "Build and deployment flow",
+                  "zh-CN": "构建与部署流程"
+                },
+                "status": "delivered"
+              }
+            ]
           },
           {
             "id": "jam-computer",
@@ -75,7 +111,25 @@
             "summary": {
               "en": "A user-facing JAM Computer application and product outcome delivered.",
               "zh-CN": "面向用户的 JAM Computer 应用与产品成果已交付。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "application",
+                "name": {
+                  "en": "JAM Computer application",
+                  "zh-CN": "JAM Computer 应用"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "public-demo",
+                "name": {
+                  "en": "Public product experience",
+                  "zh-CN": "公开产品体验"
+                },
+                "status": "delivered"
+              }
+            ]
           },
           {
             "id": "minicells",
@@ -84,7 +138,25 @@
             "summary": {
               "en": "Continuous-learning research system, experimental model architecture, and reproducible MiniCells research tooling delivered.",
               "zh-CN": "持续学习研究系统、实验性模型架构与可复现的 MiniCells 研究工具已形成。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "research-system",
+                "name": {
+                  "en": "Research system",
+                  "zh-CN": "研究系统"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "research-tooling",
+                "name": {
+                  "en": "Reproducible research tooling",
+                  "zh-CN": "可复现研究工具"
+                },
+                "status": "delivered"
+              }
+            ]
           }
         ],
         "researchHistory": [
@@ -119,7 +191,41 @@
             "summary": {
               "en": "Move JamScript toward a usable MiniJAM/JAM application-development ecosystem.",
               "zh-CN": "推动 JamScript 走向可用的 MiniJAM/JAM 应用开发生态。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "language-runtime",
+                "name": {
+                  "en": "Language and runtime",
+                  "zh-CN": "语言与运行时"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "ownership-primitives",
+                "name": {
+                  "en": "Ownership primitives",
+                  "zh-CN": "所有权原语"
+                },
+                "status": "active"
+              },
+              {
+                "id": "developer-sdk",
+                "name": {
+                  "en": "Developer SDK",
+                  "zh-CN": "开发者 SDK"
+                },
+                "status": "planned"
+              },
+              {
+                "id": "legacy-experiment",
+                "name": {
+                  "en": "Legacy experimental path",
+                  "zh-CN": "早期实验方向"
+                },
+                "status": "discontinued"
+              }
+            ]
           },
           {
             "id": "minicells",
@@ -128,7 +234,33 @@
             "summary": {
               "en": "Advance reproducible continuous-learning research toward a network-usable AI service architecture.",
               "zh-CN": "推动可复现的持续学习研究走向可在网络中使用的 AI 服务架构。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "research-baseline",
+                "name": {
+                  "en": "Research baseline",
+                  "zh-CN": "研究基线"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "service-architecture",
+                "name": {
+                  "en": "AI service architecture",
+                  "zh-CN": "AI 服务架构"
+                },
+                "status": "active"
+              },
+              {
+                "id": "network-integration",
+                "name": {
+                  "en": "Network integration",
+                  "zh-CN": "网络集成"
+                },
+                "status": "planned"
+              }
+            ]
           },
           {
             "id": "minijam",
@@ -137,7 +269,33 @@
             "summary": {
               "en": "Advance Stage-1 infrastructure toward a public-resource execution network.",
               "zh-CN": "推动 Stage-1 基础设施，建设公共资源执行网络。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "service-model",
+                "name": {
+                  "en": "JAM service model",
+                  "zh-CN": "JAM 服务模型"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "shared-resources",
+                "name": {
+                  "en": "Shared public resources",
+                  "zh-CN": "共享公共资源"
+                },
+                "status": "active"
+              },
+              {
+                "id": "execution-network",
+                "name": {
+                  "en": "Execution network",
+                  "zh-CN": "执行网络"
+                },
+                "status": "planned"
+              }
+            ]
           },
           {
             "id": "locus-ownership",
@@ -146,7 +304,25 @@
             "summary": {
               "en": "Develop wallet-agnostic ownership and asset interaction primitives.",
               "zh-CN": "开发钱包无关的所有权和资产交互原语。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "identity-mapping",
+                "name": {
+                  "en": "Cross-wallet identity mapping",
+                  "zh-CN": "跨钱包身份映射"
+                },
+                "status": "active"
+              },
+              {
+                "id": "shared-asset-model",
+                "name": {
+                  "en": "Shared asset model",
+                  "zh-CN": "统一资产模型"
+                },
+                "status": "planned"
+              }
+            ]
           },
           {
             "id": "mini-utility",
@@ -155,7 +331,25 @@
             "summary": {
               "en": "Make MINI the protocol settlement asset for application and public-resource usage.",
               "zh-CN": "使 MINI 成为应用与公共资源使用的协议结算资产。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "service-payments",
+                "name": {
+                  "en": "Service payments",
+                  "zh-CN": "服务支付"
+                },
+                "status": "planned"
+              },
+              {
+                "id": "network-settlement",
+                "name": {
+                  "en": "Network settlement",
+                  "zh-CN": "网络结算"
+                },
+                "status": "planned"
+              }
+            ]
           },
           {
             "id": "developer-ecosystem",
@@ -164,7 +358,33 @@
             "summary": {
               "en": "Improve documentation, SDKs, tooling, infrastructure, and third-party application development.",
               "zh-CN": "改进文档、SDK、工具链、基础设施和第三方应用开发路径。"
-            }
+            },
+            "tasks": [
+              {
+                "id": "documentation-examples",
+                "name": {
+                  "en": "Documentation and examples",
+                  "zh-CN": "文档与示例"
+                },
+                "status": "delivered"
+              },
+              {
+                "id": "developer-sdk",
+                "name": {
+                  "en": "Developer SDK",
+                  "zh-CN": "开发者 SDK"
+                },
+                "status": "active"
+              },
+              {
+                "id": "third-party-apps",
+                "name": {
+                  "en": "Third-party applications",
+                  "zh-CN": "第三方应用"
+                },
+                "status": "planned"
+              }
+            ]
           }
         ]
       },
