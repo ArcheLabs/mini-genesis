@@ -155,6 +155,8 @@ describe("Genesis product closure", () => {
 
   it("keeps the current basis, holders, time, curve, purchase, rules, and execution without redundant stats", () => {
     const markup = renderToStaticMarkup(createElement(GenesisPhase2, { language: "en", manifest: null, publicClient: null, session: null, provider: null, walletReady: false, correctChain: false, dynamic: dynamic("Active", 500_000n * 10n ** 18n), demoMode: false, onConnect: () => {}, onReconcile: async () => {} }));
+    expect(markup.indexOf('class="curve-section"')).toBeLessThan(markup.indexOf('class="phase2-facts"'));
+    expect(markup.indexOf('class="phase2-facts"')).toBeLessThan(markup.indexOf('class="curve-purchase'));
     expect(markup).toContain("Current acquisition basis");
     expect(markup).toContain("Holders");
     expect(markup).toContain("MINI remaining");
