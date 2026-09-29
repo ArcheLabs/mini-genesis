@@ -112,8 +112,10 @@
 .mini-total.is-loading>strong{color:var(--muted);font-size:19px;letter-spacing:0}
 .mini-holding-row{min-width:0}
 .mini-holding-row>strong{min-width:0;overflow-wrap:anywhere}
+.ecosystem-asset{display:flex;flex-direction:column}
 .ecosystem-placeholder{margin:22px 0 6px;background:linear-gradient(135deg,var(--text),var(--muted));-webkit-background-clip:text;background-clip:text;color:transparent;font:700 clamp(28px,3.4vw,34px)/1.15 var(--font-mono);letter-spacing:-.05em;white-space:nowrap}
 .ecosystem-asset .asset-note{margin:0}
+.ecosystem-asset .claim-button{margin-top:auto}
 .mini-history{margin-top:24px}
 .history-group+.history-group{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
 .history-group>h3{margin:0 0 6px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.025em}
