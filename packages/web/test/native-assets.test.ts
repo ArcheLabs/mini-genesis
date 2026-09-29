@@ -31,10 +31,10 @@ describe("wallet-specific My Assets", () => {
     expect(markup).toContain("Genesis II");
     expect(markup).toContain("12,480.00 MINI");
     expect(markup).toContain("282.78 MINI");
+    expect(markup).toContain('data-testid="my-mini-total"><strong>12,762.78 MINI</strong></div>');
+    expect(markup).not.toContain(">Total<");
     expect(markup).not.toContain("Production historical");
     expect(markup).not.toContain("holder snapshot");
-    expect(markup).not.toContain("my-mini-total");
-    expect(markup).not.toContain("12,762.78 MINI");
     expect(markup).not.toContain("ecosystem");
     expect(src).toContain("readGenesis2PurchaseHistoryForSession");
   });
