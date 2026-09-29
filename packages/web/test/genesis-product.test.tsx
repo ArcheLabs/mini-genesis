@@ -29,16 +29,59 @@ const dynamic = (phaseName: "Waiting" | "Active" | "Ended", sold = 0n) => ({
 });
 
 describe("Genesis product closure", () => {
-  it("renders Genesis I as concise historical facts with a closing basis", () => {
+  it("renders the complete Genesis I editorial copy with a closing basis", () => {
     const markup = renderToStaticMarkup(createElement(GenesisPhase1, { language: "en" }));
     expect(markup).toContain("Closing basis");
     expect(markup).toContain("0.00008946 DOT / MINI");
     expect(markup).toContain("Completed");
     expect(markup).toContain("MiniJAM");
+    expect(markup).toContain("Ownership Abstraction");
+    expect(markup).toContain("Lucos");
+    expect(markup).toContain("ZkJAM");
+    expect(markup).toContain("Stage-1 Network");
+    expect(markup).toContain("Node Infrastructure");
+    expect(markup).toContain("Backend");
+    expect(markup).toContain("Hybrid CLM");
+    expect(markup).toContain("Route Termination");
+    expect(markup.match(/data-testid="genesis-work-item-/g)).toHaveLength(7);
     expect(markup).toContain("sr-only");
     expect(markup).not.toContain("Genesis I is complete");
     expect(markup).not.toContain("Final reference price");
-    expect(markup).not.toContain("ZkJAM");
+  });
+
+  it("renders the supplied Genesis I Chinese copy while preserving manifest status metadata", () => {
+    const markup = renderToStaticMarkup(createElement(GenesisPhase1, {
+      language: "zh-CN",
+      workItems: [
+        { id: "minijam", name: "MiniJAM", status: "active", summary: { en: "old manifest text", "zh-CN": "旧 manifest 文案" } },
+      ],
+      researchHistory: [
+        { id: "zkjam", name: "ZkJAM", status: "discontinued", summary: { en: "old research copy", "zh-CN": "旧研究文案" } },
+      ],
+    }));
+    expect(markup).toContain("建立第一代 MiniJAM 网络，为 JAM Service 提供从部署、执行到状态演化的完整环境。");
+    expect(markup).toContain("节点基础设施");
+    expect(markup).toContain("MiniJAM Client");
+    expect(markup).toContain("JamScript 到 JAM/PVM 可执行 Service 的构建流程");
+    expect(markup).toContain("延迟发布");
+    expect(markup).toContain("外部身份接入");
+    expect(markup).toContain("钱包解耦");
+    expect(markup).toContain("Lucos");
+    expect(markup).toContain("资产状态模型");
+    expect(markup).toContain("混合 CLM");
+    expect(markup).toContain("MiniCells 的状态与隐私");
+    expect(markup).toContain("相关研究结论作为 Genesis I 的研发成果保留");
+    expect(markup).toContain('class="work-item work-item-active" data-testid="genesis-work-item-minijam"');
+    expect(markup).toContain('class="work-item work-item-discontinued" data-testid="genesis-work-item-zkjam"');
+    expect(markup).not.toContain("旧 manifest 文案");
+    expect(markup).not.toContain("旧研究文案");
+  });
+
+  it("renders task titles and task descriptions as separate hierarchy levels", () => {
+    const markup = renderToStaticMarkup(createElement(GenesisPhase1, { language: "en" }));
+    expect(markup).toContain('<span class="work-item-task-copy"><strong class="work-item-task-title">Stage-1 Network</strong><span class="work-item-task-summary">Complete the first-generation MiniJAM network');
+    expect(markup).toContain('<strong class="work-item-task-title">Compiler Toolchain</strong>');
+    expect(markup).toContain('<span class="work-item-task-summary">Complete the build flow from JamScript');
   });
 
   it("renders six full-width Phase II workstreams with reusable status badges", () => {

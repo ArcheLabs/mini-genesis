@@ -88,7 +88,7 @@ export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChang
 
   return <main className="genesis-stages">
     {error && <p className="genesis-data-note" role="status">{error}</p>}
-    {stage === "phase1" && <GenesisPhase1 language={language} workItems={manifest?.genesis?.phases.phase1.workItems ?? manifest?.genesis?.phases.phase1.achievements} />}
+    {stage === "phase1" && <GenesisPhase1 language={language} workItems={manifest?.genesis?.phases.phase1.workItems ?? manifest?.genesis?.phases.phase1.achievements} researchHistory={manifest?.genesis?.phases.phase1.researchHistory} />}
     {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onReconcile={async () => { await onReconcile(); await refresh(); }} />}
     {stage === "phase3" && <GenesisPhase3 language={language} />}
   </main>;
