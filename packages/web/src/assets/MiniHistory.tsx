@@ -32,17 +32,6 @@ export function MiniHistory({ language, genesis1, genesis1Status, genesis1Explor
   const genesis2Message = stateText(genesis2Status, genesis2.length > 0);
   return <section className="asset-card mini-history" data-testid="mini-history">
     <SectionHeading size="compact" icon={<ListChecksIcon />}>{zh ? "历史记录" : "History"}</SectionHeading>
-    <div className="history-group" data-testid="genesis1-history">
-      <h3>Genesis I</h3>
-      {genesis1Message && <p className="history-empty">{genesis1Message}</p>}
-      {genesis1Status === "ready" && genesis1.map((item) => {
-        const url = transactionUrl(genesis1ExplorerUrl, item.transactionHash);
-        return <article className="history-row" key={`${item.transactionHash}-${item.logIndex}`}>
-          <div className="history-row-copy"><strong>{zh ? `贡献 ${formatTokenAmount(item.amount)} ${genesis1Symbol}` : `Contributed ${formatTokenAmount(item.amount)} ${genesis1Symbol}`}</strong><span>{zh ? `区块 ${item.blockNumber}` : `Block ${item.blockNumber}`}</span></div>
-          {url ? <a className="history-transaction" href={url} target="_blank" rel="noreferrer" title={item.transactionHash}>{shortHash(item.transactionHash)} ↗</a> : <span className="history-transaction" title={item.transactionHash}>{shortHash(item.transactionHash)}</span>}
-        </article>;
-      })}
-    </div>
     <div className="history-group" data-testid="genesis2-history">
       <h3>Genesis II</h3>
       {genesis2Message && <p className="history-empty">{genesis2Message}</p>}
@@ -50,6 +39,17 @@ export function MiniHistory({ language, genesis1, genesis1Status, genesis1Explor
         const url = transactionUrl(genesis2ExplorerUrl, item.transactionHash);
         return <article className="history-row" key={`${item.transactionHash}-${item.logIndex}`}>
           <div className="history-row-copy"><strong>{zh ? `获得 ${formatTokenAmount(item.miniAmount)} MINI` : `Acquired ${formatTokenAmount(item.miniAmount)} MINI`}</strong><span>{zh ? `支付 ${formatTokenAmount(item.dotCost)} ${genesis2Symbol} · 区块 ${item.blockNumber}` : `Paid ${formatTokenAmount(item.dotCost)} ${genesis2Symbol} · Block ${item.blockNumber}`}</span></div>
+          {url ? <a className="history-transaction" href={url} target="_blank" rel="noreferrer" title={item.transactionHash}>{shortHash(item.transactionHash)} ↗</a> : <span className="history-transaction" title={item.transactionHash}>{shortHash(item.transactionHash)}</span>}
+        </article>;
+      })}
+    </div>
+    <div className="history-group" data-testid="genesis1-history">
+      <h3>Genesis I</h3>
+      {genesis1Message && <p className="history-empty">{genesis1Message}</p>}
+      {genesis1Status === "ready" && genesis1.map((item) => {
+        const url = transactionUrl(genesis1ExplorerUrl, item.transactionHash);
+        return <article className="history-row" key={`${item.transactionHash}-${item.logIndex}`}>
+          <div className="history-row-copy"><strong>{zh ? `贡献 ${formatTokenAmount(item.amount)} ${genesis1Symbol}` : `Contributed ${formatTokenAmount(item.amount)} ${genesis1Symbol}`}</strong><span>{zh ? `区块 ${item.blockNumber}` : `Block ${item.blockNumber}`}</span></div>
           {url ? <a className="history-transaction" href={url} target="_blank" rel="noreferrer" title={item.transactionHash}>{shortHash(item.transactionHash)} ↗</a> : <span className="history-transaction" title={item.transactionHash}>{shortHash(item.transactionHash)}</span>}
         </article>;
       })}

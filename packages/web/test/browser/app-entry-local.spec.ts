@@ -190,8 +190,33 @@ test("Genesis stages route from the URL and the first viewport centers the live 
     taskTitle: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-title")!).fontSize,
     workItemSummary: getComputedStyle(document.querySelector(".phase1-work-items .work-item > p")!).fontSize,
     taskSummary: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-summary")!).fontSize,
+    taskSummaryColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-summary")!).color,
+    taskTitleColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-title")!).color,
+    workItemGap: getComputedStyle(document.querySelector(".phase1-work-items .work-item-grid")!).rowGap,
+    taskGap: getComputedStyle(document.querySelector(".phase1-work-items .work-item-tasks")!).rowGap,
+    cancelledBadgeColor: getComputedStyle(document.querySelector(".phase1-work-items .status-badge-discontinued")!).color,
+    cancelledTaskColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-status-discontinued")!).color,
+    protocolColor: (() => {
+      const probe = document.createElement("span");
+      probe.style.color = "var(--protocol)";
+      document.body.append(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
+    })(),
   }));
-  expect(phase1Typography).toEqual({ sectionHeading: "20px", workItemTitle: "18px", taskTitle: "16px", workItemSummary: "14px", taskSummary: "14px" });
+  expect(phase1Typography).toMatchObject({
+    sectionHeading: "20px",
+    workItemTitle: "20px",
+    taskTitle: "16px",
+    workItemSummary: "14px",
+    taskSummary: "14px",
+    workItemGap: "16px",
+    taskGap: "12px",
+  });
+  expect(phase1Typography.taskSummaryColor).toBe(phase1Typography.taskTitleColor);
+  expect(phase1Typography.cancelledBadgeColor).toBe(phase1Typography.protocolColor);
+  expect(phase1Typography.cancelledTaskColor).toBe(phase1Typography.protocolColor);
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   const phase1TaskOverflow390 = await page.locator(".phase1-work-items .work-item-tasks li").evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));

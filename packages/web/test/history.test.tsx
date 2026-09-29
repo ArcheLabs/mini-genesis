@@ -92,6 +92,7 @@ describe("Genesis history readers", () => {
     }));
     expect(markup).toContain("Genesis I");
     expect(markup).toContain("Genesis II");
+    expect(markup.indexOf('data-testid="genesis2-history"')).toBeLessThan(markup.indexOf('data-testid="genesis1-history"'));
     expect(markup).toContain("Contributed 2.00 DOT");
     expect(markup).toContain("Acquired 100.00 MINI");
     expect(markup).toContain("Paid 0.40 PAS");
