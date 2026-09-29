@@ -19,6 +19,7 @@ export type GenesisExecutionTask = {
   id: string;
   name: string | GenesisLocalizedText;
   status: "delivered" | "active" | "planned" | "discontinued";
+  summary?: string | GenesisLocalizedText;
 };
 export type GenesisWorkItem = {
   id: string;

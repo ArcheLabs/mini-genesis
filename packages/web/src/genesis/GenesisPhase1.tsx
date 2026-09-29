@@ -1,22 +1,21 @@
 import { formatDot } from "./curve";
 import { BasisInfo } from "./BasisInfo";
 import { GenesisWorkItems } from "./GenesisWorkItems";
-import { genesisPhase1WorkItems, mergeGenesisWorkItems } from "./work-items";
+import { resolveGenesisPhase1WorkItems } from "./work-items";
 import type { GenesisWorkItem } from "../config/manifest";
-import { SectionHeading } from "../components/SectionHeading";
-import { MiniIcon } from "../components/SectionIcons";
 
 type Language = "zh-CN" | "en";
 type Props = {
   language: Language;
   workItems?: readonly GenesisWorkItem[];
+  researchHistory?: readonly GenesisWorkItem[];
 };
 
 export const GENESIS1_CLOSING_BASIS_X18 = 89_460_000_000_000n;
 
-export function GenesisPhase1({ language, workItems = genesisPhase1WorkItems }: Props) {
+export function GenesisPhase1({ language, workItems, researchHistory }: Props) {
   const zh = language === "zh-CN";
-  const resolvedWorkItems = mergeGenesisWorkItems(genesisPhase1WorkItems, workItems);
+  const resolvedWorkItems = resolveGenesisPhase1WorkItems(workItems, researchHistory);
 
   return <section className="stage-panel phase1-panel" data-testid="genesis-phase1">
     <h1 className="sr-only">Genesis I</h1>

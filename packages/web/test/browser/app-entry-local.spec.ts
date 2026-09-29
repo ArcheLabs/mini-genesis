@@ -184,6 +184,23 @@ test("Genesis stages route from the URL and the first viewport centers the live 
     return { tasksBelowSummary: tasks.top >= summary.bottom, statusToRight: status.left >= heading.right };
   });
   expect(phase1Hierarchy).toEqual({ tasksBelowSummary: true, statusToRight: true });
+  const phase1Typography = await page.evaluate(() => ({
+    sectionHeading: getComputedStyle(document.querySelector(".phase1-work-items > .section-heading h2")!).fontSize,
+    workItemTitle: getComputedStyle(document.querySelector(".phase1-work-items .work-item-head strong")!).fontSize,
+    taskTitle: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-title")!).fontSize,
+    workItemSummary: getComputedStyle(document.querySelector(".phase1-work-items .work-item > p")!).fontSize,
+    taskSummary: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-summary")!).fontSize,
+  }));
+  expect(phase1Typography).toEqual({ sectionHeading: "20px", workItemTitle: "18px", taskTitle: "16px", workItemSummary: "14px", taskSummary: "14px" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const phase1TaskOverflow390 = await page.locator(".phase1-work-items .work-item-tasks li").evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
+  expect(phase1TaskOverflow390).toBe(false);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
+  const phase1DesktopType = await page.locator(".phase1-work-items .work-item-task-title").first().evaluate((element) => getComputedStyle(element).fontSize);
+  expect(phase1DesktopType).toBe("16px");
+  await page.setViewportSize({ width: 430, height: 932 });
   expect(readAddresses.every((address) => address === phase2Address)).toBe(true);
   await page.reload();
   await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");

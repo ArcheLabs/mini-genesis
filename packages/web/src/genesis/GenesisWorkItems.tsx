@@ -37,7 +37,9 @@ export function GenesisWorkItems({ language, mode, workItems }: Props) {
           <span className={`work-item-task-status work-item-task-status-${task.status}`} role="img" aria-label={productStatusLabel(task.status, language)}>
             <StatusIcon status={task.status} size="sm" />
           </span>
-          <span className="work-item-task-name">{localized(task.name, language)}</span>
+          {task.summary
+            ? <span className="work-item-task-copy"><strong className="work-item-task-title">{localized(task.name, language)}</strong><span className="work-item-task-summary">{localized(task.summary, language)}</span></span>
+            : <span className="work-item-task-name">{localized(task.name, language)}</span>}
         </li>)}</ul>}
         {item.evidenceUrl && <a className="work-item-evidence" href={item.evidenceUrl} target="_blank" rel="noreferrer">{language === "zh-CN" ? "查看证据 ↗" : "View evidence ↗"}</a>}
       </article>)}
