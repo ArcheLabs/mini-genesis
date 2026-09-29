@@ -14,9 +14,6 @@ type Props = {
 
 export function MyMini({ language, genesis1Holding, genesis1Loading, genesis1Error, genesis2Holding, genesis2Loading, genesis2Error }: Props) {
   const zh = language === "zh-CN";
-  const totalLoading = genesis1Loading || genesis2Loading;
-  const totalUnavailable = genesis1Error || genesis2Error || genesis1Holding === null || genesis2Holding === null;
-  const total = totalLoading ? (zh ? "读取中…" : "Loading…") : totalUnavailable ? "—" : `${formatTokenAmount(genesis1Holding! + genesis2Holding!)} MINI`;
   const genesis1Balance = genesis1Loading
     ? (zh ? "读取中…" : "Loading…")
     : genesis1Error
@@ -27,10 +24,6 @@ export function MyMini({ language, genesis1Holding, genesis1Loading, genesis1Err
     : genesis2Error || genesis2Holding === null ? "—" : `${formatTokenAmount(genesis2Holding)} MINI`;
   return <section className="asset-card mini-asset" data-testid="my-mini-assets">
     <SectionHeading size="compact" icon={<MiniIcon />}>{zh ? "我的 MINI" : "My MINI"}</SectionHeading>
-    <div className={`mini-total${totalLoading ? " is-loading" : ""}`} data-testid="my-mini-total">
-      <strong>{total}</strong>
-      <span>{zh ? "总额" : "Total"}</span>
-    </div>
     <div className="mini-holding-row" data-testid="my-mini-genesis1">
       <span>Genesis I</span>
       <strong>{genesis1Balance}</strong>

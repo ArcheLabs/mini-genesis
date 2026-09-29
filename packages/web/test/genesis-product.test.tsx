@@ -202,35 +202,41 @@ describe("Genesis product closure", () => {
     expect(local).toContain("Genesis II");
     expect(local).toContain("12,000.00 MINI");
     expect(local).toContain("282.78 MINI");
-    expect(local).toContain("12,282.78 MINI");
+    expect(local).not.toContain("12,282.78 MINI");
+    expect(local).not.toContain("my-mini-total");
     expect(local).not.toContain("本地");
     expect(local).not.toContain("Local");
     expect(local).not.toContain("Production historical");
     expect(local).not.toContain("snapshot");
-    expect(local).toContain("Total");
     expect(local).not.toContain("ecosystem");
   });
 
-  it("does not present a partial MINI sum while one chain is loading or unavailable", () => {
+  it("shows each phase balance independently while a chain is loading or unavailable", () => {
     const partial = renderToStaticMarkup(createElement(MyMini, { language: "en", genesis1Holding: 100n * 10n ** 18n, genesis1Loading: false, genesis1Error: false, genesis2Holding: null, genesis2Loading: true, genesis2Error: false }));
-    expect(partial).toContain('data-testid="my-mini-total"><strong>Loading…</strong>');
+    expect(partial).not.toContain("my-mini-total");
     expect(partial).toContain('data-testid="my-mini-genesis1"><span>Genesis I</span><strong>100.00 MINI</strong>');
+    expect(partial).toContain('data-testid="my-mini-genesis2"><span>Genesis II</span><strong>Loading…</strong>');
     const unavailable = renderToStaticMarkup(createElement(MyMini, { language: "en", genesis1Holding: 100n * 10n ** 18n, genesis1Loading: false, genesis1Error: false, genesis2Holding: null, genesis2Loading: false, genesis2Error: true }));
-    expect(unavailable).toContain('data-testid="my-mini-total"><strong>—</strong>');
+    expect(unavailable).not.toContain("my-mini-total");
     expect(unavailable).toContain('data-testid="my-mini-genesis1"><span>Genesis I</span><strong>100.00 MINI</strong>');
+    expect(unavailable).toContain('data-testid="my-mini-genesis2"><span>Genesis II</span><strong>—</strong>');
   });
 
-  it("uses shared compact headings for My MINI and ecosystem assets", () => {
+  it("uses shared compact headings and the existing question-mark state for asset cards", () => {
     const myMini = renderToStaticMarkup(createElement(MyMini, { language: "zh-CN", genesis1Holding: null, genesis1Loading: true, genesis1Error: false, genesis2Holding: null, genesis2Loading: true, genesis2Error: false }));
     const ecosystem = renderToStaticMarkup(createElement(EcosystemAssets, { language: "zh-CN" }));
     expect(myMini).toContain("section-heading-compact");
     expect(myMini).toContain("我的 MINI");
+    expect(myMini).toContain("Genesis I");
+    expect(myMini).toContain("Genesis II");
     expect(ecosystem).toContain("section-heading-compact");
     expect(ecosystem).toContain("MINI 生态资产");
     expect(ecosystem).toContain('role="img"');
-    expect(ecosystem).toContain('aria-label="尚未启用"');
+    expect(ecosystem).toContain('aria-label="生态资产数量尚未公布"');
+    expect(ecosystem).toContain("????.??");
     expect(ecosystem).toContain("将在后续阶段开放");
-    expect(ecosystem).not.toContain("Claim");
+    expect(ecosystem).toContain("disabled");
+    expect(ecosystem).toContain("领取");
     expect(ecosystem).not.toContain("—");
   });
 });
