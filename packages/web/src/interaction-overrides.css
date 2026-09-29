@@ -167,8 +167,8 @@
 }
 
 /* Keep workstreams in one reading order across Genesis I and Genesis II. */
-.work-items-section.phase1-work-items .work-item{grid-template-columns:minmax(0,1fr);align-items:stretch;column-gap:0}
-.work-items-section.phase1-work-items .work-item-head,.work-items-section.phase1-work-items .work-item p{grid-column:auto;grid-row:auto}
+.work-items-section .work-item{grid-template-columns:minmax(0,1fr);align-items:stretch;column-gap:0}
+.work-items-section .work-item-head,.work-items-section .work-item p{grid-column:auto;grid-row:auto}
 .work-items-section .work-item-head>.status-badge{padding:4px 8px;border:1px solid color-mix(in srgb,currentColor 42%,var(--line));border-radius:999px}
 .work-items-section .work-item-head strong{font-size:16px}
 .work-items-section .work-item p{font-size:14px}
@@ -181,17 +181,20 @@
 .work-items-section .work-item-task-status-discontinued{color:var(--protocol)}
 .work-items-section .work-item-tasks li[data-status="discontinued"] .work-item-task-name,.work-items-section .work-item-tasks li[data-status="discontinued"] .work-item-task-title{color:var(--muted)}
 .genesis-rules>.section-heading .section-heading-copy>h2,.phase2-work-items>.section-heading .section-heading-copy>h2{font-size:20px}
-.work-items-section.phase1-work-items>.section-heading .section-heading-copy>h2{font-size:20px}
-.work-items-section.phase1-work-items .work-item-grid{gap:16px}
-.work-items-section.phase1-work-items .work-item-head strong{font-size:20px}
-.work-items-section.phase1-work-items .work-item-tasks{gap:12px}
-.work-items-section.phase1-work-items .work-item-task-copy{display:grid;gap:3px;min-width:0;flex:1 1 auto}
-.work-items-section.phase1-work-items .work-item-task-title{color:var(--text);font-size:16px;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
-.work-items-section.phase1-work-items .work-item-task-summary{color:var(--text);font-size:14px;font-weight:400;line-height:1.5;overflow-wrap:anywhere}
+.work-items-section>.section-heading .section-heading-copy>h2{font-size:20px}
+.work-items-section .work-item-grid{gap:16px}
+.work-items-section .work-item-head strong{font-size:20px}
+.work-items-section .work-item-tasks{gap:12px}
+.work-items-section .work-item-task-copy{display:grid;gap:3px;min-width:0;flex:1 1 auto}
+.work-items-section .work-item-task-title{color:var(--text);font-size:16px;font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.work-items-section .work-item-task-summary{color:var(--text);font-size:14px;font-weight:400;line-height:1.5;overflow-wrap:anywhere}
 .phase2-facts{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:420px){
   .work-items-section .work-item-head{align-items:center!important}
-  .genesis-rules>.section-heading .section-heading-copy>h2,.phase2-work-items>.section-heading .section-heading-copy>h2{font-size:18px}
-  .work-items-section.phase1-work-items>.section-heading .section-heading-copy>h2{font-size:20px}
+  .genesis-rules>.section-heading .section-heading-copy>h2{font-size:18px}
+  .work-items-section>.section-heading .section-heading-copy>h2{font-size:20px}
   .phase2-facts{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Genesis I Delivered and Genesis II Execution use the same section spacing. */
+.work-items-section{margin-top:30px}

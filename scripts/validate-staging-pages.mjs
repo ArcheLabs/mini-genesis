@@ -14,12 +14,11 @@ const PHASE2_START_PRICE_X18 = "3500000000000000";
 const PHASE2_END_PRICE_X18 = "5500000000000000";
 const PHASE2_DURATION_SECONDS = 7n * 24n * 60n * 60n;
 const PHASE2_WORK_ITEM_IDS = [
-  "jamscript",
-  "minicells",
   "minijam",
-  "locus-ownership",
-  "mini-utility",
-  "developer-ecosystem",
+  "jamscript",
+  "ownership-abstraction",
+  "minicells",
+  "locus",
 ];
 
 export function validateStagingPagesManifest(manifest) {
