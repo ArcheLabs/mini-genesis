@@ -202,8 +202,9 @@ describe("Genesis product closure", () => {
     expect(local).toContain("Genesis II");
     expect(local).toContain("12,000.00 MINI");
     expect(local).toContain("282.78 MINI");
-    expect(local).not.toContain("12,282.78 MINI");
-    expect(local).not.toContain("my-mini-total");
+    expect(local).toContain('data-testid="my-mini-total"><strong>12,282.78 MINI</strong></div>');
+    expect(local).not.toContain(">Total<");
+    expect(local).not.toContain(">总额<");
     expect(local).not.toContain("本地");
     expect(local).not.toContain("Local");
     expect(local).not.toContain("Production historical");
@@ -211,13 +212,13 @@ describe("Genesis product closure", () => {
     expect(local).not.toContain("ecosystem");
   });
 
-  it("shows each phase balance independently while a chain is loading or unavailable", () => {
+  it("shows the combined amount only when both phase balances are available", () => {
     const partial = renderToStaticMarkup(createElement(MyMini, { language: "en", genesis1Holding: 100n * 10n ** 18n, genesis1Loading: false, genesis1Error: false, genesis2Holding: null, genesis2Loading: true, genesis2Error: false }));
-    expect(partial).not.toContain("my-mini-total");
+    expect(partial).toContain('data-testid="my-mini-total"><strong>Loading…</strong></div>');
     expect(partial).toContain('data-testid="my-mini-genesis1"><span>Genesis I</span><strong>100.00 MINI</strong>');
     expect(partial).toContain('data-testid="my-mini-genesis2"><span>Genesis II</span><strong>Loading…</strong>');
     const unavailable = renderToStaticMarkup(createElement(MyMini, { language: "en", genesis1Holding: 100n * 10n ** 18n, genesis1Loading: false, genesis1Error: false, genesis2Holding: null, genesis2Loading: false, genesis2Error: true }));
-    expect(unavailable).not.toContain("my-mini-total");
+    expect(unavailable).toContain('data-testid="my-mini-total"><strong>—</strong></div>');
     expect(unavailable).toContain('data-testid="my-mini-genesis1"><span>Genesis I</span><strong>100.00 MINI</strong>');
     expect(unavailable).toContain('data-testid="my-mini-genesis2"><span>Genesis II</span><strong>—</strong>');
   });
