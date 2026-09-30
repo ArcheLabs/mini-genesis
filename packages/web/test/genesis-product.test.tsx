@@ -11,6 +11,7 @@ import { MyMini } from "../src/assets/MyMini";
 import { EcosystemAssets } from "../src/assets/EcosystemAssets";
 import { genesisPhase1WorkItems, genesisPhase2WorkItems } from "../src/genesis/work-items";
 import { phase2Status } from "../src/genesis/GenesisStages";
+import { getManifest } from "../src/config/manifest";
 
 const dynamic = (phaseName: "Waiting" | "Active" | "Ended", sold = 0n) => ({
   contract: "0x1111111111111111111111111111111111111111" as `0x${string}`,
@@ -166,6 +167,31 @@ describe("Genesis product closure", () => {
     expect(locked).not.toContain("<button");
     expect(locked).not.toContain("<a ");
     expect(locked.match(/Genesis III/g)).toHaveLength(1);
+  });
+
+  it("renders production Genesis II as a non-purchasable waiting template", () => {
+    const manifest = getManifest("production")!;
+    const markup = renderToStaticMarkup(createElement(GenesisPhase2, {
+      language: "en",
+      manifest,
+      publicClient: null,
+      session: null,
+      provider: null,
+      correctChain: false,
+      dynamic: null,
+      demoMode: false,
+      onConnect: () => {},
+      onReconcile: async () => {},
+    }));
+    expect(phase2Status(null, manifest, false)).toBe("WAITING");
+    expect(markup).toContain("Genesis II is coming soon");
+    expect(markup).toContain("Coming soon");
+    expect(markup).toContain("DOT");
+    expect(markup).toContain('id="phase2-native-budget"');
+    expect(markup).toContain('disabled=""');
+    expect(markup).not.toContain("PAS");
+    expect(markup).not.toContain("TestNet");
+    expect(markup).not.toContain("Polkadot Hub TestNet");
   });
 
   it("keeps the current basis, holders, time, curve, purchase, rules, and execution without redundant stats", () => {

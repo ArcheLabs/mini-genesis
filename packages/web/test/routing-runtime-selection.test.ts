@@ -33,12 +33,21 @@ describe("URL runtime environment selection", () => {
     ["local", "local"],
     ["testnet", "staging"],
     ["mainnet", "production"],
-  ] as const)("maps network=%s to %s", (network, environment) => {
-    expect(resolveRuntimeSelection({ search: `?network=${network}`, mode: "production", deploymentEnv: "production" })).toMatchObject({ environment, source: "url", error: null });
+  ] as const)("maps network=%s to %s outside a production build", (network, environment) => {
+    expect(resolveRuntimeSelection({ search: `?network=${network}`, mode: "production", deploymentEnv: "staging" })).toMatchObject({ environment, source: "url", error: null });
   });
 
-  it("gives URL selection priority over build configuration", () => {
-    expect(resolveRuntimeSelection({ search: "?network=local", mode: "production", deploymentEnv: "production" }).environment).toBe("local");
+  it("pins production builds to Mainnet, allowing only an explicit mainnet URL", () => {
+    for (const network of ["local", "testnet"]) {
+      expect(resolveRuntimeSelection({ search: `?network=${network}`, mode: "production", deploymentEnv: "production" })).toMatchObject({ environment: null, error: "CONFIGURATION_MISMATCH", source: "invalid" });
+    }
+    expect(resolveRuntimeSelection({ search: "", mode: "production", deploymentEnv: "production" })).toMatchObject({ environment: "production", source: "build", error: null });
+    expect(resolveRuntimeSelection({ search: "?network=mainnet", mode: "production", deploymentEnv: "production" })).toMatchObject({ environment: "production", source: "url", error: null });
+  });
+
+  it("pins a default production-mode artifact even when no deployment env is supplied", () => {
+    expect(resolveRuntimeSelection({ search: "?network=testnet", mode: "production" })).toMatchObject({ environment: null, error: "CONFIGURATION_MISMATCH" });
+    expect(resolveRuntimeSelection({ search: "", mode: "production" })).toMatchObject({ environment: "production", error: null });
   });
 
   it("fails closed when the requested environment is not bundled into the published frontend", () => {
