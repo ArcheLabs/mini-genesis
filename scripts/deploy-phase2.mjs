@@ -195,7 +195,9 @@ async function deploy() {
   manifest.genesis ??= { phases: {} };
   manifest.genesis.phases ??= {};
   manifest.genesis.phases.phase1 ??= { status: "ended", mechanism: "stream", finalReferencePriceX18: "89460000000000" };
-  const phase2WorkItems = manifest.genesis.phases.phase2?.workItems;
+  const existingPhase2 = manifest.genesis.phases.phase2;
+  const phase2PreviousDeployment = existingPhase2?.previousDeployment;
+  const phase2WorkItems = existingPhase2?.workItems;
   manifest.genesis.phases.phase2 = {
     status: "active",
     mechanism: "linear-bonding-curve",
@@ -208,6 +210,7 @@ async function deploy() {
     endPriceX18,
     startTime,
     endTime,
+    ...(phase2PreviousDeployment ? { previousDeployment: phase2PreviousDeployment } : {}),
     ...(phase2WorkItems ? { workItems: phase2WorkItems } : {}),
   };
   manifest.genesis.phases.phase3 ??= { status: "locked" };
