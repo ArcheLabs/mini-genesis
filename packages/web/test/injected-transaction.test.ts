@@ -40,19 +40,34 @@ describe("injected Native transaction", () => {
   it("builds revive.call with native units and signs with the selected SS58 account", async () => {
     const { api, tx } = nativeJsApi(finalized);
     const signer = { signPayload: vi.fn() };
+    const mainnetManifest = manifest({ environment: "production", source: { ...manifest().source, chainId: "420420419", name: "Polkadot Hub" } });
     mocks.getApi.mockResolvedValueOnce(api);
     mocks.web3Enable.mockResolvedValueOnce([{ name: "SubWallet", version: "1.2.3" }]);
     mocks.web3FromAddress.mockResolvedValueOnce({ name: "SubWallet", version: "1.2.3", signer });
 
     const account = "5GrwvaEF5zXb26Fz9rcQpDWSJ8U1h4QqN9u2Xh5iQ3cP5k1";
+    const diagnostics: Record<string, unknown> = {};
     const result = await submitNativeReviveCall({
-      manifest: manifest(), address: account, contractAddress: SOURCE_CONTRACT, value: 10_000_000_000n,
+      manifest: mainnetManifest, address: account, contractAddress: SOURCE_CONTRACT, value: 10_000_000_000n,
       weightLimit: { refTime: 100n, proofSize: 10n }, storageDepositLimit: 5n, data: "0x1234",
+      onDiagnostic: (patch) => Object.assign(diagnostics, patch),
     });
 
     expect(api.tx.revive.call).toHaveBeenCalledWith(SOURCE_CONTRACT, "10000000000", { refTime: "100", proofSize: "10" }, "5", "0x1234");
     expect(tx.signAndSend).toHaveBeenCalledWith(account, { signer }, expect.any(Function));
+    expect(diagnostics.network).toBe("polkadot-mainnet");
     expect(result.blockNumber).toBe(42n);
+  });
+
+  it("blocks SS58 submission on the staging TestNet before RPC or wallet access", async () => {
+    await expect(submitNativeReviveCall({
+      manifest: manifest({ environment: "staging" }), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
+      weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
+    })).rejects.toThrow("NATIVE_POLKADOT_TRANSACTIONS_DISABLED");
+
+    expect(mocks.getApi).not.toHaveBeenCalled();
+    expect(mocks.web3Enable).not.toHaveBeenCalled();
+    expect(mocks.web3FromAddress).not.toHaveBeenCalled();
   });
 
   it("normalizes a dispatch error to NATIVE_SUBMISSION_FAILED", async () => {

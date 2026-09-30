@@ -3,6 +3,7 @@ import { hexToBytes, type Address } from "viem";
 import { createNativeDiagnostic, createSubstrateExecutionAdapter, estimateNativeMax, inspectWeightShape, recordSimulationDiagnostic, validateNativeEvents, validatePolkadotJsNativeEvents, validateWeightRequired } from "../src/genesis/execution/substrate";
 import { parseDotAmount } from "../src/genesis/amount";
 import { readNativeBalance } from "../src/wallet/substrate/balance";
+import { buyExactMiniNative } from "../src/genesis/curve-contribution-native";
 import { ACCOUNT, contributedLog, manifest, SOURCE_CONTRACT } from "./helpers";
 
 const mocks = vi.hoisted(() => ({ submitNativeReviveCall: vi.fn() }));
@@ -34,6 +35,13 @@ function nativeApi() {
 }
 
 describe("native contribution adapter", () => {
+  it("rejects direct SS58 purchase calls on staging TestNet before simulation or signing", async () => {
+    const onUpdate = vi.fn();
+    await expect(buyExactMiniNative({}, {}, NATIVE_ACCOUNT, manifest({ environment: "staging" }), SOURCE_CONTRACT, 1n, 1n, onUpdate))
+      .rejects.toThrow("NATIVE_POLKADOT_TRANSACTIONS_DISABLED");
+    expect(onUpdate).toHaveBeenLastCalledWith({ state: "failed", error: "NATIVE_POLKADOT_TRANSACTIONS_DISABLED" });
+    expect(mocks.submitNativeReviveCall).not.toHaveBeenCalled();
+  });
   it("accepts the descriptor's snake_case bigint weight", () => {
     expect(validateWeightRequired({ ref_time: 100n, proof_size: 20n })).toEqual({ ref_time: 100n, proof_size: 20n });
   });

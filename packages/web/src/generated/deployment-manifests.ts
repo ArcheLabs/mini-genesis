@@ -595,8 +595,17 @@ export const deploymentManifests = {
           ]
         },
         "phase2": {
-          "status": "template",
+          "status": "active",
           "mechanism": "linear-bonding-curve",
+          "contract": "0x52ac7474efa464eafb10d5c88a6b5c2311807928",
+          "treasury": "0x2A8E2fFc8d10e04a477623252026F4378d210b3A",
+          "deploymentBlock": "13891700",
+          "runtimeCodeHash": "0x03ac9c920864a7caf84f6d5f4aa14f4ebeea8325e0d2229f71c5529fc2edf818",
+          "allocationMini": "2000000000000000000000000",
+          "startPriceX18": "3500000000000000",
+          "endPriceX18": "5500000000000000",
+          "startTime": "1790791200",
+          "endTime": "1790794800",
           "previousDeployment": {
             "status": "retained-immutable",
             "contract": "0x59964457dc4045988eaa7cf4d928970798aa5adf",

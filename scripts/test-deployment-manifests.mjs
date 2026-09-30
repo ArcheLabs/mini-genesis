@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { PHASE2_DURATION_SECONDS, validateManifest } from "./deployment-manifest.mjs";
+import { isConfiguredRpcUrl } from "./rpc-selection.mjs";
 import { validateStagingPagesManifest } from "./validate-staging-pages.mjs";
+
+{
+  const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
+  assert.equal(isConfiguredRpcUrl("https://services.polkadothub-rpc.com/testnet/", staging.source.rpcHttpUrls), true);
+  assert.equal(isConfiguredRpcUrl("https://eth-rpc-testnet.polkadot.io/", staging.source.rpcHttpUrls), true);
+  assert.equal(isConfiguredRpcUrl("https://rpc.example.invalid/", staging.source.rpcHttpUrls), false);
+}
 
 for (const environment of ["local", "staging", "production"]) {
   const manifest = JSON.parse(await readFile(`deployments/${environment}.json`, "utf8"));
@@ -65,12 +73,15 @@ for (const [environment, offset] of [["staging", -1n], ["staging", 1n], ["produc
 {
   const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
   validateManifest(staging, "staging");
-  assert.equal(staging.genesis.phases.phase2.previousDeployment.status, "retained-immutable");
-  assert.equal(staging.genesis.phases.phase2.previousDeployment.contract, "0x59964457dc4045988eaa7cf4d928970798aa5adf");
-  assert.equal(
-    BigInt(staging.genesis.phases.phase2.previousDeployment.endTime) - BigInt(staging.genesis.phases.phase2.previousDeployment.startTime),
-    7n * 24n * 60n * 60n,
-  );
+  const previousDeployment = staging.genesis.phases.phase2.previousDeployment;
+  if (previousDeployment) {
+    assert.equal(previousDeployment.status, "retained-immutable");
+    assert.equal(previousDeployment.contract, "0x59964457dc4045988eaa7cf4d928970798aa5adf");
+    assert.equal(
+      BigInt(previousDeployment.endTime) - BigInt(previousDeployment.startTime),
+      7n * 24n * 60n * 60n,
+    );
+  }
   const firstWorkItem = staging.genesis.phases.phase2.workItems[0];
   const tasks = firstWorkItem.tasks;
   assert.doesNotThrow(() => validateManifest({

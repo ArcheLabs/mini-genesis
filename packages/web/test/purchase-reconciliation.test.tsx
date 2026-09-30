@@ -5,8 +5,9 @@ import { ACCOUNT, SOURCE_CONTRACT, SOURCE_HASH, DESTINATION, DESTINATION_HASH, B
 import { GenesisPhase2 } from "../src/genesis/GenesisPhase2";
 import type { GenesisCurveDynamic } from "../src/genesis/curve-reads";
 
-const { buyExactMiniMock, walletClientMock } = vi.hoisted(() => ({
+const { buyExactMiniMock, buyExactMiniNativeMock, walletClientMock } = vi.hoisted(() => ({
   buyExactMiniMock: vi.fn(),
+  buyExactMiniNativeMock: vi.fn(),
   walletClientMock: vi.fn(() => ({})),
 }));
 
@@ -14,6 +15,7 @@ vi.mock("../src/genesis/curve-contribution", () => ({
   buyExactMini: buyExactMiniMock,
   waitForTransactionFinality: vi.fn(),
 }));
+vi.mock("../src/genesis/curve-contribution-native", () => ({ buyExactMiniNative: buyExactMiniNativeMock }));
 vi.mock("../src/wallet/wallet-client", () => ({ walletClient: walletClientMock }));
 
 const UNIT = 10n ** 18n;
@@ -83,9 +85,26 @@ function PurchaseHarness() {
   });
 }
 
+function StagingPolkadotPurchaseHarness() {
+  const address = "5GrwvaEF5zXb26Fz9rcQpDWSJ8U1h4QqN9u2Xh5iQ3cP5k1";
+  const session = {
+    kind: "polkadot" as const, status: "connected" as const, extensionId: "subwallet-js", walletName: "SubWallet",
+    accounts: [{ address, signer: {} as any, accountId32: new Uint8Array(32) }], selectedAccountAddress: address,
+    accountId32: `0x${"00".repeat(32)}` as `0x${string}`, balance: 20n * UNIT, balanceStatus: "ready" as const,
+    api: {} as any, contractIdentity: ACCOUNT, contractIdentityStatus: "verified" as const,
+  } as any;
+  return createElement(GenesisPhase2, {
+    language: "en", manifest: deployedManifest, publicClient: {} as any, session, provider: null,
+    walletReady: true, correctChain: true,
+    dynamic: dynamic({ sold: 0n, raised: 0n, buyers: 1n, spot: 3_500_000_000_000_000n }),
+    demoMode: false, onConnect: () => {}, onReconcile: async () => {},
+  });
+}
+
 describe("Genesis II purchase reconciliation", () => {
   beforeEach(() => {
     buyExactMiniMock.mockReset().mockResolvedValue({ hash: `0x${"ab".repeat(32)}`, blockNumber: 100n, miniAmount: 1n, dotCost: 1n, finalized: true });
+    buyExactMiniNativeMock.mockReset();
     walletClientMock.mockReset().mockReturnValue({});
     container = document.createElement("div");
     document.body.append(container);
@@ -99,19 +118,36 @@ describe("Genesis II purchase reconciliation", () => {
     container = null;
   });
 
-  it("reconciles native balance, curve price, holders, and remaining after finalized purchase", async () => {
+  it("keeps the EVM purchase path reachable on staging TestNet", async () => {
     await act(async () => { root!.render(createElement(PurchaseHarness)); });
     const button = container!.querySelector(".submit-button")!;
+    expect((button as HTMLButtonElement).disabled).toBe(false);
     await act(async () => {
       button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     expect(buyExactMiniMock).toHaveBeenCalledOnce();
+    expect(buyExactMiniNativeMock).not.toHaveBeenCalled();
     expect(container!.querySelector('[data-testid="phase2-wallet-balance"]')?.textContent).toContain("15 PAS");
     expect(container!.querySelector('[data-testid="phase2-current-basis"]')?.textContent).toContain("0.004000 PAS / MINI");
     expect(container!.querySelector('[data-testid="phase2-holder-count"]')?.textContent).toBe("2");
     expect(container!.querySelector('[data-testid="phase2-remaining-mini"]')?.textContent).toContain("1,500,000.00 MINI");
     expect(container!.querySelector('[data-testid="bonding-curve-interaction"]')?.getAttribute("data-current-position")).toBe("25.000000%");
+  });
+
+  it("makes native SS58 purchase unreachable on staging TestNet", async () => {
+    await act(async () => { root!.render(createElement(StagingPolkadotPurchaseHarness)); });
+    const button = container!.querySelector(".submit-button") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(container!.querySelector('[data-testid="phase2-native-wallet-disabled"]')?.textContent).toContain("Connect an EVM wallet");
+
+    await act(async () => {
+      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(buyExactMiniNativeMock).not.toHaveBeenCalled();
+    expect(buyExactMiniMock).not.toHaveBeenCalled();
   });
 });
