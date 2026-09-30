@@ -427,9 +427,18 @@ export const deploymentManifests = {
         "https://eth-rpc-testnet.polkadot.io/"
       ],
       "substrateWsUrls": [
+        "wss://sys.ibp.network/asset-hub-paseo",
+        "wss://asset-hub-paseo.dotters.network",
         "wss://asset-hub-paseo-rpc.n.dwellir.com"
       ],
       "substrateGenesisHash": "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2",
+      "substrateRuntime": {
+        "profileId": "paseo-asset-hub-2005002",
+        "specName": "asset-hub-paseo",
+        "specVersion": 2005002,
+        "transactionVersion": 18,
+        "wasmCodeHash": "0x3d399dc2daeaaf831fc4fda6ddc1958494fc0f3319ebb8ec0c1e7ca8995eed56"
+      },
       "ss58Prefix": 0,
       "explorerUrl": "https://blockscout-testnet.polkadot.io/",
       "contract": "0xcd2cdc847bd096f05b63ed4ea1dbc3fc3ad065fc",
@@ -586,17 +595,20 @@ export const deploymentManifests = {
           ]
         },
         "phase2": {
-          "status": "active",
+          "status": "template",
           "mechanism": "linear-bonding-curve",
-          "contract": "0x59964457dc4045988eaa7cf4d928970798aa5adf",
-          "treasury": "0x78B02E176e587E163661fBe70232CCDDEb11759e",
-          "deploymentBlock": "13780830",
-          "runtimeCodeHash": "0x45c347916ad1ee3724d09caf77d5544056c233f6a09b9750d2445bf146f01c12",
-          "allocationMini": "2000000000000000000000000",
-          "startPriceX18": "3500000000000000",
-          "endPriceX18": "5500000000000000",
-          "startTime": "1790551932",
-          "endTime": "1791156732",
+          "previousDeployment": {
+            "status": "retained-immutable",
+            "contract": "0x59964457dc4045988eaa7cf4d928970798aa5adf",
+            "treasury": "0x78B02E176e587E163661fBe70232CCDDEb11759e",
+            "deploymentBlock": "13780830",
+            "runtimeCodeHash": "0x45c347916ad1ee3724d09caf77d5544056c233f6a09b9750d2445bf146f01c12",
+            "allocationMini": "2000000000000000000000000",
+            "startPriceX18": "3500000000000000",
+            "endPriceX18": "5500000000000000",
+            "startTime": "1790551932",
+            "endTime": "1791156732"
+          },
           "workItems": [
             {
               "id": "minijam",

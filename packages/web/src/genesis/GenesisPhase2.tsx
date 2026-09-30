@@ -67,6 +67,15 @@ function errorText(code: string, zh: boolean): string {
     RPC_UNAVAILABLE: ["网络暂时无法连接，请稍后重试。", "The network is temporarily unavailable. Try again shortly."],
     UNKNOWN_ERROR: ["暂时无法完成购买，请重试。", "The purchase could not be completed. Please try again."],
     CONFIGURATION_MISMATCH: ["当前环境配置不匹配。", "The selected environment configuration does not match."],
+    NATIVE_NETWORK_MISMATCH: ["当前网络与支持的原生交易网络不匹配。", "The current network does not match the supported native transaction network."],
+    NATIVE_RUNTIME_PROFILE_MISMATCH: ["当前网络 Runtime 暂不支持原生交易。", "Native transactions are temporarily unavailable for the current network runtime."],
+    NATIVE_RUNTIME_PROFILE_INCOMPLETE: ["无法验证当前网络 Runtime，已暂时禁用原生交易。", "The current runtime could not be verified; native transactions are disabled."],
+    NATIVE_WALLET_RUNTIME_UNSUPPORTED: ["当前钱包暂不支持此版本 Polkadot Hub TestNet 的原生交易。", "This wallet does not support native transactions for the current Polkadot Hub TestNet runtime."],
+    NATIVE_SIGNING_REJECTED: ["你已取消钱包签名。", "The wallet signature was declined."],
+    NATIVE_EVENT_RECONCILIATION_FAILED: ["交易已最终确认，但购买事件核验未完成。请勿重复购买；请先检查历史记录。", "The transaction finalized, but purchase-event verification is incomplete. Do not resubmit; check history first."],
+    NATIVE_TRANSACTION_BUILD_FAILED: ["当前钱包无法安全构造此原生交易。", "The current wallet could not safely construct this native transaction."],
+    NATIVE_SUBMISSION_FAILED: ["原生交易未能完成提交。", "The native transaction could not be submitted."],
+    NATIVE_CONTRACT_REVERTED: ["合约拒绝了本次购买，请刷新报价后重试。", "The contract rejected this purchase. Refresh the quote and try again."],
   };
   const localized = messages[code];
   return localized ? localized[zh ? 0 : 1] : code;
@@ -76,6 +85,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
   const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
   const [budget, setBudget] = useState("1.00");
   const [busy, setBusy] = useState(false);
+  const [nativeVerificationPendingFor, setNativeVerificationPendingFor] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const zh = language === "zh-CN";
@@ -142,9 +152,13 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         evmBlockNumber = result.blockNumber;
       } else {
         if (!session.api) throw new Error("CONFIGURATION_MISMATCH");
+        if (!publicClient) throw new Error("RPC_UNAVAILABLE");
         const selected = session.accounts.find((item) => item.address === session.selectedAccountAddress);
         if (!selected) throw new Error("SUBSTRATE_ACCOUNT_NOT_SELECTED");
-        await buyExactMiniNative(session.api, selected.signer, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei);
+        await buyExactMiniNative(session.api, publicClient, selected.txCreator, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei, (update) => {
+          if (update.state === "finalized" || update.state === "verifying_event") setNativeVerificationPendingFor(session.selectedAccountAddress);
+          if (update.state === "success") setNativeVerificationPendingFor(null);
+        });
       }
       await onReconcile();
       setBudget("");
@@ -196,6 +210,10 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
           <span>{nativeSymbol}</span>
         </div>
         <p className="purchase-balance" data-testid="phase2-wallet-balance">{zh ? "余额" : "Balance"} {balanceLabel} {nativeSymbol}</p>
+        {session?.kind === "polkadot" && (session.nativeRuntimeStatus === "unsupported" || session.nativeRuntimeStatus === "error") && <p className="purchase-message error" role="status">{zh ? "当前网络 Runtime 暂不支持原生交易。" : "Native transactions are temporarily unavailable for the current network runtime."}</p>}
+        {session?.kind === "polkadot" && session.nativeWalletStatus === "unsupported" && <p className="purchase-message error" role="status">{zh ? "当前钱包暂不支持此版本 Polkadot Hub TestNet 的原生交易。" : "This wallet does not support native transactions for the current Polkadot Hub TestNet runtime."}</p>}
+        {session?.kind === "polkadot" && session.nativeWalletStatus === "error" && <p className="purchase-message error" role="status">{zh ? "无法验证当前钱包对 Runtime 的支持，已禁用原生签名。" : "Wallet support for this runtime could not be verified; native signing is disabled."}</p>}
+        {session?.kind === "polkadot" && nativeVerificationPendingFor === session.selectedAccountAddress && <p className="purchase-message error" role="status">{zh ? "交易已最终确认，但购买事件核验未完成。请勿重复购买；请先检查历史记录。" : "The transaction finalized, but purchase-event verification is incomplete. Do not resubmit; check history first."}</p>}
         <div className="budget-presets" aria-label={zh ? "快捷金额" : "Quick amounts"}>
           {["1", "5", "20"].map((value) => <button key={value} type="button" className={budget === value || budget === `${value}.00` ? "selected" : ""} onClick={() => setBudget(value)}>{value} {nativeSymbol}</button>)}
         </div>
@@ -203,7 +221,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
           <span>{zh ? "你将获得" : "You receive"}</span>
           <strong data-testid="phase2-mini-quote">≈ {formatMini(affordableMini)} MINI</strong>
         </div>
-        <button className="submit-button" type="button" disabled={busy || !purchaseEnabled || affordableMini === 0n} onClick={() => void submit()}>
+        <button className="submit-button" type="button" disabled={busy || (session?.kind === "polkadot" && nativeVerificationPendingFor === session.selectedAccountAddress) || !purchaseEnabled || affordableMini === 0n || (session?.kind === "polkadot" && (session.nativeRuntimeStatus !== "supported" || session.nativeWalletStatus !== "supported"))} onClick={() => void submit()}>
           {busy ? (zh ? "处理中…" : "Processing…") : session && walletReady ? (zh ? "获得 MINI" : "Get MINI") : (zh ? "连接钱包" : "Connect wallet")}
         </button>
         {message && <p className="purchase-message success" role="status">{message}</p>}

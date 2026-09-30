@@ -17,7 +17,6 @@ const {
   keccak256,
   parseEventLogs,
 } = require("viem");
-const { ApiPromise, WsProvider } = require("@polkadot/api");
 
 const allocation = 2_000_000n * 10n ** 18n;
 const startPrice = 3_500_000_000_000_000n;
@@ -68,37 +67,41 @@ function extractRevertData(error, seen = new Set()) {
 }
 
 async function substrateMetadata() {
-  const provider = new WsProvider(substrateUrl, 2500);
-  const api = await ApiPromise.create({ provider, noInitWarn: true });
+  const [{ createClient }, { getWsProvider }] = await Promise.all([
+    import(require.resolve("polkadot-api")),
+    import(require.resolve("polkadot-api/ws")),
+  ]);
+  const client = createClient(getWsProvider(substrateUrl));
   try {
-    const [chain, name, version, runtime, properties, finalizedHead] = await Promise.all([
-      api.rpc.system.chain(),
-      api.rpc.system.name(),
-      api.rpc.system.version(),
-      api.rpc.state.getRuntimeVersion(),
-      api.rpc.system.properties(),
-      api.rpc.chain.getFinalizedHead(),
+    const chainSpec = await client.getChainSpecData();
+    const finalized = await client.getFinalizedBlock();
+    const [chain, name, version, runtime] = await Promise.all([
+      client._request("system_chain", []),
+      client._request("system_name", []),
+      client._request("system_version", []),
+      client._request("state_getRuntimeVersion", [finalized.hash]),
     ]);
-    const nativeDecimalsValue = properties.tokenDecimals?.toJSON?.() ?? properties.tokenDecimals;
-    const nativeSymbolValue = properties.tokenSymbol?.toJSON?.() ?? properties.tokenSymbol;
+    const properties = chainSpec.properties ?? {};
+    const nativeDecimalsValue = properties.tokenDecimals;
+    const nativeSymbolValue = properties.tokenSymbol;
     const nativeDecimals = Array.isArray(nativeDecimalsValue) ? nativeDecimalsValue[0] : nativeDecimalsValue;
     const nativeSymbol = Array.isArray(nativeSymbolValue) ? nativeSymbolValue[0] : nativeSymbolValue;
     return {
-      chain: chain.toString(),
-      nodeName: name.toString(),
-      nodeVersion: version.toString(),
-      specName: runtime.specName.toString(),
-      specVersion: runtime.specVersion.toString(),
-      ss58Prefix: Number(properties.ss58Format?.toString?.() ?? properties.ss58Format ?? 0),
+      chain: String(chain),
+      nodeName: String(name),
+      nodeVersion: String(version),
+      specName: String(runtime.specName),
+      specVersion: String(runtime.specVersion),
+      ss58Prefix: Number(properties.ss58Format ?? 0),
       nativeDecimals: Number(nativeDecimals),
       nativeSymbol: String(nativeSymbol),
-      genesisHash: api.genesisHash.toHex(),
-      finalizedHead: finalizedHead.toHex(),
-      api,
+      genesisHash: chainSpec.genesisHash,
+      finalizedHead: finalized.hash,
     };
   } catch (error) {
-    await api.disconnect();
     throw error;
+  } finally {
+    client.destroy();
   }
 }
 

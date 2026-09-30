@@ -6,7 +6,9 @@ import { appKit, polkadotHubNetwork } from "./appkit";
 import { parseEip1193ChainId, readEip1193ChainId, switchEip1193Chain, type Eip1193Provider } from "./eip1193";
 import { accountId32FromSs58, resolveContractAddress } from "./substrate/account";
 import { readNativeBalance } from "./substrate/balance";
-import { getSubstrateApi } from "./substrate/client";
+import { getSubstrateApi, getSubstrateClient } from "./substrate/client";
+import { checkNativeRuntime } from "./substrate/runtime";
+import { probeNativeWallet } from "./substrate/wallet-capability";
 import { connectInjectedExtension, getInjectedExtensions, type InjectedExtension, type InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
 import type { EvmWalletSession, PolkadotAccount, PolkadotWalletDescriptor, PolkadotWalletSession, WalletSession } from "./types";
 
@@ -63,12 +65,12 @@ export function describePolkadotWallet(extensionId: string): PolkadotWalletDescr
 }
 
 export function toPolkadotAccount(account: InjectedPolkadotAccount): PolkadotAccount | null {
-  const publicKey = account.polkadotSigner?.publicKey;
+  const publicKey = account.txCreator?.publicKey;
   if (!(publicKey instanceof Uint8Array) || publicKey.length !== 32) return null;
   try {
     const accountId32 = accountId32FromSs58(account.address);
-    if (accountId32.length !== 32) return null;
-    return { address: account.address, name: account.name, signer: account.polkadotSigner, accountId32 };
+    if (accountId32.length !== 32 || bytesToHex(publicKey).toLowerCase() !== bytesToHex(accountId32).toLowerCase()) return null;
+    return { address: account.address, name: account.name, txCreator: account.txCreator, accountId32 };
   } catch {
     return null;
   }
@@ -102,6 +104,8 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const [nativeBalanceStatus, setNativeBalanceStatus] = useState<PolkadotWalletSession["balanceStatus"]>("idle");
   const [substrateContractAddress, setSubstrateContractAddress] = useState<Address | null>(null);
   const [contractIdentityStatus, setContractIdentityStatus] = useState<PolkadotWalletSession["contractIdentityStatus"]>("loading");
+  const [nativeRuntimeStatus, setNativeRuntimeStatus] = useState<PolkadotWalletSession["nativeRuntimeStatus"]>("checking");
+  const [nativeWalletStatus, setNativeWalletStatus] = useState<PolkadotWalletSession["nativeWalletStatus"]>("checking");
   const [evmBalance, setEvmBalance] = useState<bigint | null>(null);
   const [evmProviderChain, setEvmProviderChain] = useState<{ provider: Eip1193Provider; chainId: number | null } | null>(null);
   const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions().map(describePolkadotWallet));
@@ -177,16 +181,53 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       api: substrateApi,
       contractIdentity: substrateContractAddress,
       contractIdentityStatus,
+      nativeRuntimeStatus,
+      nativeWalletStatus,
     };
-  }, [contractIdentityStatus, nativeBalance, nativeBalanceStatus, selectedPolkadotAccount, substrateAccounts, substrateApi, substrateContractAddress, substrateExtension]);
+  }, [contractIdentityStatus, nativeBalance, nativeBalanceStatus, nativeRuntimeStatus, nativeWalletStatus, selectedPolkadotAccount, substrateAccounts, substrateApi, substrateContractAddress, substrateExtension]);
 
   const session = selectWalletSession(isConnected, evmSession, polkadotSession);
   const sessionKey = session?.kind === "evm" ? `evm:${session.address}` : session?.kind === "polkadot" ? `polkadot:${session.accountId32}` : null;
 
   useEffect(() => {
     if (!substrateExtension || !nativeManifest) return;
-    try { setSubstrateApi(getSubstrateApi(nativeManifest)); } catch { setSubstrateApi(null); }
+    try {
+      setSubstrateApi(getSubstrateApi(nativeManifest));
+      setNativeRuntimeStatus("checking");
+      setNativeWalletStatus("checking");
+    } catch {
+      setSubstrateApi(null);
+      setNativeRuntimeStatus("error");
+      setNativeWalletStatus("error");
+    }
   }, [nativeManifest, substrateExtension]);
+
+  useEffect(() => {
+    if (!selectedPolkadotAccount || !substrateApi || !nativeManifest) return;
+    let disposed = false;
+    setNativeRuntimeStatus("checking");
+    setNativeWalletStatus("checking");
+    void checkNativeRuntime(getSubstrateClient(nativeManifest), nativeManifest).then(async (runtime) => {
+      if (disposed) return;
+      if (runtime.compatibility !== "supported") {
+        setNativeRuntimeStatus("unsupported");
+        setNativeWalletStatus("unsupported");
+        return;
+      }
+      setNativeRuntimeStatus("supported");
+      try {
+        await probeNativeWallet(nativeManifest, selectedPolkadotAccount.txCreator);
+        if (!disposed) setNativeWalletStatus("supported");
+      } catch (error) {
+        if (!disposed) setNativeWalletStatus(error instanceof Error && error.message === "NATIVE_WALLET_RUNTIME_UNSUPPORTED" ? "unsupported" : "error");
+      }
+    }).catch(() => {
+      if (disposed) return;
+      setNativeRuntimeStatus("error");
+      setNativeWalletStatus("error");
+    });
+    return () => { disposed = true; };
+  }, [nativeManifest, selectedPolkadotAccount, substrateApi]);
 
   useEffect(() => {
     if (!substrateExtension) return;
@@ -202,6 +243,8 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
         setSelectedPolkadotAddress(null);
         setSubstrateApi(null);
         setNativeBalanceStatus("idle");
+        setNativeRuntimeStatus("checking");
+        setNativeWalletStatus("checking");
         return;
       }
       setSubstrateAccounts((current) => samePolkadotAccounts(current, next) ? current : next);

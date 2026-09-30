@@ -1,6 +1,10 @@
 import type { Address } from "viem";
 import type { MappingState } from "../types";
 import { sameSubstrateAccount } from "./account";
+import type { DeploymentManifest } from "../../config/manifest";
+import { getSubstrateClient } from "./client";
+import { NativeTransactionError, submitNativeTransaction } from "./native-transaction";
+import type { InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
 
 export async function checkAccountMapping(api: any, contractAddress: Address, account: string): Promise<MappingState> {
   try {
@@ -13,20 +17,14 @@ export async function checkAccountMapping(api: any, contractAddress: Address, ac
   }
 }
 
-export async function mapAccount(api: any, signer: any, account: string, onUpdate: (state: MappingState) => void = () => {}): Promise<void> {
+export async function mapAccount(api: any, txCreator: InjectedPolkadotAccount["txCreator"], account: string, manifest: DeploymentManifest, onUpdate: (state: MappingState) => void = () => {}): Promise<void> {
   onUpdate("mapping");
   try {
-    const result = await api.tx.Revive.map_account().signAndSubmit(signer);
-    if (!result.ok) throw new Error("ACCOUNT_MAPPING_FAILED");
+    await submitNativeTransaction({ client: getSubstrateClient(manifest), manifest, tx: api.tx.Revive.map_account(), txCreator });
     onUpdate("mapped");
   } catch (error) {
-    const description = error instanceof Error ? error.message : String(error);
-    if (import.meta.env.DEV && /signed.?extension|authorize.?value|pjs.?signer/i.test(description)) {
-      console.error("[MINI Genesis] LEGACY_PJS_SIGNER_PATH_USED", error);
-      throw new Error("LEGACY_PJS_SIGNER_PATH_USED");
-    }
-    if (description.toLowerCase().includes("reject")) throw new Error("USER_REJECTED_MAPPING");
     onUpdate("failed");
-    throw error instanceof Error ? error : new Error("ACCOUNT_MAPPING_FAILED");
+    if (error instanceof NativeTransactionError) throw error;
+    throw new Error(error instanceof Error ? error.message : "ACCOUNT_MAPPING_FAILED", { cause: error });
   }
 }

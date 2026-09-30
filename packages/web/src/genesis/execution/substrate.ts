@@ -1,11 +1,13 @@
 import { bytesToHex, decodeEventLog, encodeFunctionData, hexToBytes, type Address } from "viem";
 import type { DeploymentManifest } from "../../config/manifest";
 import { genesisAbi } from "../abi";
-import { NATIVE_TO_EVM_RATIO, parseDotAmount, validateContributionAmount, type ParsedDotAmount } from "../amount";
+import { parseDotAmount, validateContributionAmount, type ParsedDotAmount } from "../amount";
 import { checkAccountMapping, mapAccount } from "../../wallet/substrate/mapping";
 import { accountId32FromSs58, resolveContractAddress } from "../../wallet/substrate/account";
 import { readNativeBalance } from "../../wallet/substrate/balance";
-import { NativeTransactionError, submitNativeReviveCall } from "../../wallet/substrate/injected-transaction";
+import { assertNativeRuntimeSupported, NativeTransactionError, probeNativeWalletCapability, submitNativeTransaction } from "../../wallet/substrate/native-transaction";
+import { getSubstrateClient } from "../../wallet/substrate/client";
+import type { InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
 import type { GenesisExecutionAdapter, ContributionContext, ContributionResult } from "./types";
 
 type Weight = { ref_time: bigint; proof_size: bigint };
@@ -57,21 +59,12 @@ export type NativeDiagnostic = {
   dryRunError: string | null;
   txBuildError: string | null;
   feeEstimateError: string | null;
-  polkadotJsRuntimeVersion: { specVersion: string; transactionVersion: string } | null;
-  signedExtensions: string[] | null;
-  injectorSource: string | null;
-  injectorVersion: string | null;
-  chainGenesisHash: string | null;
-  injectorMetadataKnown: boolean | null;
-  injectorMetadataProvided: boolean | null;
-  injectorMetadataError: unknown;
   signingError: unknown;
   submissionError: unknown;
   signingStarted: boolean;
   walletPopupReached: boolean;
   txStatus: string | null;
   dispatchError: unknown;
-  signerPath: "injected-signPayload" | null;
   network: "paseo" | "polkadot-mainnet" | null;
   reviveCall: unknown;
   error: string | null;
@@ -167,7 +160,7 @@ export function validateWeightRequired(required: unknown, diagnostic?: NativeDia
 export function createNativeDiagnostic(account: string): NativeDiagnostic {
   let accountId32: string | null = null;
   try { accountId32 = bytesToHex(accountId32FromSs58(account)); } catch { /* Keep the diagnostic usable for malformed accounts. */ }
-  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunEnvelope: null, dryRunEnvelopeShape: null, dryRunWeightRequired: null, dryRunWeightConsumed: null, dryRunStorageDeposit: null, dryRunMaxStorageDeposit: null, dryRunGasConsumed: null, dryRunWeightRequiredShape: null, dryRunMaxStorageDepositShape: null, dryRunResultValueShape: null, dryRunInput: null, weightLimitFailureReason: null, contractAddress: null, dryRunError: null, txBuildError: null, feeEstimateError: null, polkadotJsRuntimeVersion: null, signedExtensions: null, injectorSource: null, injectorVersion: null, chainGenesisHash: null, injectorMetadataKnown: null, injectorMetadataProvided: null, injectorMetadataError: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, submissionError: null, signerPath: null, network: null, reviveCall: null, error: null };
+  return { account, accountId32, free: null, frozen: null, existentialDeposit: null, spendable: null, dryRunResult: null, dryRunEnvelope: null, dryRunEnvelopeShape: null, dryRunWeightRequired: null, dryRunWeightConsumed: null, dryRunStorageDeposit: null, dryRunMaxStorageDeposit: null, dryRunGasConsumed: null, dryRunWeightRequiredShape: null, dryRunMaxStorageDepositShape: null, dryRunResultValueShape: null, dryRunInput: null, weightLimitFailureReason: null, contractAddress: null, dryRunError: null, txBuildError: null, feeEstimateError: null, signingStarted: false, walletPopupReached: false, txStatus: null, dispatchError: null, signingError: null, submissionError: null, network: null, reviveCall: null, error: null };
 }
 
 function emitNativeDiagnostic(manifest: DeploymentManifest, diagnostic: NativeDiagnostic): void {
@@ -238,44 +231,13 @@ export async function simulateNativeContribution(api: any, account: string, cont
   return { weightLimit: required, storageDepositLimit: storageChargeOrZero(simulation.max_storage_deposit), simulation };
 }
 
-function ceilPlanckFromEvmWei(value: bigint): bigint { return (value + NATIVE_TO_EVM_RATIO - 1n) / NATIVE_TO_EVM_RATIO; }
-
-/** Return EVM-denominated input for the UI, or null when a safe native max is unavailable. */
-export async function estimateNativeMax(api: any, account: string, manifest: DeploymentManifest, phase: number, firstMinimum: bigint, subsequentExclusive: bigint): Promise<bigint | null> {
-  if (phase >= 2) return 0n;
-  const diagnostic = createNativeDiagnostic(account);
-  diagnostic.network = manifest.source.chainId === "420420419" ? "polkadot-mainnet" : "paseo";
-  try {
-    const resolution = await resolveContractAddress(api, account);
-    const balance = await readNativeBalance(api, account);
-    recordNativeBalance(diagnostic, balance);
-    const probeEvmWei = phase === 0 ? firstMinimum : subsequentExclusive + 1n;
-    const probe = { planck: ceilPlanckFromEvmWei(probeEvmWei), evmWei: ceilPlanckFromEvmWei(probeEvmWei) * NATIVE_TO_EVM_RATIO };
-    const limits = await simulateNativeContribution(api, account, manifest.source.contract, probe, diagnostic);
-    const data = encodeFunctionData({ abi: genesisAbi, functionName: "contribute" });
-    let tx;
-    try { tx = api.tx.Revive.call({ dest: manifest.source.contract, value: probe.planck, weight_limit: limits.weightLimit, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) }); } catch (error) { diagnostic.txBuildError = errorDescription(error); throw error; }
-    let fee: bigint;
-    try { fee = BigInt(await tx.getEstimatedFees(account)); } catch (error) { diagnostic.feeEstimateError = errorDescription(error); throw error; }
-    const reserve = fee + fee / 5n + limits.storageDepositLimit;
-    if (balance.spendable <= reserve) return 0n;
-    const maxPlanck = balance.spendable - reserve;
-    return maxPlanck >= probe.planck ? maxPlanck * NATIVE_TO_EVM_RATIO : 0n;
-  } catch (error) {
-    diagnostic.error = errorDescription(error);
-    // Max is probed when an account is selected. An unmapped or empty account
-    // is a normal wallet state at this point, not a failed Join attempt.
-    if (!/ACCOUNT_UNMAPPED|NATIVE_INSUFFICIENT_BALANCE/.test(diagnostic.error)) {
-      emitNativeDiagnostic(manifest, diagnostic);
-    }
-    return null;
-  }
-}
-
 function eventParts(event: any): { type: string; value: any; phase?: any } {
+  const outer = event?.type ?? event?.event?.type ?? "";
+  const nested = event?.value ?? event?.event?.value;
+  const innerType = nested && typeof nested === "object" ? String(nested.type ?? "") : "";
   return {
-    type: event?.type ?? event?.event?.type ?? "",
-    value: event?.value ?? event?.event?.value,
+    type: innerType ? `${outer}.${innerType}` : String(outer),
+    value: innerType ? nested.value : nested,
     phase: event?.phase ?? event?.original?.phase ?? event?.event?.phase,
   };
 }
@@ -304,34 +266,7 @@ export function validateNativeEvents(events: any[], contractAddress: Address, co
   if (matches !== 1) throw new Error("CONTRIBUTED_EVENT_MISMATCH");
 }
 
-function polkadotJsEventValue(event: any): { section: string; method: string; value: any } {
-  const record = event?.event ?? event;
-  const section = String(record?.section ?? "");
-  const method = String(record?.method ?? "");
-  const raw = record?.data?.toJSON ? record.data.toJSON() : record?.data;
-  if ((section.toLowerCase() === "revive" || section.toLowerCase() === "palletrevive") && method === "ContractEmitted") {
-    if (Array.isArray(raw)) return { section, method, value: { contract: raw[0], data: raw[1], topics: raw[2] } };
-    return { section, method, value: raw };
-  }
-  return { section, method, value: raw };
-}
-
-export function validatePolkadotJsNativeEvents(events: any[], contractAddress: Address, contributorH160: Address, amount: ParsedDotAmount): void {
-  const currentEvents = events.map(polkadotJsEventValue);
-  if (currentEvents.some(({ section, method }) => section.toLowerCase() === "system" && method === "ExtrinsicFailed")) throw new Error("NATIVE_SUBMISSION_FAILED");
-  if (!currentEvents.some(({ section, method }) => section.toLowerCase() === "system" && method === "ExtrinsicSuccess")) throw new Error("NATIVE_SUBMISSION_FAILED");
-  const logs = currentEvents.filter(({ section, method, value }) => (section.toLowerCase() === "revive" || section.toLowerCase() === "palletrevive") && method === "ContractEmitted" && value && String(value.contract).toLowerCase() === contractAddress.toLowerCase()).map(({ value }) => value);
-  let matches = 0;
-  for (const log of logs) {
-    try {
-      const decoded = decodeEventLog({ abi: genesisAbi, data: typeof log.data === "string" ? log.data : bytesToHex(log.data), topics: (log.topics ?? []).map((topic: unknown) => typeof topic === "string" ? topic : bytesToHex(topic as Uint8Array)) as [`0x${string}`, ...`0x${string}`[]] });
-      if (decoded.eventName === "Contributed" && String((decoded.args as any).contributor).toLowerCase() === contributorH160.toLowerCase() && (decoded.args as any).amount === amount.evmWei) matches += 1;
-    } catch { /* Ignore unrelated contract events. */ }
-  }
-  if (matches !== 1) throw new Error("CONTRIBUTED_EVENT_MISMATCH");
-}
-
-export function createSubstrateExecutionAdapter(api: any, signer: any, account: string, manifest: DeploymentManifest, canonicalContractAddress?: Address): GenesisExecutionAdapter {
+export function createSubstrateExecutionAdapter(api: any, txCreator: InjectedPolkadotAccount["txCreator"], account: string, manifest: DeploymentManifest, canonicalContractAddress?: Address): GenesisExecutionAdapter {
   const contractAddress = manifest.source.contract;
   return {
     kind: "substrate",
@@ -360,7 +295,7 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
             if (mapping === "failed") throw new Error("ACCOUNT_MAPPING_FAILED");
             if (mapping === "unmapped") {
               onUpdate({ state: "mapping_required" });
-              await mapAccount(api, signer, account, (state) => onUpdate({ state: state === "mapping" ? "awaiting_mapping_signature" : "mapping_submitted" }));
+              await mapAccount(api, txCreator, account, manifest, (state) => onUpdate({ state: state === "mapping" ? "awaiting_mapping_signature" : "mapping_submitted" }));
               onUpdate({ state: "mapping_finalized" });
               onUpdate({ state: "verifying_mapping" });
               const refreshed = await checkAccountMapping(api, contributorH160, account);
@@ -382,45 +317,38 @@ export function createSubstrateExecutionAdapter(api: any, signer: any, account: 
           throw new Error("NATIVE_SUBMISSION_FAILED");
         }
         try {
-          fee = BigInt(await tx.getEstimatedFees(account));
+          await assertNativeRuntimeSupported(getSubstrateClient(manifest), manifest);
+          fee = await probeNativeWalletCapability(tx, txCreator, manifest);
         } catch (error) {
           diagnostic.feeEstimateError = errorDescription(error);
           throw new Error("NATIVE_FEE_ESTIMATE_UNAVAILABLE");
         }
         if (balance.spendable < amount.planck + fee + limits.storageDepositLimit) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
         onUpdate({ state: "awaiting_signature" });
-        diagnostic.signerPath = "injected-signPayload";
         diagnostic.signingStarted = true;
         diagnostic.walletPopupReached = true;
         let finalized;
         try {
-          finalized = await submitNativeReviveCall({
-            manifest,
-            address: account,
-            contractAddress,
-            value: amount.planck,
-            weightLimit: { refTime: limits.weightLimit.ref_time, proofSize: limits.weightLimit.proof_size },
-            storageDepositLimit: limits.storageDepositLimit,
-            data,
+          finalized = await submitNativeTransaction({
+            client: getSubstrateClient(manifest), manifest, tx, txCreator,
             signal,
             onStatus: (status) => {
               if (status === "broadcast") onUpdate({ state: "submitted" });
-              if (status === "inBlock") onUpdate({ state: "included" });
+              if (status === "inBestBlock") onUpdate({ state: "included" });
               if (status === "finalized") onUpdate({ state: "finalized" });
             },
-            onDiagnostic: (patch) => Object.assign(diagnostic, patch),
           });
         } catch (error) {
-          if (error instanceof NativeTransactionError) throw new Error(error.code);
+          if (error instanceof NativeTransactionError) throw error;
           throw error;
         }
         checkCancelled(signal);
         diagnostic.txStatus = "finalized";
-        onUpdate({ state: "finalized", hash: finalized.txHash });
+        onUpdate({ state: "finalized", hash: finalized.substrateTxHash });
         onUpdate({ state: "verifying_event" });
-        validatePolkadotJsNativeEvents(finalized.events, contractAddress, contributorH160, amount);
-        onUpdate({ state: "success", hash: finalized.txHash });
-        return { execution: "substrate", blockNumber: finalized.blockNumber, amount, contributorH160, substrateTransactionHash: finalized.txHash };
+        validateNativeEvents(finalized.events, contractAddress, contributorH160, amount, finalized.extrinsicIndex);
+        onUpdate({ state: "success", hash: finalized.substrateTxHash });
+        return { execution: "substrate", blockNumber: finalized.finalizedBlockNumber, amount, contributorH160, substrateTransactionHash: finalized.substrateTxHash };
       } catch (error) {
         const code = error instanceof Error ? error.message : "REVIVE_DRY_RUN_FAILED";
         diagnostic.error = code;
