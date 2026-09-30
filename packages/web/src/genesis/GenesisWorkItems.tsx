@@ -1,7 +1,7 @@
 import { StatusBadge, productStatusLabel, type ProductStatus } from "../components/StatusBadge";
 import { StatusIcon } from "../components/StatusIcon";
 import { SectionHeading } from "../components/SectionHeading";
-import { DeliveredIcon, ListChecksIcon } from "../components/SectionIcons";
+import { DeliveredIcon } from "../components/SectionIcons";
 import type { GenesisWorkItem } from "./work-items";
 
 type Language = "zh-CN" | "en";
@@ -25,7 +25,7 @@ export function GenesisWorkItems({ language, mode, workItems }: Props) {
     ? (language === "zh-CN" ? "已交付" : "Delivered")
     : (language === "zh-CN" ? "Genesis II 执行计划" : "Genesis II Execution");
   return <section className={`work-items-section ${phase1 ? "phase1-work-items" : "phase2-work-items"}`}>
-    <SectionHeading size="default" icon={phase1 ? <DeliveredIcon /> : <ListChecksIcon />}>{heading}</SectionHeading>
+    <SectionHeading size="default" icon={<DeliveredIcon />}>{heading}</SectionHeading>
     <div className="work-item-grid">
       {workItems.map((item) => <article key={item.id} className={`work-item work-item-${item.status}`} data-testid={`genesis-work-item-${item.id}`}>
         <div className="work-item-head">

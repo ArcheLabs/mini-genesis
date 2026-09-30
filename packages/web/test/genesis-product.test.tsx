@@ -9,7 +9,7 @@ import { GenesisWorkItems } from "../src/genesis/GenesisWorkItems";
 import { BondingCurveChart } from "../src/genesis/BondingCurveChart";
 import { MyMini } from "../src/assets/MyMini";
 import { EcosystemAssets } from "../src/assets/EcosystemAssets";
-import { genesisPhase2WorkItems } from "../src/genesis/work-items";
+import { genesisPhase1WorkItems, genesisPhase2WorkItems } from "../src/genesis/work-items";
 import { phase2Status } from "../src/genesis/GenesisStages";
 
 const dynamic = (phaseName: "Waiting" | "Active" | "Ended", sold = 0n) => ({
@@ -87,7 +87,10 @@ describe("Genesis product closure", () => {
   it("renders the five supplied bilingual Phase II workstreams with reusable status badges", () => {
     const english = renderToStaticMarkup(createElement(GenesisWorkItems, { language: "en", mode: "phase2-funds", workItems: genesisPhase2WorkItems }));
     const chinese = renderToStaticMarkup(createElement(GenesisWorkItems, { language: "zh-CN", mode: "phase2-funds", workItems: genesisPhase2WorkItems }));
+    const phase1 = renderToStaticMarkup(createElement(GenesisWorkItems, { language: "en", mode: "phase1-enabled", workItems: genesisPhase1WorkItems }));
+    const headingIcon = (markup: string) => markup.match(/<span class="section-heading-icon"[^>]*>(.*?)<\/span>/)?.[1];
     expect(english.match(/class="work-item work-item-/g)).toHaveLength(5);
+    expect(headingIcon(english)).toBe(headingIcon(phase1));
     expect(english).toContain("Genesis II Execution");
     expect(english).toContain("Incentive Protocol");
     expect(english).toContain("MiniCells Training Subprotocol");
