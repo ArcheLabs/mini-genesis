@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { createPublicClient, type PublicClient } from "viem";
+import { createPublicClient, type Hash, type PublicClient } from "viem";
 import { genesisChain, publicTransport } from "./src/config/chain";
 import { getManifest, type DeploymentManifest } from "./src/config/manifest";
 import { currentRuntimeSelection } from "./src/config/runtime-selection";
@@ -82,6 +82,7 @@ function App() {
   const languageWrapRef = useRef<HTMLDivElement | null>(null);
   const previousWalletStatus = useRef(status);
   const context = useCallback((operation: FeedbackContext["operation"], params?: FeedbackContext["params"]): FeedbackContext => ({ operation, locale: language, params }), [language]);
+  const onPurchaseSuccess = useCallback((amount: string, transactionHash: Hash) => feedback.presentCode("MINI_PURCHASE_SUCCEEDED", context("submit-contribution", { amount, transactionHash, explorerUrl: manifest?.source.explorerUrl || undefined })), [context, feedback.presentCode, manifest?.source.explorerUrl]);
 
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem("mini-genesis-theme", theme); }, [theme]);
   useEffect(() => { document.documentElement.classList.toggle("native-mainnet-override", nativeMainnetOverride); }, [nativeMainnetOverride]);
@@ -254,7 +255,7 @@ function App() {
   const miniHistory = session && <MiniHistory language={language} genesis1={genesis1History} genesis1Status={genesis1HistoryStatus} genesis1ExplorerUrl={productionManifest?.source.explorerUrl} genesis1Symbol={productionManifest?.source.currencySymbol ?? "DOT"} genesis2={genesis2History} genesis2Status={genesis2HistoryStatus} genesis2ExplorerUrl={manifest?.source.explorerUrl} genesis2Symbol={manifest?.source.currencySymbol ?? "DOT"} />;
   const assetsPage = <main className="assets-page"><div className="assets-heading"><span className="section-index">{text.account}</span><h1>{text.mine}</h1><p className="my-address">{shortHash(selectedSourceAddress)}</p></div>{!session && !demoMode ? <section className="assets-empty"><p>{text.assetsEmpty}</p><button className="submit-button" type="button" onClick={() => setWalletMenu(true)}>{text.connect}</button></section> : <><div className="my-grid">{miniAssetCard}{ecosystemAssetCard}</div>{miniHistory}</>}</main>;
   const configurationErrorPage = <main className="configuration-error-page" role="alert"><h1>{language === "zh-CN" ? "页面配置不匹配" : "Configuration mismatch"}</h1><p>{language === "zh-CN" ? "所选网络未包含在此页面的部署配置中。" : "The selected network is not included in this page deployment."}</p></main>;
-  const genesisStagesPage = isGenesisRoute ? <GenesisStages language={language} stage={activeStage} refreshKey={phase2RefreshKey} onPhase2StatusChange={setPhase2HeaderStatus} manifest={manifest} publicClient={publicClient} session={session} provider={provider} correctChain={correctChain} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onReconcile={onReconcile} /> : null;
+  const genesisStagesPage = isGenesisRoute ? <GenesisStages language={language} stage={activeStage} refreshKey={phase2RefreshKey} onPhase2StatusChange={setPhase2HeaderStatus} manifest={manifest} publicClient={publicClient} session={session} provider={provider} correctChain={correctChain} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onReconcile={onReconcile} onPurchaseSuccess={onPurchaseSuccess} /> : null;
   const smokePage = NATIVE_SMOKE_ENABLED ? <NativeSignerSmoke manifest={manifest} session={session} availablePolkadotWallets={availablePolkadotWallets} connectPolkadot={connectPolkadot} /> : null;
   return <><NotificationCenter items={feedback.notifications} onDismiss={feedback.dismiss} onAction={handleFeedbackAction} />{header}<SystemBanner items={feedback.banners} onAction={handleFeedbackAction} />{runtimeSelection.error ? configurationErrorPage : route === "native-signer-smoke" ? smokePage : route === "assets" ? assetsPage : genesisStagesPage}</>;
 }
