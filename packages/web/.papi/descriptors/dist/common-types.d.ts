@@ -2882,42 +2882,48 @@ export type Icusb76knakdp5 = {
     "new_value"?: (Anonymize<I7rt63b9d5k7p8>) | undefined;
 };
 export type I4b3lhc1ach2vm = AnonymousEnum<{
-    "StakingElection": Enum<{
-        "SignedPhase": undefined;
-        "MaxSignedSubmissions": undefined;
-        "UnsignedPhase": undefined;
-        "MinerPages": undefined;
-        "MaxElectingVoters": undefined;
-        "TargetSnapshotPerBlock": undefined;
-        "MaxEraDuration": undefined;
-    }>;
-    "Scheduler": Enum<{
-        "MaxScheduledPerBlock": undefined;
-        "MaximumWeight": undefined;
-    }>;
-    "MessageQueue": Enum<{
-        "MaxOnInitWeight": undefined;
-        "MaxOnIdleWeight": undefined;
-    }>;
+    "StakingElection": Anonymize<I7b9ads3v443ck>;
+    "Scheduler": Anonymize<I24jhg3f2eo0lf>;
+    "MessageQueue": Anonymize<Idajpoh0kgdigh>;
+}>;
+export type I7b9ads3v443ck = AnonymousEnum<{
+    "SignedPhase": undefined;
+    "MaxSignedSubmissions": undefined;
+    "UnsignedPhase": undefined;
+    "MinerPages": undefined;
+    "MaxElectingVoters": undefined;
+    "TargetSnapshotPerBlock": undefined;
+    "MaxEraDuration": undefined;
+}>;
+export type I24jhg3f2eo0lf = AnonymousEnum<{
+    "MaxScheduledPerBlock": undefined;
+    "MaximumWeight": undefined;
+}>;
+export type Idajpoh0kgdigh = AnonymousEnum<{
+    "MaxOnInitWeight": undefined;
+    "MaxOnIdleWeight": undefined;
 }>;
 export type I7rt63b9d5k7p8 = AnonymousEnum<{
-    "StakingElection": Enum<{
-        "SignedPhase": number;
-        "MaxSignedSubmissions": number;
-        "UnsignedPhase": number;
-        "MinerPages": number;
-        "MaxElectingVoters": number;
-        "TargetSnapshotPerBlock": number;
-        "MaxEraDuration": bigint;
-    }>;
-    "Scheduler": Enum<{
-        "MaxScheduledPerBlock": number;
-        "MaximumWeight": Anonymize<I4q39t5hn830vp>;
-    }>;
-    "MessageQueue": Enum<{
-        "MaxOnInitWeight"?: Anonymize<Iasb8k6ash5mjn>;
-        "MaxOnIdleWeight"?: Anonymize<Iasb8k6ash5mjn>;
-    }>;
+    "StakingElection": Anonymize<I5trrk9652tbo6>;
+    "Scheduler": Anonymize<Ib2k8reb66bms0>;
+    "MessageQueue": Anonymize<I3b81fugo1ah07>;
+}>;
+export type I5trrk9652tbo6 = AnonymousEnum<{
+    "SignedPhase": number;
+    "MaxSignedSubmissions": number;
+    "UnsignedPhase": number;
+    "MinerPages": number;
+    "MaxElectingVoters": number;
+    "TargetSnapshotPerBlock": number;
+    "MaxEraDuration": bigint;
+}>;
+export type Ib2k8reb66bms0 = AnonymousEnum<{
+    "MaxScheduledPerBlock": number;
+    "MaximumWeight": Anonymize<I4q39t5hn830vp>;
+}>;
+export type I3b81fugo1ah07 = AnonymousEnum<{
+    "MaxOnInitWeight"?: Anonymize<Iasb8k6ash5mjn>;
+    "MaxOnIdleWeight"?: Anonymize<Iasb8k6ash5mjn>;
 }>;
 export type Iasb8k6ash5mjn = (Anonymize<I4q39t5hn830vp>) | undefined;
 export type I94co7vj7h6bo = AnonymousEnum<{
@@ -7236,14 +7242,15 @@ export type Ifvgo9568rpmqc = Array<Anonymize<I8uo3fpd3bcc6f>>;
 export type I8uo3fpd3bcc6f = [SS58String, SizedHex<32>];
 export type I9pvau8qut93lg = Array<{
     "recipient": number;
-    "state": Enum<{
-        "Ok": undefined;
-        "Suspended": undefined;
-    }>;
+    "state": Anonymize<Ic2gg6ldfq068e>;
     "signals_exist": boolean;
     "first_index": number;
     "last_index": number;
     "flags": number;
+}>;
+export type Ic2gg6ldfq068e = AnonymousEnum<{
+    "Ok": undefined;
+    "Suspended": undefined;
 }>;
 export type I5g2vv0ckl2m8b = [number, number];
 export type Ifup3lg9ro8a0f = {
@@ -8546,26 +8553,29 @@ export type I6a0l99iu4e4a8 = AnonymousEnum<{
 }>;
 export type I6usrkf9la6hg2 = {
     "key_value": Enum<{
-        "StakingElection": Enum<{
-            "SignedPhase": Anonymize<Idqsmalvqe2q98>;
-            "MaxSignedSubmissions": Anonymize<Idqsmalvqe2q98>;
-            "UnsignedPhase": Anonymize<Idqsmalvqe2q98>;
-            "MinerPages": Anonymize<Idqsmalvqe2q98>;
-            "MaxElectingVoters": Anonymize<Idqsmalvqe2q98>;
-            "TargetSnapshotPerBlock": Anonymize<Idqsmalvqe2q98>;
-            "MaxEraDuration": FixedSizeArray<1, Anonymize<I35p85j063s0il>>;
-        }>;
-        "Scheduler": Enum<{
-            "MaxScheduledPerBlock": Anonymize<Idqsmalvqe2q98>;
-            "MaximumWeight": FixedSizeArray<1, Anonymize<Iasb8k6ash5mjn>>;
-        }>;
-        "MessageQueue": Enum<{
-            "MaxOnInitWeight": FixedSizeArray<1, (Anonymize<Iasb8k6ash5mjn>) | undefined>;
-            "MaxOnIdleWeight": FixedSizeArray<1, (Anonymize<Iasb8k6ash5mjn>) | undefined>;
-        }>;
+        "StakingElection": Anonymize<I242o6tru431gv>;
+        "Scheduler": Anonymize<Ifdl9mnv4nvlai>;
+        "MessageQueue": Anonymize<I7lh9sa8l4652a>;
     }>;
 };
+export type I242o6tru431gv = AnonymousEnum<{
+    "SignedPhase": Anonymize<Idqsmalvqe2q98>;
+    "MaxSignedSubmissions": Anonymize<Idqsmalvqe2q98>;
+    "UnsignedPhase": Anonymize<Idqsmalvqe2q98>;
+    "MinerPages": Anonymize<Idqsmalvqe2q98>;
+    "MaxElectingVoters": Anonymize<Idqsmalvqe2q98>;
+    "TargetSnapshotPerBlock": Anonymize<Idqsmalvqe2q98>;
+    "MaxEraDuration": FixedSizeArray<1, Anonymize<I35p85j063s0il>>;
+}>;
 export type Idqsmalvqe2q98 = FixedSizeArray<1, Anonymize<I4arjljr6dpflb>>;
+export type Ifdl9mnv4nvlai = AnonymousEnum<{
+    "MaxScheduledPerBlock": Anonymize<Idqsmalvqe2q98>;
+    "MaximumWeight": FixedSizeArray<1, Anonymize<Iasb8k6ash5mjn>>;
+}>;
+export type I7lh9sa8l4652a = AnonymousEnum<{
+    "MaxOnInitWeight": FixedSizeArray<1, (Anonymize<Iasb8k6ash5mjn>) | undefined>;
+    "MaxOnIdleWeight": FixedSizeArray<1, (Anonymize<Iasb8k6ash5mjn>) | undefined>;
+}>;
 export type I4oqb168b2d4er = AnonymousEnum<{
     /**
      * Allows root to set a cursor to forcefully start, stop or forward the migration process.
@@ -16070,11 +16080,10 @@ export type Iek7ha36da9mf5 = ResultPayload<XcmVersionedAssets, Anonymize<Iavct6f
 export type Ibnsp8n876tnd7 = ResultPayload<{
     "execution_result": Anonymize<I78cd4a1ojtkk9>;
     "emitted_events": Anonymize<I8ijns20nhseh5>;
-    "local_xcm"?: Anonymize<Ieqgqma27vbupd>;
+    "local_xcm"?: (XcmVersionedXcm) | undefined;
     "forwarded_xcms": Anonymize<Ialhmrpub9sefe>;
 }, Anonymize<I55ku9c5gk50hb>>;
 export type I8ijns20nhseh5 = Array<Anonymize<I12hc7fqa1l39c>>;
-export type Ieqgqma27vbupd = (XcmVersionedXcm) | undefined;
 export type Ialhmrpub9sefe = Array<[XcmVersionedLocation, Array<XcmVersionedXcm>]>;
 export type I55ku9c5gk50hb = AnonymousEnum<{
     "Unimplemented": undefined;
@@ -16150,11 +16159,10 @@ export type Iaorknft5vtg7f = {
     "storage_deposit": Anonymize<If7bmpttbdmqu4>;
     "max_storage_deposit": Anonymize<If7bmpttbdmqu4>;
     "gas_consumed": bigint;
-    "result": ResultPayload<Anonymize<I6cm3omaniofs7>, Anonymize<I2nb5ki21eadb1>>;
-};
-export type I6cm3omaniofs7 = {
-    "result": Anonymize<I620n7irgfspm4>;
-    "addr": SizedHex<20>;
+    "result": ResultPayload<{
+        "result": Anonymize<I620n7irgfspm4>;
+        "addr": SizedHex<20>;
+    }, Anonymize<I2nb5ki21eadb1>>;
 };
 export type I6f9v7emp7t5ba = {
     "access_list"?: (Anonymize<Ieap15h2pjii9u>) | undefined;
@@ -16205,11 +16213,10 @@ export type Id22r0gklsr0ok = (Array<[SizedHex<20>, {
 }]>) | undefined;
 export type I2806mq9p1klk7 = ResultPayload<Anonymize<I4totqt881mlti>, Anonymize<I8mb9f26m2cgi5>>;
 export type Iau1ib3fio8i01 = ResultPayload<Anonymize<I4q39t5hn830vp>, Anonymize<I8mb9f26m2cgi5>>;
-export type Ibitbjt0urruo8 = ResultPayload<Anonymize<Icjs1v5avc8kdj>, Anonymize<I2nb5ki21eadb1>>;
-export type Icjs1v5avc8kdj = {
+export type Ibitbjt0urruo8 = ResultPayload<{
     "code_hash": SizedHex<32>;
     "deposit": bigint;
-};
+}, Anonymize<I2nb5ki21eadb1>>;
 export type I8i7cn80akt4h6 = ResultPayload<Anonymize<Iabpgqcjikia83>, Enum<{
     "DoesntExist": undefined;
     "KeyDecodingFailed": undefined;
@@ -16314,72 +16321,339 @@ export type I512dtcl0pn07c = ResultPayload<Anonymize<I6cs1itejju2vv>, Enum<{
     "Value": undefined;
     "Dust": undefined;
 }>>;
-export type Ieqt7n1rf1k69o = Array<{
+export type ExtensionsCheckMortality = Enum<{
+    "Immortal": undefined;
+    "Mortal1": number;
+    "Mortal2": number;
+    "Mortal3": number;
+    "Mortal4": number;
+    "Mortal5": number;
+    "Mortal6": number;
+    "Mortal7": number;
+    "Mortal8": number;
+    "Mortal9": number;
+    "Mortal10": number;
+    "Mortal11": number;
+    "Mortal12": number;
+    "Mortal13": number;
+    "Mortal14": number;
+    "Mortal15": number;
+    "Mortal16": number;
+    "Mortal17": number;
+    "Mortal18": number;
+    "Mortal19": number;
+    "Mortal20": number;
+    "Mortal21": number;
+    "Mortal22": number;
+    "Mortal23": number;
+    "Mortal24": number;
+    "Mortal25": number;
+    "Mortal26": number;
+    "Mortal27": number;
+    "Mortal28": number;
+    "Mortal29": number;
+    "Mortal30": number;
+    "Mortal31": number;
+    "Mortal32": number;
+    "Mortal33": number;
+    "Mortal34": number;
+    "Mortal35": number;
+    "Mortal36": number;
+    "Mortal37": number;
+    "Mortal38": number;
+    "Mortal39": number;
+    "Mortal40": number;
+    "Mortal41": number;
+    "Mortal42": number;
+    "Mortal43": number;
+    "Mortal44": number;
+    "Mortal45": number;
+    "Mortal46": number;
+    "Mortal47": number;
+    "Mortal48": number;
+    "Mortal49": number;
+    "Mortal50": number;
+    "Mortal51": number;
+    "Mortal52": number;
+    "Mortal53": number;
+    "Mortal54": number;
+    "Mortal55": number;
+    "Mortal56": number;
+    "Mortal57": number;
+    "Mortal58": number;
+    "Mortal59": number;
+    "Mortal60": number;
+    "Mortal61": number;
+    "Mortal62": number;
+    "Mortal63": number;
+    "Mortal64": number;
+    "Mortal65": number;
+    "Mortal66": number;
+    "Mortal67": number;
+    "Mortal68": number;
+    "Mortal69": number;
+    "Mortal70": number;
+    "Mortal71": number;
+    "Mortal72": number;
+    "Mortal73": number;
+    "Mortal74": number;
+    "Mortal75": number;
+    "Mortal76": number;
+    "Mortal77": number;
+    "Mortal78": number;
+    "Mortal79": number;
+    "Mortal80": number;
+    "Mortal81": number;
+    "Mortal82": number;
+    "Mortal83": number;
+    "Mortal84": number;
+    "Mortal85": number;
+    "Mortal86": number;
+    "Mortal87": number;
+    "Mortal88": number;
+    "Mortal89": number;
+    "Mortal90": number;
+    "Mortal91": number;
+    "Mortal92": number;
+    "Mortal93": number;
+    "Mortal94": number;
+    "Mortal95": number;
+    "Mortal96": number;
+    "Mortal97": number;
+    "Mortal98": number;
+    "Mortal99": number;
+    "Mortal100": number;
+    "Mortal101": number;
+    "Mortal102": number;
+    "Mortal103": number;
+    "Mortal104": number;
+    "Mortal105": number;
+    "Mortal106": number;
+    "Mortal107": number;
+    "Mortal108": number;
+    "Mortal109": number;
+    "Mortal110": number;
+    "Mortal111": number;
+    "Mortal112": number;
+    "Mortal113": number;
+    "Mortal114": number;
+    "Mortal115": number;
+    "Mortal116": number;
+    "Mortal117": number;
+    "Mortal118": number;
+    "Mortal119": number;
+    "Mortal120": number;
+    "Mortal121": number;
+    "Mortal122": number;
+    "Mortal123": number;
+    "Mortal124": number;
+    "Mortal125": number;
+    "Mortal126": number;
+    "Mortal127": number;
+    "Mortal128": number;
+    "Mortal129": number;
+    "Mortal130": number;
+    "Mortal131": number;
+    "Mortal132": number;
+    "Mortal133": number;
+    "Mortal134": number;
+    "Mortal135": number;
+    "Mortal136": number;
+    "Mortal137": number;
+    "Mortal138": number;
+    "Mortal139": number;
+    "Mortal140": number;
+    "Mortal141": number;
+    "Mortal142": number;
+    "Mortal143": number;
+    "Mortal144": number;
+    "Mortal145": number;
+    "Mortal146": number;
+    "Mortal147": number;
+    "Mortal148": number;
+    "Mortal149": number;
+    "Mortal150": number;
+    "Mortal151": number;
+    "Mortal152": number;
+    "Mortal153": number;
+    "Mortal154": number;
+    "Mortal155": number;
+    "Mortal156": number;
+    "Mortal157": number;
+    "Mortal158": number;
+    "Mortal159": number;
+    "Mortal160": number;
+    "Mortal161": number;
+    "Mortal162": number;
+    "Mortal163": number;
+    "Mortal164": number;
+    "Mortal165": number;
+    "Mortal166": number;
+    "Mortal167": number;
+    "Mortal168": number;
+    "Mortal169": number;
+    "Mortal170": number;
+    "Mortal171": number;
+    "Mortal172": number;
+    "Mortal173": number;
+    "Mortal174": number;
+    "Mortal175": number;
+    "Mortal176": number;
+    "Mortal177": number;
+    "Mortal178": number;
+    "Mortal179": number;
+    "Mortal180": number;
+    "Mortal181": number;
+    "Mortal182": number;
+    "Mortal183": number;
+    "Mortal184": number;
+    "Mortal185": number;
+    "Mortal186": number;
+    "Mortal187": number;
+    "Mortal188": number;
+    "Mortal189": number;
+    "Mortal190": number;
+    "Mortal191": number;
+    "Mortal192": number;
+    "Mortal193": number;
+    "Mortal194": number;
+    "Mortal195": number;
+    "Mortal196": number;
+    "Mortal197": number;
+    "Mortal198": number;
+    "Mortal199": number;
+    "Mortal200": number;
+    "Mortal201": number;
+    "Mortal202": number;
+    "Mortal203": number;
+    "Mortal204": number;
+    "Mortal205": number;
+    "Mortal206": number;
+    "Mortal207": number;
+    "Mortal208": number;
+    "Mortal209": number;
+    "Mortal210": number;
+    "Mortal211": number;
+    "Mortal212": number;
+    "Mortal213": number;
+    "Mortal214": number;
+    "Mortal215": number;
+    "Mortal216": number;
+    "Mortal217": number;
+    "Mortal218": number;
+    "Mortal219": number;
+    "Mortal220": number;
+    "Mortal221": number;
+    "Mortal222": number;
+    "Mortal223": number;
+    "Mortal224": number;
+    "Mortal225": number;
+    "Mortal226": number;
+    "Mortal227": number;
+    "Mortal228": number;
+    "Mortal229": number;
+    "Mortal230": number;
+    "Mortal231": number;
+    "Mortal232": number;
+    "Mortal233": number;
+    "Mortal234": number;
+    "Mortal235": number;
+    "Mortal236": number;
+    "Mortal237": number;
+    "Mortal238": number;
+    "Mortal239": number;
+    "Mortal240": number;
+    "Mortal241": number;
+    "Mortal242": number;
+    "Mortal243": number;
+    "Mortal244": number;
+    "Mortal245": number;
+    "Mortal246": number;
+    "Mortal247": number;
+    "Mortal248": number;
+    "Mortal249": number;
+    "Mortal250": number;
+    "Mortal251": number;
+    "Mortal252": number;
+    "Mortal253": number;
+    "Mortal254": number;
+    "Mortal255": number;
+}>;
+export declare const ExtensionsCheckMortality: GetEnum<ExtensionsCheckMortality>;
+export type I182pt4kr56mhn = {
+    "tip": bigint;
+    "asset_id"?: Anonymize<I4pai6qnfk426l>;
+};
+export type I87rnrnks7g0hm = AnonymousEnum<{
+    "Disabled": undefined;
+    "Enabled": undefined;
+}>;
+export type Ie13a6ppb66mks = Array<{
     "phase": Phase;
-    "event": Anonymize<I3vqdln3cqr01e>;
+    "event": Enum<{
+        "System": Anonymize<Idd6fopulbu07j>;
+        "ParachainSystem": Anonymize<Icbsekf57miplo>;
+        "Preimage": PreimageEvent;
+        "Scheduler": Anonymize<I6o6htu8mlmk1h>;
+        "Parameters": Anonymize<I9rb8kcpcp6r4b>;
+        "MultiBlockMigrations": Anonymize<I94co7vj7h6bo>;
+        "Balances": Anonymize<Id6ehgrdf2t13l>;
+        "TransactionPayment": TransactionPaymentEvent;
+        "AssetTxPayment": Anonymize<I78bosroad52fa>;
+        "Vesting": Anonymize<I7uu9ebnucfti5>;
+        "Claims": CommonClaimsEvent;
+        "Dap": Anonymize<Ief0bj0s54t81l>;
+        "CollatorSelection": Anonymize<I4srakrmf0fspo>;
+        "Session": Anonymize<I6ue0ck5fc3u44>;
+        "XcmpQueue": Anonymize<Idsqc7mhp6nnle>;
+        "PolkadotXcm": Anonymize<If95hivmqmkiku>;
+        "CumulusXcm": Anonymize<I5uv57c3fffoi9>;
+        "ToKusamaXcmRouter": Anonymize<Ift4p4jnj5bri1>;
+        "MessageQueue": Anonymize<I2kosejppk3jon>;
+        "SnowbridgeSystemFrontend": Anonymize<I190sdd2js8aqk>;
+        "Utility": Anonymize<Ibhau0utosgvfv>;
+        "Multisig": Anonymize<I1805suvp0bj8l>;
+        "Proxy": Anonymize<I7mmkg3rsgm83b>;
+        "Indices": Anonymize<I2pejk6do5vg4t>;
+        "Assets": Anonymize<Ibse1c0pgtcdtn>;
+        "Uniques": Anonymize<Ia0j71vjrjqu9p>;
+        "Nfts": Anonymize<I6qicn8jn4fftj>;
+        "ForeignAssets": Anonymize<I4nr69fhfof48s>;
+        "PoolAssets": Anonymize<Ibse1c0pgtcdtn>;
+        "AssetConversion": Anonymize<Ievo2o32gc42ng>;
+        "AssetsFreezer": Anonymize<I7omheqbc53plq>;
+        "AssetsHolder": Anonymize<I94pmbd2ej3cid>;
+        "Treasury": Anonymize<I4jdb4j2c6meuu>;
+        "ConvictionVoting": Anonymize<I7pql8a2uf8mlq>;
+        "Referenda": Anonymize<Idfraa3b4eu018>;
+        "Whitelist": Anonymize<I24ok278rsrsvp>;
+        "Bounties": Anonymize<Ialf8tlustkp17>;
+        "ChildBounties": ChildBountiesEvent;
+        "AssetRate": Anonymize<I1dcjapt414ijf>;
+        "MultiAssetBounties": Anonymize<I18q76v9nfp680>;
+        "StateTrieMigration": Anonymize<I61dksvl51aujo>;
+        "NominationPools": Anonymize<Id0dkgikq71n9h>;
+        "VoterList": BagsListEvent;
+        "DelegatedStaking": Anonymize<I1nq1se98idofq>;
+        "StakingRcClient": Anonymize<I7djm8pmbv58rp>;
+        "MultiBlockElection": Anonymize<If1r9qhn1k7698>;
+        "MultiBlockElectionVerifier": Anonymize<Ia3me59518l5g2>;
+        "MultiBlockElectionSigned": Anonymize<I5ljekabnc2mck>;
+        "Staking": Anonymize<Idpojgcc8rlqkh>;
+        "MembersSubscriber": Anonymize<I4eou53mkprt8j>;
+        "AliasAccounts": Anonymize<I39r4c1qe1vpi9>;
+        "Pgas": Anonymize<Ibla01o1pjh7at>;
+        "Revive": Anonymize<I8ifearsvh7egi>;
+        "DotnsGateway": Anonymize<I15f34i89ie0mj>;
+        "OriginRestriction": Anonymize<Ioa4m5v0ajjt0>;
+        "NetworkSuffix": Anonymize<I9svlea5bgeoju>;
+        "Sudo": Anonymize<I8l9753il9abbr>;
+        "PgasAllowance": Anonymize<Iddese4sd5hoka>;
+        "AhOps": Anonymize<I4f830gria90rg>;
+    }>;
     "topics": Anonymize<Ic5m5lp1oioo8r>;
 }>;
-export type I3vqdln3cqr01e = AnonymousEnum<{
-    "System": Anonymize<I7s9c1r3i694ir>;
-    "ParachainSystem": Anonymize<Icbsekf57miplo>;
-    "Preimage": PreimageEvent;
-    "Scheduler": Anonymize<I79fsngj2hupjg>;
-    "Parameters": Anonymize<Iehfcpb8hf71dd>;
-    "MultiBlockMigrations": Anonymize<I94co7vj7h6bo>;
-    "Balances": Anonymize<Id6ehgrdf2t13l>;
-    "TransactionPayment": TransactionPaymentEvent;
-    "AssetTxPayment": Anonymize<I78bosroad52fa>;
-    "Vesting": Anonymize<I7uu9ebnucfti5>;
-    "Claims": CommonClaimsEvent;
-    "Dap": Anonymize<Ief0bj0s54t81l>;
-    "CollatorSelection": Anonymize<I4srakrmf0fspo>;
-    "Session": Anonymize<I6ue0ck5fc3u44>;
-    "XcmpQueue": Anonymize<Idsqc7mhp6nnle>;
-    "PolkadotXcm": Anonymize<If95hivmqmkiku>;
-    "CumulusXcm": Anonymize<I5uv57c3fffoi9>;
-    "ToKusamaXcmRouter": Anonymize<Ift4p4jnj5bri1>;
-    "MessageQueue": Anonymize<I2kosejppk3jon>;
-    "SnowbridgeSystemFrontend": Anonymize<I190sdd2js8aqk>;
-    "Utility": Anonymize<Id3og2ornl517n>;
-    "Multisig": Anonymize<Iflpuo79s0lpl0>;
-    "Proxy": Anonymize<I159p5754fpg22>;
-    "Indices": Anonymize<I2pejk6do5vg4t>;
-    "Assets": Anonymize<Ibse1c0pgtcdtn>;
-    "Uniques": Anonymize<Ia0j71vjrjqu9p>;
-    "Nfts": Anonymize<I6qicn8jn4fftj>;
-    "ForeignAssets": Anonymize<I4nr69fhfof48s>;
-    "PoolAssets": Anonymize<Ibse1c0pgtcdtn>;
-    "AssetConversion": Anonymize<Ievo2o32gc42ng>;
-    "AssetsFreezer": Anonymize<I7omheqbc53plq>;
-    "AssetsHolder": Anonymize<I94pmbd2ej3cid>;
-    "Treasury": Anonymize<I4jdb4j2c6meuu>;
-    "ConvictionVoting": Anonymize<I7pql8a2uf8mlq>;
-    "Referenda": Anonymize<Idfraa3b4eu018>;
-    "Whitelist": Anonymize<Ic60mlljv0tmcj>;
-    "Bounties": Anonymize<Ialf8tlustkp17>;
-    "ChildBounties": ChildBountiesEvent;
-    "AssetRate": Anonymize<I1dcjapt414ijf>;
-    "MultiAssetBounties": Anonymize<Iflv3gsndvcvub>;
-    "StateTrieMigration": Anonymize<I61dksvl51aujo>;
-    "NominationPools": Anonymize<Id0dkgikq71n9h>;
-    "VoterList": BagsListEvent;
-    "DelegatedStaking": Anonymize<I1nq1se98idofq>;
-    "StakingRcClient": Anonymize<I7djm8pmbv58rp>;
-    "MultiBlockElection": Anonymize<If1r9qhn1k7698>;
-    "MultiBlockElectionVerifier": Anonymize<Ia3me59518l5g2>;
-    "MultiBlockElectionSigned": Anonymize<I5ljekabnc2mck>;
-    "Staking": Anonymize<Idpojgcc8rlqkh>;
-    "MembersSubscriber": Anonymize<I4eou53mkprt8j>;
-    "AliasAccounts": Anonymize<I6sabhgj0jvd0b>;
-    "Pgas": Anonymize<Ibla01o1pjh7at>;
-    "Revive": Anonymize<I8au5nhditq2me>;
-    "DotnsGateway": Anonymize<I15f34i89ie0mj>;
-    "OriginRestriction": Anonymize<Ioa4m5v0ajjt0>;
-    "Sudo": Anonymize<Ibup8h5a83ojae>;
-    "PgasAllowance": Anonymize<Iddese4sd5hoka>;
-    "AhOps": Anonymize<I4f830gria90rg>;
-}>;
-export type I7s9c1r3i694ir = AnonymousEnum<{
+export type Idd6fopulbu07j = AnonymousEnum<{
     /**
      * An extrinsic completed successfully.
      */
@@ -16387,7 +16661,7 @@ export type I7s9c1r3i694ir = AnonymousEnum<{
     /**
      * An extrinsic failed.
      */
-    "ExtrinsicFailed": Anonymize<Idkvkmmgbl8jne>;
+    "ExtrinsicFailed": Anonymize<I1qdgrqvt473n4>;
     /**
      * `:code` was updated to the code with the given hash.
      */
@@ -16415,7 +16689,7 @@ export type I7s9c1r3i694ir = AnonymousEnum<{
     /**
      * A [`Task`] failed during execution.
      */
-    "TaskFailed": Anonymize<Ibu47iareat2vc>;
+    "TaskFailed": Anonymize<Ier5r85jd90cop>;
     /**
      * An upgrade was authorized.
      */
@@ -16423,13 +16697,13 @@ export type I7s9c1r3i694ir = AnonymousEnum<{
     /**
      * An invalid authorized upgrade was rejected while trying to apply it.
      */
-    "RejectedInvalidAuthorizedUpgrade": Anonymize<Ifk6r39afdvu7e>;
+    "RejectedInvalidAuthorizedUpgrade": Anonymize<Ifovqevul1hv3t>;
 }>;
-export type Idkvkmmgbl8jne = {
-    "dispatch_error": Anonymize<I3v48tp5484oth>;
+export type I1qdgrqvt473n4 = {
+    "dispatch_error": Anonymize<I61h1b445e14of>;
     "dispatch_info": Anonymize<Ic9s8f85vjtncc>;
 };
-export type I3v48tp5484oth = AnonymousEnum<{
+export type I61h1b445e14of = AnonymousEnum<{
     "Other": undefined;
     "CannotLookup": undefined;
     "BadOrigin": undefined;
@@ -16491,8 +16765,8 @@ export type I3v48tp5484oth = AnonymousEnum<{
         "MultiBlockElectionUnsigned": undefined;
         "MultiBlockElectionSigned": Anonymize<I9i66md365gdq9>;
         "Staking": Anonymize<Ibor9117nik4td>;
-        "MembersSubscriber": Anonymize<Ie329i4fuqfspu>;
-        "AliasAccounts": Anonymize<Iah94gqvla26v0>;
+        "MembersSubscriber": Anonymize<I4mt05vkbf849h>;
+        "AliasAccounts": Anonymize<Iepujesql01cq6>;
         "Pgas": Anonymize<Ifeuoiuv4rkv6>;
         "Revive": Anonymize<I8r3rk2nkfs0an>;
         "AssetsPrecompiles": undefined;
@@ -16500,6 +16774,7 @@ export type I3v48tp5484oth = AnonymousEnum<{
         "VestingPrecompiles": undefined;
         "DotnsGateway": Anonymize<I9eqk36vlrt1c9>;
         "OriginRestriction": Anonymize<I8pd5n1lppndg2>;
+        "NetworkSuffix": Anonymize<Ifvri7ski7d2q7>;
         "Sudo": Anonymize<Iaug04qjhbli00>;
         "PgasAllowance": undefined;
         "AhOps": Anonymize<Ibl4g7bmj805f>;
@@ -16528,7 +16803,7 @@ export type I3rc9953c1unod = AnonymousEnum<{
      */
     "TooManyHolds": undefined;
 }>;
-export type Ie329i4fuqfspu = AnonymousEnum<{
+export type I4mt05vkbf849h = AnonymousEnum<{
     /**
      * XCM message send failed.
      */
@@ -16565,8 +16840,16 @@ export type Ie329i4fuqfspu = AnonymousEnum<{
      * Requested revision is not present in the stored sliding window.
      */
     "RevisionNotFound": undefined;
+    /**
+     * Requested revision has been superseded for longer than the retention duration.
+     */
+    "RevisionExpired": undefined;
+    /**
+     * The notifier initialized more than `MaxCollections` collections.
+     */
+    "TooManyCollections": undefined;
 }>;
-export type Iah94gqvla26v0 = AnonymousEnum<{
+export type Iepujesql01cq6 = AnonymousEnum<{
     /**
      * The collection is not accepted.
      */
@@ -16587,19 +16870,6 @@ export type Iah94gqvla26v0 = AnonymousEnum<{
      * Call is too late or too early.
      */
     "TimeOutOfRange": undefined;
-    /**
-     * The alias mapping is not stale; the revision still matches the current ring root.
-     */
-    "AliasNotStale": undefined;
-    /**
-     * The cleanup grace period has not elapsed yet; the alias holder still has time to
-     * update.
-     */
-    "CleanupTooEarly": undefined;
-    /**
-     * Storage is in an inconsistent state. This should never happen under normal operation.
-     */
-    "InconsistentState": undefined;
     /**
      * The PGAS fee for alias registrations has not been set yet.
      */
@@ -16712,20 +16982,26 @@ export type I8pd5n1lppndg2 = AnonymousEnum<{
      */
     "NotZero": undefined;
 }>;
+export type Ifvri7ski7d2q7 = AnonymousEnum<{
+    /**
+     * A network suffix cannot be empty.
+     */
+    "EmptySuffix": undefined;
+}>;
 export type Iaug04qjhbli00 = AnonymousEnum<{
     /**
      * Sender must be the Sudo account.
      */
     "RequireSudo": undefined;
 }>;
-export type Ibu47iareat2vc = {
-    "err": Anonymize<I3v48tp5484oth>;
+export type Ier5r85jd90cop = {
+    "err": Anonymize<I61h1b445e14of>;
 };
-export type Ifk6r39afdvu7e = {
+export type Ifovqevul1hv3t = {
     "code_hash": SizedHex<32>;
-    "error": Anonymize<I3v48tp5484oth>;
+    "error": Anonymize<I61h1b445e14of>;
 };
-export type I79fsngj2hupjg = AnonymousEnum<{
+export type I6o6htu8mlmk1h = AnonymousEnum<{
     /**
      * Scheduled some task.
      */
@@ -16737,7 +17013,7 @@ export type I79fsngj2hupjg = AnonymousEnum<{
     /**
      * Dispatched some task.
      */
-    "Dispatched": Anonymize<Iajap7qjb6bmus>;
+    "Dispatched": Anonymize<I5bk5hu4ak2ltv>;
     /**
      * Set a retry configuration for some task.
      */
@@ -16768,18 +17044,58 @@ export type I79fsngj2hupjg = AnonymousEnum<{
      */
     "AgendaIncomplete": Anonymize<Ibtsa3docbr9el>;
 }>;
-export type Iajap7qjb6bmus = {
+export type I5bk5hu4ak2ltv = {
     "task": Anonymize<I9jd27rnpm8ttv>;
     "id"?: Anonymize<I4s6vifaf8k998>;
-    "result": Anonymize<I92luu1npc10cg>;
+    "result": Anonymize<I4p171dr2futft>;
 };
-export type I92luu1npc10cg = ResultPayload<undefined, Anonymize<I3v48tp5484oth>>;
-export type Id3og2ornl517n = AnonymousEnum<{
+export type I4p171dr2futft = ResultPayload<undefined, Anonymize<I61h1b445e14of>>;
+export type I9rb8kcpcp6r4b = AnonymousEnum<{
+    /**
+     * A Parameter was set.
+     *
+     * Is also emitted when the value was not changed.
+     */
+    "Updated": Anonymize<I2nv6j2h8imgbl>;
+}>;
+export type I2nv6j2h8imgbl = {
+    /**
+     * The key that was updated.
+     */
+    "key": Anonymize<I5li9kjoo8jjeo>;
+    /**
+     * The old value before this call.
+     */
+    "old_value"?: (Anonymize<I1l3sdv10o52gd>) | undefined;
+    /**
+     * The new value after this call.
+     */
+    "new_value"?: (Anonymize<I1l3sdv10o52gd>) | undefined;
+};
+export type I5li9kjoo8jjeo = AnonymousEnum<{
+    "StakingElection": Anonymize<I7b9ads3v443ck>;
+    "Scheduler": Anonymize<I24jhg3f2eo0lf>;
+    "MessageQueue": Anonymize<Idajpoh0kgdigh>;
+    "AliasAccounts": Enum<{
+        "AliasFee": undefined;
+        "StaleAliasSweepInterval": undefined;
+    }>;
+}>;
+export type I1l3sdv10o52gd = AnonymousEnum<{
+    "StakingElection": Anonymize<I5trrk9652tbo6>;
+    "Scheduler": Anonymize<Ib2k8reb66bms0>;
+    "MessageQueue": Anonymize<I3b81fugo1ah07>;
+    "AliasAccounts": Enum<{
+        "AliasFee"?: Anonymize<I35p85j063s0il>;
+        "StaleAliasSweepInterval": number;
+    }>;
+}>;
+export type Ibhau0utosgvfv = AnonymousEnum<{
     /**
      * Batch of dispatches did not complete fully. Index of first failing dispatch given, as
      * well as the error.
      */
-    "BatchInterrupted": Anonymize<Ifuhste1ebchgv>;
+    "BatchInterrupted": Anonymize<I5t0h3v31vercb>;
     /**
      * Batch of dispatches completed fully with no error.
      */
@@ -16795,11 +17111,11 @@ export type Id3og2ornl517n = AnonymousEnum<{
     /**
      * A single item within a Batch of dispatches has completed with error.
      */
-    "ItemFailed": Anonymize<I3bbd4ih1sm5rk>;
+    "ItemFailed": Anonymize<Ioq9h2ok08d7n>;
     /**
      * A call was dispatched.
      */
-    "DispatchedAs": Anonymize<Ifue5tr1igffke>;
+    "DispatchedAs": Anonymize<Idfvckuklc9fg5>;
     /**
      * Main call was dispatched.
      */
@@ -16807,22 +17123,22 @@ export type Id3og2ornl517n = AnonymousEnum<{
     /**
      * The fallback call was dispatched.
      */
-    "IfElseFallbackCalled": Anonymize<I522m86k6ln5ak>;
+    "IfElseFallbackCalled": Anonymize<Ibmjpstvdjcrai>;
 }>;
-export type Ifuhste1ebchgv = {
+export type I5t0h3v31vercb = {
     "index": number;
-    "error": Anonymize<I3v48tp5484oth>;
+    "error": Anonymize<I61h1b445e14of>;
 };
-export type I3bbd4ih1sm5rk = {
-    "error": Anonymize<I3v48tp5484oth>;
+export type Ioq9h2ok08d7n = {
+    "error": Anonymize<I61h1b445e14of>;
 };
-export type Ifue5tr1igffke = {
-    "result": Anonymize<I92luu1npc10cg>;
+export type Idfvckuklc9fg5 = {
+    "result": Anonymize<I4p171dr2futft>;
 };
-export type I522m86k6ln5ak = {
-    "main_error": Anonymize<I3v48tp5484oth>;
+export type Ibmjpstvdjcrai = {
+    "main_error": Anonymize<I61h1b445e14of>;
 };
-export type Iflpuo79s0lpl0 = AnonymousEnum<{
+export type I1805suvp0bj8l = AnonymousEnum<{
     /**
      * A new multisig operation has begun.
      */
@@ -16834,7 +17150,7 @@ export type Iflpuo79s0lpl0 = AnonymousEnum<{
     /**
      * A multisig operation has been executed.
      */
-    "MultisigExecuted": Anonymize<Ibl41shttdjev9>;
+    "MultisigExecuted": Anonymize<I8glmdpumtd6gi>;
     /**
      * A multisig operation has been cancelled.
      */
@@ -16844,18 +17160,18 @@ export type Iflpuo79s0lpl0 = AnonymousEnum<{
      */
     "DepositPoked": Anonymize<I8gtde5abn1g9a>;
 }>;
-export type Ibl41shttdjev9 = {
+export type I8glmdpumtd6gi = {
     "approving": SS58String;
     "timepoint": Anonymize<Itvprrpb0nm3o>;
     "multisig": SS58String;
     "call_hash": SizedHex<32>;
-    "result": Anonymize<I92luu1npc10cg>;
+    "result": Anonymize<I4p171dr2futft>;
 };
-export type I159p5754fpg22 = AnonymousEnum<{
+export type I7mmkg3rsgm83b = AnonymousEnum<{
     /**
      * A proxy was executed correctly, with the given.
      */
-    "ProxyExecuted": Anonymize<Ifue5tr1igffke>;
+    "ProxyExecuted": Anonymize<Idfvckuklc9fg5>;
     /**
      * A pure account has been created by new proxy with given
      * disambiguation index and proxy type.
@@ -16942,69 +17258,18 @@ export type I17i7j1j46bce3 = {
     "reason": Anonymize<Ickdiocl9u813v>;
     "amount": bigint;
 };
-export type Ic60mlljv0tmcj = AnonymousEnum<{
+export type I24ok278rsrsvp = AnonymousEnum<{
     "CallWhitelisted": Anonymize<I1adbcfi5uc62r>;
     "WhitelistedCallRemoved": Anonymize<I1adbcfi5uc62r>;
-    "WhitelistedCallDispatched": Anonymize<I8bo1tpr9a8c2h>;
+    "WhitelistedCallDispatched": Anonymize<I13h3fcccd3vd6>;
 }>;
-export type I8bo1tpr9a8c2h = {
+export type I13h3fcccd3vd6 = {
     "call_hash": SizedHex<32>;
-    "result": Anonymize<I9atibdbi0omss>;
+    "result": ResultPayload<Anonymize<Ia1u1r3n74r13c>, {
+        "post_info": Anonymize<Ia1u1r3n74r13c>;
+        "error": Anonymize<I61h1b445e14of>;
+    }>;
 };
-export type I9atibdbi0omss = ResultPayload<Anonymize<Ia1u1r3n74r13c>, {
-    "post_info": Anonymize<Ia1u1r3n74r13c>;
-    "error": Anonymize<I3v48tp5484oth>;
-}>;
-export type Iflv3gsndvcvub = AnonymousEnum<{
-    /**
-     * A new bounty was created and funding has been initiated.
-     */
-    "BountyCreated": Anonymize<I666bl2fqjkejo>;
-    /**
-     * A new child-bounty was created and funding has been initiated.
-     */
-    "ChildBountyCreated": Anonymize<I60p8l86a8cm59>;
-    /**
-     * The curator accepted role and child-/bounty became active.
-     */
-    "BountyBecameActive": Anonymize<I41bt7lr6c2cqa>;
-    /**
-     * A child-/bounty was awarded to a beneficiary.
-     */
-    "BountyAwarded": Anonymize<I200voven22cdm>;
-    /**
-     * Payout payment to the beneficiary has concluded successfully.
-     */
-    "BountyPayoutProcessed": Anonymize<I2j7mp9h804tg2>;
-    /**
-     * Funding payment has concluded successfully.
-     */
-    "BountyFundingProcessed": Anonymize<I1hl2lumftiuhm>;
-    /**
-     * Refund payment has concluded successfully.
-     */
-    "BountyRefundProcessed": Anonymize<I1hl2lumftiuhm>;
-    /**
-     * A child-/bounty was cancelled.
-     */
-    "BountyCanceled": Anonymize<I1hl2lumftiuhm>;
-    /**
-     * A child-/bounty curator was unassigned.
-     */
-    "CuratorUnassigned": Anonymize<I1hl2lumftiuhm>;
-    /**
-     * A child-/bounty curator was proposed.
-     */
-    "CuratorProposed": Anonymize<I41bt7lr6c2cqa>;
-    /**
-     * A payment failed and can be retried.
-     */
-    "PaymentFailed": Anonymize<Iccp9ugd60cntc>;
-    /**
-     * A payment happened and can be checked.
-     */
-    "Paid": Anonymize<Iccp9ugd60cntc>;
-}>;
 export type I4eou53mkprt8j = AnonymousEnum<{
     /**
      * Ring roots have been initialized from the notifier.
@@ -17073,7 +17338,7 @@ export type Idjiu7vp8ovdab = {
      */
     "identifier": SizedHex<32>;
 };
-export type I6sabhgj0jvd0b = AnonymousEnum<{
+export type I39r4c1qe1vpi9 = AnonymousEnum<{
     /**
      * An alias account has been set or updated.
      */
@@ -17083,13 +17348,19 @@ export type I6sabhgj0jvd0b = AnonymousEnum<{
      */
     "AliasAccountUnset": Anonymize<Icbccs0ug47ilf>;
     /**
-     * A stale alias mapping was cleaned up.
+     * A stale alias mapping was removed.
      */
-    "StaleAliasCleanedUp": Anonymize<I2k5q8tu497vml>;
+    "StaleAliasRemoved": Anonymize<I2k5q8tu497vml>;
     /**
-     * The PGAS fee for alias registrations was changed.
+     * A mapping was reported stale, which starts [`Config::MappingRetention`]. It is still
+     * stored, and a call from `removable_at` on removes it.
      */
-    "AliasFeeSet": Anonymize<Ib1ilbm5ipoh62>;
+    "StaleAliasReported": Anonymize<Ib5nd4b60msfgt>;
+    /**
+     * A mapping reported stale verifies again, so its report was dropped. A later staleness
+     * starts [`Config::MappingRetention`] over.
+     */
+    "StaleAliasReportCleared": Anonymize<I2k5q8tu497vml>;
 }>;
 export type I2k5q8tu497vml = {
     /**
@@ -17105,8 +17376,23 @@ export type I2k5q8tu497vml = {
      */
     "alias": SizedHex<32>;
 };
-export type Ib1ilbm5ipoh62 = {
-    "fee": bigint;
+export type Ib5nd4b60msfgt = {
+    /**
+     * The account whose mapping was reported.
+     */
+    "account": SS58String;
+    /**
+     * The collection identifier.
+     */
+    "collection": SizedHex<32>;
+    /**
+     * The contextual alias.
+     */
+    "alias": SizedHex<32>;
+    /**
+     * The second from which the mapping can be removed.
+     */
+    "removable_at": bigint;
 };
 export type Ibla01o1pjh7at = AnonymousEnum<{
     /**
@@ -17137,7 +17423,7 @@ export type Iav577o5q7lojg = {
     "day_index": number;
     "count": number;
 };
-export type I8au5nhditq2me = AnonymousEnum<{
+export type I8ifearsvh7egi = AnonymousEnum<{
     /**
      * A custom event emitted by the contract.
      */
@@ -17154,10 +17440,10 @@ export type I8au5nhditq2me = AnonymousEnum<{
      * To distinguish reverted calls from successful ones, this event is emitted
      * for failed Ethereum transactions.
      */
-    "EthExtrinsicRevert": Anonymize<Itqt1ijla4vha>;
+    "EthExtrinsicRevert": Anonymize<I534irpjp31lfe>;
 }>;
-export type Itqt1ijla4vha = {
-    "dispatch_error": Anonymize<I3v48tp5484oth>;
+export type I534irpjp31lfe = {
+    "dispatch_error": Anonymize<I61h1b445e14of>;
 };
 export type I15f34i89ie0mj = AnonymousEnum<{
     /**
@@ -17259,11 +17545,21 @@ export type I6at0amaqc5r60 = {
 export type I4pgs2j4mmb12q = AnonymousEnum<{
     "DotnsPersonRegistration": SizedHex<32>;
 }>;
-export type Ibup8h5a83ojae = AnonymousEnum<{
+export type I9svlea5bgeoju = AnonymousEnum<{
+    /**
+     * The network suffix changed.
+     */
+    "NetworkSuffixSet": Anonymize<Ievh3p2v3irpv2>;
+}>;
+export type Ievh3p2v3irpv2 = {
+    "old": Uint8Array;
+    "new": Uint8Array;
+};
+export type I8l9753il9abbr = AnonymousEnum<{
     /**
      * A sudo call just took place.
      */
-    "Sudid": Anonymize<I255irfn84gpvv>;
+    "Sudid": Anonymize<I23hh2qt15pn3s>;
     /**
      * The sudo key has been updated.
      */
@@ -17275,13 +17571,13 @@ export type Ibup8h5a83ojae = AnonymousEnum<{
     /**
      * A [sudo_as](Pallet::sudo_as) call just took place.
      */
-    "SudoAsDone": Anonymize<I255irfn84gpvv>;
+    "SudoAsDone": Anonymize<I23hh2qt15pn3s>;
 }>;
-export type I255irfn84gpvv = {
+export type I23hh2qt15pn3s = {
     /**
      * The result of the call made by the sudo user.
      */
-    "sudo_result": Anonymize<I92luu1npc10cg>;
+    "sudo_result": Anonymize<I4p171dr2futft>;
 };
 export type I5rtkmhm2dng4u = {
     /**
@@ -17304,21 +17600,18 @@ export type I6vpqg1ssj0gc7 = {
     "who": SS58String;
     "actual_fee": bigint;
 };
-export type I226kqgcfgo790 = Array<({
+export type Iaqsrnkbbmb97b = Array<({
     "maybe_id"?: Anonymize<I4s6vifaf8k998>;
     "priority": number;
     "call": PreimagesBounded;
     "maybe_periodic"?: Anonymize<Iep7au1720bm0e>;
-    "origin": Anonymize<I16fdh28nbfp7t>;
+    "origin": Anonymize<I1ilf2k8puf0h4>;
 }) | undefined>;
-export type I16fdh28nbfp7t = AnonymousEnum<{
+export type I1ilf2k8puf0h4 = AnonymousEnum<{
     "system": Anonymize<I9gqitj4t615g3>;
     "PolkadotXcm": Anonymize<Icvilmd7qu30i4>;
     "CumulusXcm": Anonymize<I3in0d0lb61qi8>;
     "Origins": GovernanceOrigin;
-    "AliasAccounts": Enum<{
-        "RingAlias": Anonymize<Ia892jrs62vldc>;
-    }>;
     "Pgas": Enum<{
         "ClaimAlias": {
             "alias": SizedHex<32>;
@@ -17331,25 +17624,24 @@ export type I16fdh28nbfp7t = AnonymousEnum<{
         "PersonRegistration": SizedHex<32>;
     }>;
 }>;
-export type Ia892jrs62vldc = {
-    "collection": SizedHex<32>;
-    "revision": number;
-    "ring": number;
-    "ca": Anonymize<Icq9999ubti4jr>;
-};
-export type Icq9999ubti4jr = {
-    "alias": SizedHex<32>;
-    "context": SizedHex<32>;
-};
+export type I5mpbmq1ooiq9i = Array<{
+    "recipient": number;
+    "state": Anonymize<Ic2gg6ldfq068e>;
+    "signals_exist": boolean;
+    "first_index": number;
+    "last_index": number;
+    "flags": number;
+    "queued_bytes": number;
+}>;
 export type Iag7gka4fmp5er = [Array<{
     "delegate": SS58String;
     "proxy_type": Anonymize<Iq3dapmsriggs>;
     "delay": number;
 }>, bigint];
-export type Icqb8vu2svfhjf = AnonymousEnum<{
+export type Ic6burlpovfhi6 = AnonymousEnum<{
     "Ongoing": {
         "track": number;
-        "origin": Anonymize<I16fdh28nbfp7t>;
+        "origin": Anonymize<I1ilf2k8puf0h4>;
         "proposal": PreimagesBounded;
         "enactment": TraitsScheduleDispatchTime;
         "submitted": number;
@@ -17366,15 +17658,21 @@ export type Icqb8vu2svfhjf = AnonymousEnum<{
     "TimedOut": Anonymize<Ini94eljn5lj8>;
     "Killed": number;
 }>;
-export type Ic05hka01p7c4i = Array<{
-    "root": SizedHex<768>;
+export type Ifsgohug5cpb9 = Array<{
+    "root": SizedHex<288>;
     "revision": number;
     "source_time": bigint;
     "source_sequence": bigint;
 }>;
-export type I7varcg4klvmsf = {
+export type I4hus3s8lblmj7 = [number, SizedHex<32>, number];
+export type Id2b1qsnd0q3jb = {
+    "generation": number;
+    "page": number;
+};
+export type Ifl2ank31rkhm0 = {
     "ring_count": number;
     "next_ring_index": number;
+    "next_scan_index": number;
     "missing_indices": Anonymize<I95g6i7ilua7lq>;
     "deleted_indices": Anonymize<Icgljjb6j82uhn>;
 };
@@ -17396,6 +17694,16 @@ export type I5k86f11ne5gjd = {
     "last_replay_request_time": bigint;
 };
 export type I8g5kqku53c190 = [SizedHex<32>, Anonymize<Icq9999ubti4jr>];
+export type Icq9999ubti4jr = {
+    "alias": SizedHex<32>;
+    "context": SizedHex<32>;
+};
+export type Ia892jrs62vldc = {
+    "collection": SizedHex<32>;
+    "revision": number;
+    "ring": number;
+    "ca": Anonymize<Icq9999ubti4jr>;
+};
 export type I9jea06984vfti = [SizedHex<4>, SizedHex<32>];
 export type If85gvv84rc1b = {
     "collection": Enum<{
@@ -17403,6 +17711,16 @@ export type If85gvv84rc1b = {
         "PeopleLite": undefined;
     }>;
     "account": SS58String;
+};
+export type Idfos1hk75i7fm = {
+    "lite"?: ({
+        "label": Uint8Array;
+        "chat"?: (SizedHex<65>) | undefined;
+    }) | undefined;
+    "full"?: ({
+        "label": Uint8Array;
+        "chat"?: (SizedHex<65>) | undefined;
+    }) | undefined;
 };
 export type Icj0tssrh6ika3 = {
     "used": bigint;
@@ -17412,11 +17730,11 @@ export type If0d1j56sjc2vd = {
     "location": Anonymize<If9iqq7i64mur8>;
     "pallet_index": number;
 };
-export type I3uvsr9dukvbas = AnonymousEnum<{
+export type I4dnfqk04hg9va = AnonymousEnum<{
     /**
      * Anonymously schedule a task.
      */
-    "schedule": Anonymize<I4eopdufa5bdk8>;
+    "schedule": Anonymize<Ikcj0uucb0tlk>;
     /**
      * Cancel a scheduled task (named or anonymous), by providing the block it is scheduled for
      * execution in, as well as the index of the task in that block's agenda.
@@ -17427,7 +17745,7 @@ export type I3uvsr9dukvbas = AnonymousEnum<{
     /**
      * Schedule a named task.
      */
-    "schedule_named": Anonymize<I8hg4d5q2ltark>;
+    "schedule_named": Anonymize<Iaeuepm7g9fa41>;
     /**
      * Cancel a named scheduled task.
      */
@@ -17435,11 +17753,11 @@ export type I3uvsr9dukvbas = AnonymousEnum<{
     /**
      * Anonymously schedule a task after a delay.
      */
-    "schedule_after": Anonymize<Ictcdoi96smosi>;
+    "schedule_after": Anonymize<Ian2lnfkc73gle>;
     /**
      * Schedule a named task after a delay.
      */
-    "schedule_named_after": Anonymize<I3ttr0gem35mdu>;
+    "schedule_named_after": Anonymize<I2mj6qem5oo9bh>;
     /**
      * Set a retry configuration for a task so that, in case its scheduled run fails, it will
      * be retried after `period` blocks, for a total amount of `retries` retries or until it
@@ -17483,33 +17801,53 @@ export type I3uvsr9dukvbas = AnonymousEnum<{
      */
     "cancel_retry_named": Anonymize<Ifs1i5fk9cqvr6>;
 }>;
-export type I4eopdufa5bdk8 = {
+export type Ikcj0uucb0tlk = {
     "when": number;
     "maybe_periodic"?: Anonymize<Iep7au1720bm0e>;
     "priority": number;
     "call": TxCallData;
 };
-export type I8hg4d5q2ltark = {
+export type Iaeuepm7g9fa41 = {
     "id": SizedHex<32>;
     "when": number;
     "maybe_periodic"?: Anonymize<Iep7au1720bm0e>;
     "priority": number;
     "call": TxCallData;
 };
-export type Ictcdoi96smosi = {
+export type Ian2lnfkc73gle = {
     "after": number;
     "maybe_periodic"?: Anonymize<Iep7au1720bm0e>;
     "priority": number;
     "call": TxCallData;
 };
-export type I3ttr0gem35mdu = {
+export type I2mj6qem5oo9bh = {
     "id": SizedHex<32>;
     "after": number;
     "maybe_periodic"?: Anonymize<Iep7au1720bm0e>;
     "priority": number;
     "call": TxCallData;
 };
-export type I78vo1kco4ease = AnonymousEnum<{
+export type I57ceu1ubtrfov = AnonymousEnum<{
+    /**
+     * Set the value of a parameter.
+     *
+     * The dispatch origin of this call must be `AdminOrigin` for the given `key`. Values be
+     * deleted by setting them to `None`.
+     */
+    "set_parameter": Anonymize<Ib2514p0nqisbg>;
+}>;
+export type Ib2514p0nqisbg = {
+    "key_value": Enum<{
+        "StakingElection": Anonymize<I242o6tru431gv>;
+        "Scheduler": Anonymize<Ifdl9mnv4nvlai>;
+        "MessageQueue": Anonymize<I7lh9sa8l4652a>;
+        "AliasAccounts": Enum<{
+            "AliasFee": FixedSizeArray<1, (Anonymize<I35p85j063s0il>) | undefined>;
+            "StaleAliasSweepInterval": Anonymize<Idqsmalvqe2q98>;
+        }>;
+    }>;
+};
+export type Iellhato5fm5je = AnonymousEnum<{
     /**
      * Send a batch of dispatch calls.
      *
@@ -17530,7 +17868,7 @@ export type I78vo1kco4ease = AnonymousEnum<{
      * and the error of the failed call. If all were successful, then the `BatchCompleted`
      * event is deposited.
      */
-    "batch": Anonymize<I5lbr40m04ak69>;
+    "batch": Anonymize<I3ntd9i7877oak>;
     /**
      * Send a call through an indexed pseudonym of the sender.
      *
@@ -17546,7 +17884,7 @@ export type I78vo1kco4ease = AnonymousEnum<{
      *
      * The dispatch origin for this call must be _Signed_.
      */
-    "as_derivative": Anonymize<I7ns2a9oeu8be5>;
+    "as_derivative": Anonymize<Idvq9g9ibrkvtu>;
     /**
      * Send a batch of dispatch calls and atomically execute them.
      * The whole transaction will rollback and fail if any of the calls failed.
@@ -17562,7 +17900,7 @@ export type I78vo1kco4ease = AnonymousEnum<{
      * ## Complexity
      * - O(C) where C is the number of calls to be batched.
      */
-    "batch_all": Anonymize<I5lbr40m04ak69>;
+    "batch_all": Anonymize<I3ntd9i7877oak>;
     /**
      * Dispatches a function call with a provided origin.
      *
@@ -17571,7 +17909,7 @@ export type I78vo1kco4ease = AnonymousEnum<{
      * ## Complexity
      * - O(1).
      */
-    "dispatch_as": Anonymize<I3fpug2dld0r8m>;
+    "dispatch_as": Anonymize<Ial13es6f4qc2i>;
     /**
      * Send a batch of dispatch calls.
      * Unlike `batch`, it allows errors and won't interrupt.
@@ -17587,7 +17925,7 @@ export type I78vo1kco4ease = AnonymousEnum<{
      * ## Complexity
      * - O(C) where C is the number of calls to be batched.
      */
-    "force_batch": Anonymize<I5lbr40m04ak69>;
+    "force_batch": Anonymize<I3ntd9i7877oak>;
     /**
      * Dispatch a function call with a specified weight.
      *
@@ -17596,7 +17934,7 @@ export type I78vo1kco4ease = AnonymousEnum<{
      *
      * The dispatch origin for this call must be _Root_.
      */
-    "with_weight": Anonymize<I9ram4dti7vvhv>;
+    "with_weight": Anonymize<I4trno9ou8ib0t>;
     /**
      * Dispatch a fallback call in the event the main call fails to execute.
      * May be called from any origin except `None`.
@@ -17622,7 +17960,7 @@ export type I78vo1kco4ease = AnonymousEnum<{
      * - Some use cases might involve submitting a `batch` type call in either main, fallback
      * or both.
      */
-    "if_else": Anonymize<I46jf39pgs2u4u>;
+    "if_else": Anonymize<I9gf6vu5rhvslt>;
     /**
      * Dispatches a function call with a provided origin.
      *
@@ -17630,28 +17968,28 @@ export type I78vo1kco4ease = AnonymousEnum<{
      *
      * The dispatch origin for this call must be _Root_.
      */
-    "dispatch_as_fallible": Anonymize<I3fpug2dld0r8m>;
+    "dispatch_as_fallible": Anonymize<Ial13es6f4qc2i>;
 }>;
-export type I5lbr40m04ak69 = {
+export type I3ntd9i7877oak = {
     "calls": Array<TxCallData>;
 };
-export type I7ns2a9oeu8be5 = {
+export type Idvq9g9ibrkvtu = {
     "index": number;
     "call": TxCallData;
 };
-export type I3fpug2dld0r8m = {
-    "as_origin": Anonymize<I16fdh28nbfp7t>;
+export type Ial13es6f4qc2i = {
+    "as_origin": Anonymize<I1ilf2k8puf0h4>;
     "call": TxCallData;
 };
-export type I9ram4dti7vvhv = {
+export type I4trno9ou8ib0t = {
     "call": TxCallData;
     "weight": Anonymize<I4q39t5hn830vp>;
 };
-export type I46jf39pgs2u4u = {
+export type I9gf6vu5rhvslt = {
     "main": TxCallData;
     "fallback": TxCallData;
 };
-export type Ico6fhf7bkqqt3 = AnonymousEnum<{
+export type Iajac9b899ntjv = AnonymousEnum<{
     /**
      * Immediately dispatch a multi-signature call using a single approval from the caller.
      *
@@ -17666,7 +18004,7 @@ export type Ico6fhf7bkqqt3 = AnonymousEnum<{
      * ## Complexity
      * O(Z + C) where Z is the length of the call and C its execution weight.
      */
-    "as_multi_threshold_1": Anonymize<I4hhm3djmaqhk9>;
+    "as_multi_threshold_1": Anonymize<I1mr337ef5gtdo>;
     /**
      * Register approval for a dispatch to be made from a deterministic composite account if
      * approved by a total of `threshold - 1` of `other_signatories`.
@@ -17711,7 +18049,7 @@ export type Ico6fhf7bkqqt3 = AnonymousEnum<{
      * - Storage: inserts one item, value size bounded by `MaxSignatories`, with a deposit
      * taken for its lifetime of `DepositBase + threshold * DepositFactor`.
      */
-    "as_multi": Anonymize<If5d5vd5s3hom0>;
+    "as_multi": Anonymize<I32i7b1p0ee9ap>;
     /**
      * Register approval for a dispatch to be made from a deterministic composite account if
      * approved by a total of `threshold - 1` of `other_signatories`.
@@ -17794,18 +18132,18 @@ export type Ico6fhf7bkqqt3 = AnonymousEnum<{
      */
     "poke_deposit": Anonymize<I6lqh1vgb4mcja>;
 }>;
-export type I4hhm3djmaqhk9 = {
+export type I1mr337ef5gtdo = {
     "other_signatories": Anonymize<Ia2lhg7l2hilo3>;
     "call": TxCallData;
 };
-export type If5d5vd5s3hom0 = {
+export type I32i7b1p0ee9ap = {
     "threshold": number;
     "other_signatories": Anonymize<Ia2lhg7l2hilo3>;
     "maybe_timepoint"?: Anonymize<I95jfd8j5cr5eh>;
     "call": TxCallData;
     "max_weight": Anonymize<I4q39t5hn830vp>;
 };
-export type I9pugt904mt63j = AnonymousEnum<{
+export type I824h5k7lq8fqd = AnonymousEnum<{
     /**
      * Dispatch the given `call` from an account that the sender is authorised for through
      * `add_proxy`.
@@ -17817,7 +18155,7 @@ export type I9pugt904mt63j = AnonymousEnum<{
      * - `force_proxy_type`: Specify the exact proxy type to be used and checked for this call.
      * - `call`: The call to be made by the `real` account.
      */
-    "proxy": Anonymize<I31mtbkbio2383>;
+    "proxy": Anonymize<Icfe90kbu2ohi7>;
     /**
      * Register a proxy account for the sender that is able to make calls on its behalf.
      *
@@ -17946,7 +18284,7 @@ export type I9pugt904mt63j = AnonymousEnum<{
      * - `force_proxy_type`: Specify the exact proxy type to be used and checked for this call.
      * - `call`: The call to be made by the `real` account.
      */
-    "proxy_announced": Anonymize<Idbiu3ka7qdu81>;
+    "proxy_announced": Anonymize<Ifbb755k5glf9c>;
     /**
      * Poke / Adjust deposits made for proxies and announcements based on current values.
      * This can be used by accounts to possibly lower their locked amount.
@@ -17959,7 +18297,7 @@ export type I9pugt904mt63j = AnonymousEnum<{
      */
     "poke_deposit": undefined;
 }>;
-export type I31mtbkbio2383 = {
+export type Icfe90kbu2ohi7 = {
     "real": MultiAddress;
     "force_proxy_type"?: Anonymize<Idij4avt9e4cf>;
     "call": TxCallData;
@@ -17982,13 +18320,13 @@ export type I9fg860lp990m2 = {
     "height": number;
     "ext_index": number;
 };
-export type Idbiu3ka7qdu81 = {
+export type Ifbb755k5glf9c = {
     "delegate": MultiAddress;
     "real": MultiAddress;
     "force_proxy_type"?: Anonymize<Idij4avt9e4cf>;
     "call": TxCallData;
 };
-export type I1sdjapeklo4jr = AnonymousEnum<{
+export type I14r6iht02cda8 = AnonymousEnum<{
     /**
      * Propose a referendum on a privileged action.
      *
@@ -18000,7 +18338,7 @@ export type I1sdjapeklo4jr = AnonymousEnum<{
      *
      * Emits `Submitted`.
      */
-    "submit": Anonymize<I9qsaa39akt3b6>;
+    "submit": Anonymize<If2a2827j1eg7m>;
     /**
      * Post the Decision Deposit for a referendum.
      *
@@ -18080,259 +18418,21 @@ export type I1sdjapeklo4jr = AnonymousEnum<{
      */
     "set_metadata": Anonymize<I8c0vkqjjipnuj>;
 }>;
-export type I9qsaa39akt3b6 = {
-    "proposal_origin": Anonymize<I16fdh28nbfp7t>;
+export type If2a2827j1eg7m = {
+    "proposal_origin": Anonymize<I1ilf2k8puf0h4>;
     "proposal": PreimagesBounded;
     "enactment_moment": TraitsScheduleDispatchTime;
 };
-export type Iailr4h14uumt9 = AnonymousEnum<{
+export type I936okcjle0mdf = AnonymousEnum<{
     "whitelist_call": Anonymize<I1adbcfi5uc62r>;
     "remove_whitelisted_call": Anonymize<I1adbcfi5uc62r>;
     "dispatch_whitelisted_call": Anonymize<Ibf6ucefn8fh49>;
-    "dispatch_whitelisted_call_with_preimage": Anonymize<Ifacok17cvls3n>;
+    "dispatch_whitelisted_call_with_preimage": Anonymize<Ifr706bjpl0fi8>;
 }>;
-export type Ifacok17cvls3n = {
+export type Ifr706bjpl0fi8 = {
     "call": TxCallData;
 };
-export type I5t09dnejpfl63 = AnonymousEnum<{
-    /**
-     * Fund a new bounty with a proposed curator, initiating the payment from the
-     * funding source to the bounty account/location.
-     *
-     * ## Dispatch Origin
-     *
-     * Must be [`Config::SpendOrigin`] with the `Success` value being at least
-     * the bounty value converted to native balance using [`Config::BalanceConverter`].
-     * The converted native amount is validated against the maximum spendable amount
-     * returned by [`Config::SpendOrigin`].
-     *
-     * ## Details
-     *
-     * - The `SpendOrigin` must have sufficient permissions to fund the bounty.
-     * - The bounty `value` (in asset balance) is converted to native balance for validation.
-     * - In case of a funding failure, the bounty status must be updated with the
-     * `check_status` call before retrying with `retry_payment` call.
-     *
-     * ### Parameters
-     * - `asset_kind`: An indicator of the specific asset class to be funded.
-     * - `value`: The total payment amount of this bounty.
-     * - `curator`: Address of bounty curator.
-     * - `metadata`: The hash of an on-chain stored preimage with bounty metadata.
-     *
-     * ## Events
-     *
-     * Emits [`Event::BountyCreated`] and [`Event::Paid`] if successful.
-     */
-    "fund_bounty": Anonymize<Ic7vv426t45o81>;
-    /**
-     * Fund a new child-bounty with a proposed curator, initiating the payment from the parent
-     * bounty to the child-bounty account/location.
-     *
-     * ## Dispatch Origin
-     *
-     * Must be signed by the parent curator.
-     *
-     * ## Details
-     *
-     * - If `curator` is not provided, the child-bounty will default to using the parent
-     * curator, allowing the parent curator to immediately call `check_status` and
-     * `award_bounty` to payout the child-bounty.
-     * - In case of a funding failure, the child-/bounty status must be updated with the
-     * `check_status` call before retrying with `retry_payment` call.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of parent bounty for which child-bounty is being added.
-     * - `value`: The payment amount of this child-bounty.
-     * - `metadata`: The hash of an on-chain stored preimage with child-bounty metadata.
-     * - `curator`: Address of child-bounty curator.
-     *
-     * ## Events
-     *
-     * Emits [`Event::ChildBountyCreated`] and [`Event::Paid`] if successful.
-     */
-    "fund_child_bounty": Anonymize<Ic5qjcpspmr75n>;
-    /**
-     * Propose a new curator for a child-/bounty after the previous was unassigned.
-     *
-     * ## Dispatch Origin
-     *
-     * Must be signed by `T::SpendOrigin` for a bounty, or by the parent bounty curator
-     * for a child-bounty.
-     *
-     * ## Details
-     *
-     * - The child-/bounty must be in the `CuratorUnassigned` state.
-     * - For a bounty, the `SpendOrigin` must have sufficient permissions to propose the
-     * curator.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of bounty.
-     * - `child_bounty_id`: Index of child-bounty.
-     * - `curator`: Account to be proposed as the curator.
-     *
-     * ## Events
-     *
-     * Emits [`Event::CuratorProposed`] if successful.
-     */
-    "propose_curator": Anonymize<I9usg3e2ik3sk>;
-    /**
-     * Accept the curator role for a child-/bounty.
-     *
-     * ## Dispatch Origin
-     *
-     * Must be signed by the proposed curator.
-     *
-     * ## Details
-     *
-     * - The child-/bounty must be in the `Funded` state.
-     * - The curator must accept the role by calling this function.
-     * - A deposit will be reserved from the curator and refunded upon successful payout.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of parent bounty.
-     * - `child_bounty_id`: Index of child-bounty.
-     *
-     * ## Events
-     *
-     * Emits [`Event::BountyBecameActive`] if successful.
-     */
-    "accept_curator": Anonymize<I9bg8aubpi9e76>;
-    /**
-     * Unassign curator from a child-/bounty.
-     *
-     * ## Dispatch Origin
-     *
-     * This function can only be called by the `RejectOrigin` or the child-/bounty curator.
-     *
-     * ## Details
-     *
-     * - If this function is called by the `RejectOrigin`, or by the parent curator in the case
-     * of a child bounty, we assume that the curator is malicious or inactive. As a result,
-     * we will slash the curator when possible.
-     * - If the origin is the child-/bounty curator, we take this as a sign they are unable to
-     * do their job and they willingly give up. We could slash them, but for now we allow
-     * them to recover their deposit and exit without issue. (We may want to change this if
-     * it is abused).
-     * - If successful, the child-/bounty status is updated to `CuratorUnassigned`. To
-     * reactivate the bounty, a new curator must be proposed and must accept the role.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of parent bounty.
-     * - `child_bounty_id`: Index of child-bounty.
-     *
-     * ## Events
-     *
-     * Emits [`Event::CuratorUnassigned`] if successful.
-     */
-    "unassign_curator": Anonymize<I9bg8aubpi9e76>;
-    /**
-     * Awards the child-/bounty to a beneficiary account/location,
-     * initiating the payout payments to both the beneficiary and the curator.
-     *
-     * ## Dispatch Origin
-     *
-     * This function can only be called by the `RejectOrigin` or the child-/bounty curator.
-     *
-     * ## Details
-     *
-     * - The child-/bounty must be in the `Active` state.
-     * - if awarding a parent bounty it must not have active or funded child bounties.
-     * - Initiates payout payment from the child-/bounty to the beneficiary account/location.
-     * - If successful the child-/bounty status is updated to `PayoutAttempted`.
-     * - In case of a payout failure, the child-/bounty status must be updated with
-     * `check_status` call before retrying with `retry_payment` call.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of parent bounty.
-     * - `child_bounty_id`: Index of child-bounty.
-     * - `beneficiary`: Account/location to be awarded the child-/bounty.
-     *
-     * ## Events
-     *
-     * Emits [`Event::BountyAwarded`] and [`Event::Paid`] if successful.
-     */
-    "award_bounty": Anonymize<I6k9enqukp95rq>;
-    /**
-     * Cancel an active child-/bounty. A payment to send all the funds to the funding source is
-     * initialized.
-     *
-     * ## Dispatch Origin
-     *
-     * This function can only be called by the `RejectOrigin` or the parent bounty curator.
-     *
-     * ## Details
-     *
-     * - If the child-/bounty is in the `Funded` state, a refund payment is initiated.
-     * - If the child-/bounty is in the `Active` state, a refund payment is initiated and the
-     * child-/bounty status is updated with the curator account/location.
-     * - If the child-/bounty is in the funding or payout phase, it cannot be canceled.
-     * - In case of a refund failure, the child-/bounty status must be updated with the
-     * `check_status` call before retrying with `retry_payment` call.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of parent bounty.
-     * - `child_bounty_id`: Index of child-bounty.
-     *
-     * ## Events
-     *
-     * Emits [`Event::BountyCanceled`] and [`Event::Paid`] if successful.
-     */
-    "close_bounty": Anonymize<I9bg8aubpi9e76>;
-    /**
-     * Check and update the payment status of a child-/bounty.
-     *
-     * ## Dispatch Origin
-     *
-     * Must be signed.
-     *
-     * ## Details
-     *
-     * - If the child-/bounty status is `FundingAttempted`, it checks if the funding payment
-     * has succeeded. If successful, the bounty status becomes `Funded`.
-     * - If the child-/bounty status is `RefundAttempted`, it checks if the refund payment has
-     * succeeded. If successful, the child-/bounty is removed from storage.
-     * - If the child-/bounty status is `PayoutAttempted`, it checks if the payout payment has
-     * succeeded. If successful, the child-/bounty is removed from storage.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of parent bounty.
-     * - `child_bounty_id`: Index of child-bounty.
-     *
-     * ## Events
-     *
-     * Emits [`Event::BountyBecameActive`] if the child/bounty status transitions to `Active`.
-     * Emits [`Event::BountyRefundProcessed`] if the refund payment has succeed.
-     * Emits [`Event::BountyPayoutProcessed`] if the payout payment has succeed.
-     * Emits [`Event::PaymentFailed`] if the funding, refund our payment payment has failed.
-     */
-    "check_status": Anonymize<I9bg8aubpi9e76>;
-    /**
-     * Retry the funding, refund or payout payments.
-     *
-     * ## Dispatch Origin
-     *
-     * Must be signed.
-     *
-     * ## Details
-     *
-     * - If the child-/bounty status is `FundingAttempted`, it retries the funding payment from
-     * funding source the child-/bounty account/location.
-     * - If the child-/bounty status is `RefundAttempted`, it retries the refund payment from
-     * the child-/bounty account/location to the funding source.
-     * - If the child-/bounty status is `PayoutAttempted`, it retries the payout payment from
-     * the child-/bounty account/location to the beneficiary account/location.
-     *
-     * ### Parameters
-     * - `parent_bounty_id`: Index of parent bounty.
-     * - `child_bounty_id`: Index of child-bounty.
-     *
-     * ## Events
-     *
-     * Emits [`Event::Paid`] if the funding, refund or payout payment has initiated.
-     */
-    "retry_payment": Anonymize<I9bg8aubpi9e76>;
-}>;
-export type Ie56pob79qcs5c = AnonymousEnum<{
+export type I6rhp64sltk7q4 = AnonymousEnum<{
     /**
      * Stores the initial ring roots received from the notifier upon subscription start.
      * Accepts multi-part continuations (same sequence). Rejects calls with a different
@@ -18343,7 +18443,7 @@ export type Ie56pob79qcs5c = AnonymousEnum<{
      * - `origin`: Notifier XCM origin.
      * - `roots`: Initial batch of ring roots.
      */
-    "initialize_ring_roots": Anonymize<I9p75jqdr4nh7f>;
+    "initialize_ring_roots": Anonymize<I3pd97rr0bl0ai>;
     /**
      * Process ring roots updates received from the notifier.
      *
@@ -18351,7 +18451,7 @@ export type Ie56pob79qcs5c = AnonymousEnum<{
      * - `origin`: Must be the XCM origin from the notifier.
      * - `batch`: Batch of ring root updates to process.
      */
-    "process_ring_updates": Anonymize<I6k8blge6b41eq>;
+    "process_ring_updates": Anonymize<Ifv2oev86nk73e>;
     /**
      * Terminates the subscription.
      *
@@ -18373,12 +18473,18 @@ export type Ie56pob79qcs5c = AnonymousEnum<{
      * missing before sending XCM replay requests.
      */
     "replay_missing_roots": Anonymize<Icec749qc1mpna>;
+    /**
+     * Removes a page of stale-generation `RingRoots` entries.
+     *
+     * Submitted by the offchain worker as an authorized transaction.
+     */
+    "purge_stale_ring_roots": undefined;
 }>;
-export type I9p75jqdr4nh7f = {
+export type I3pd97rr0bl0ai = {
     "ring_exponent": Anonymize<Idvob66qflhcgd>;
-    "roots": Anonymize<I9hlu4ona8lbhr>;
+    "roots": Anonymize<I37iqrk1u87cdj>;
 };
-export type I9hlu4ona8lbhr = {
+export type I37iqrk1u87cdj = {
     "identifier": SizedHex<32>;
     "sequence": bigint;
     "source_time": bigint;
@@ -18387,21 +18493,21 @@ export type I9hlu4ona8lbhr = {
         "op": Enum<{
             "Built": {
                 "revision": number;
-                "root": SizedHex<768>;
+                "root": SizedHex<288>;
             };
             "Deleted": undefined;
         }>;
     }>;
     "next_ring_index": number;
 };
-export type I6k8blge6b41eq = {
-    "batch": Anonymize<I9hlu4ona8lbhr>;
+export type Ifv2oev86nk73e = {
+    "batch": Anonymize<I37iqrk1u87cdj>;
 };
 export type Icec749qc1mpna = {
     "identifier": SizedHex<32>;
     "indices": Anonymize<Icgljjb6j82uhn>;
 };
-export type Ibqt7h8h9v4psr = AnonymousEnum<{
+export type I1lrs3qts7onc2 = AnonymousEnum<{
     /**
      * Remove the alias mapping for the signer.
      *
@@ -18413,7 +18519,7 @@ export type Ibqt7h8h9v4psr = AnonymousEnum<{
      * Link an account to a ring alias, on payment of a PGAS fee.
      *
      * The origin must be signed; the signer becomes the bound account. The PGAS fee
-     * ([`AliasFee`]) is burned from the signer's PGAS balance. The alias must verify
+     * ([`Config::AliasFee`]) is burned from the signer's PGAS balance. The alias must verify
      * against the supplied `collection`/`ring_index`/`ring_revision` in `context`. The
      * collection must still be People or People Lite.
      *
@@ -18435,25 +18541,39 @@ export type Ibqt7h8h9v4psr = AnonymousEnum<{
      */
     "reprove_alias_account": Anonymize<I6fhhpo0k6s6lr>;
     /**
-     * Set the PGAS fee charged by [`Pallet::set_alias_account`].
+     * Stamp [`StaleSince`] on each mapping in `accounts`, starting
+     * [`Config::MappingRetention`].
      *
-     * Origin must be [`Config::FeeManagerOrigin`]. The new fee replaces the
-     * previous value (if any). There is no minimum — set to zero to
-     * effectively disable the burn while keeping the path open.
+     * A mapping is stale once [`Config::MemberService`] stops accepting its revision, which is
+     * when the ring was rebuilt and the old revision ran out of retention there, or when the
+     * ring was deleted. Stamping removes nothing, because a consumer that reads
+     * [`AccountToAlias`] without checking the revision still resolves the mapping;
+     * [`Pallet::retire_stale_aliases`] removes it once the retention has run out.
+     *
+     * `accounts` must be in strictly ascending order, so one account cannot be stamped twice
+     * in a batch, and every one of them must hold a stale mapping with no stamp yet.
      */
-    "set_alias_fee": Anonymize<Ib1ilbm5ipoh62>;
+    "report_stale_aliases": Anonymize<I9gel4bv68gacj>;
     /**
-     * Remove a stale alias <-> account mapping.
+     * Remove each mapping in `accounts`, whose [`Config::MappingRetention`] has run out.
      *
-     * Anyone can call this. A mapping is stale when:
-     * 1. The ring revision no longer matches the account alias (i.e., ring was rebuilt).
-     * 2. The account alias refers to a deleted ring.
-     *
-     * For (1), the mapping is only considered stale after a grace period has elapsed.
-     *
-     * The transaction fee is refunded on success to incentivize cleanup.
+     * Both directions of the mapping go, along with the stamp and the account's sufficient
+     * reference. `accounts` must be in strictly ascending order, and every one of them must
+     * hold a stale mapping stamped [`Config::MappingRetention`] ago or longer.
      */
-    "clean_up_stale_alias": Anonymize<Ieu5ttli9tg91>;
+    "retire_stale_aliases": Anonymize<I9gel4bv68gacj>;
+    /**
+     * Drop the [`StaleSince`] stamp of each mapping in `accounts`, which verifies again.
+     *
+     * A revision can verify again after it stopped: a collection torn down and re-created
+     * under the same identifier restarts its revisions at zero, so a stored revision can be
+     * reissued. Dropping the stamp keeps the next staleness to a full
+     * [`Config::MappingRetention`] rather than letting it remove the mapping on the spot.
+     *
+     * `accounts` must be in strictly ascending order, and every one of them must hold a
+     * stamped mapping whose revision verifies.
+     */
+    "clear_stale_alias_reports": Anonymize<I9gel4bv68gacj>;
 }>;
 export type Iab0nqc372eia = {
     "proof": Uint8Array;
@@ -18468,10 +18588,6 @@ export type I6fhhpo0k6s6lr = {
     "ring_index": number;
     "ring_revision": number;
     "proof_valid_at": bigint;
-};
-export type Ieu5ttli9tg91 = {
-    "collection": SizedHex<32>;
-    "ca": Anonymize<Icq9999ubti4jr>;
 };
 export type Ie02h3cgqokv4i = AnonymousEnum<{
     /**
@@ -18512,7 +18628,7 @@ export type Ip2b8725fmudi = {
     "day_index": number;
     "first_alias": SizedHex<32>;
 };
-export type I8jcme2bs05dl9 = AnonymousEnum<{
+export type I97gf6nd4f6j10 = AnonymousEnum<{
     /**
      * A raw EVM transaction, typically dispatched by an Ethereum JSON-RPC server.
      *
@@ -18640,7 +18756,7 @@ export type I8jcme2bs05dl9 = AnonymousEnum<{
      * * `call`: The Substrate runtime call to execute.
      * * `transaction_encoded`: The RLP encoding of the Ethereum transaction,
      */
-    "eth_substrate_call": Anonymize<I4tgnabqehk6na>;
+    "eth_substrate_call": Anonymize<I4fl6nptnfv4q3>;
     /**
      * Upload new `code` without instantiating a contract from it.
      *
@@ -18709,9 +18825,9 @@ export type I8jcme2bs05dl9 = AnonymousEnum<{
      * is the `AccountId20` with the last 12 bytes set to `0xEE`. This is essentially a
      * recovery function in case an `AccountId20` was used without creating a mapping first.
      */
-    "dispatch_as_fallback_account": Anonymize<Ifacok17cvls3n>;
+    "dispatch_as_fallback_account": Anonymize<Ifr706bjpl0fi8>;
 }>;
-export type I4tgnabqehk6na = {
+export type I4fl6nptnfv4q3 = {
     "call": TxCallData;
     "transaction_encoded": Uint8Array;
 };
@@ -18806,11 +18922,20 @@ export type Ier6ji7bgtceji = AnonymousEnum<{
      */
     "clean_usage": Anonymize<I6at0amaqc5r60>;
 }>;
-export type I5o3lgfkmr6jvp = AnonymousEnum<{
+export type I7c0v5l51fkdhc = AnonymousEnum<{
+    /**
+     * Set the network suffix used by all product-context derivations.
+     */
+    "set_network_suffix": Anonymize<I8serkotvgpn40>;
+}>;
+export type I8serkotvgpn40 = {
+    "network_suffix": Uint8Array;
+};
+export type I8eefpvuiu3e6k = AnonymousEnum<{
     /**
      * Authenticates the sudo key and dispatches a function call with `Root` origin.
      */
-    "sudo": Anonymize<Ifacok17cvls3n>;
+    "sudo": Anonymize<Ifr706bjpl0fi8>;
     /**
      * Authenticates the sudo key and dispatches a function call with `Root` origin.
      * This function does not check the weight of the call, and instead allows the
@@ -18818,7 +18943,7 @@ export type I5o3lgfkmr6jvp = AnonymousEnum<{
      *
      * The dispatch origin for this call must be _Signed_.
      */
-    "sudo_unchecked_weight": Anonymize<I9ram4dti7vvhv>;
+    "sudo_unchecked_weight": Anonymize<I4trno9ou8ib0t>;
     /**
      * Authenticates the current sudo key and sets the given AccountId (`new`) as the new sudo
      * key.
@@ -18830,7 +18955,7 @@ export type I5o3lgfkmr6jvp = AnonymousEnum<{
      *
      * The dispatch origin for this call must be _Signed_.
      */
-    "sudo_as": Anonymize<I862edtjk8h9ij>;
+    "sudo_as": Anonymize<Iaf1nsti3s4eks>;
     /**
      * Permanently removes the sudo key.
      *
@@ -18841,18 +18966,18 @@ export type I5o3lgfkmr6jvp = AnonymousEnum<{
 export type I8k3rnvpeeh4hv = {
     "new": MultiAddress;
 };
-export type I862edtjk8h9ij = {
+export type Iaf1nsti3s4eks = {
     "who": MultiAddress;
     "call": TxCallData;
 };
-export type Iag8b7oglutv48 = AnonymousEnum<{
+export type Id32c233f14hs1 = AnonymousEnum<{
     "System": Anonymize<Ifaoavjs71ibps>;
     "ParachainSystem": Anonymize<I3u72uvpuo4qrt>;
     "Timestamp": Anonymize<I7d75gqfg6jh9c>;
     "ParachainInfo": undefined;
     "Preimage": Anonymize<If81ks88t5mpk5>;
-    "Scheduler": Anonymize<I3uvsr9dukvbas>;
-    "Parameters": Anonymize<I6a0l99iu4e4a8>;
+    "Scheduler": Anonymize<I4dnfqk04hg9va>;
+    "Parameters": Anonymize<I57ceu1ubtrfov>;
     "MultiBlockMigrations": Anonymize<I4oqb168b2d4er>;
     "Balances": Anonymize<I9svldsp29mh87>;
     "Vesting": Anonymize<Icgf8vmtkbnu4u>;
@@ -18866,9 +18991,9 @@ export type Iag8b7oglutv48 = AnonymousEnum<{
     "ToKusamaXcmRouter": Anonymize<I6epb28bkd5aqn>;
     "MessageQueue": Anonymize<Ic2uoe7jdksosp>;
     "SnowbridgeSystemFrontend": Anonymize<I15u4pbuusigel>;
-    "Utility": Anonymize<I78vo1kco4ease>;
-    "Multisig": Anonymize<Ico6fhf7bkqqt3>;
-    "Proxy": Anonymize<I9pugt904mt63j>;
+    "Utility": Anonymize<Iellhato5fm5je>;
+    "Multisig": Anonymize<Iajac9b899ntjv>;
+    "Proxy": Anonymize<I824h5k7lq8fqd>;
     "Indices": Anonymize<I67ac6i6ihmvpt>;
     "Assets": Anonymize<I885rd9smlqfti>;
     "Uniques": Anonymize<Icu49uv7rfej74>;
@@ -18878,12 +19003,12 @@ export type Iag8b7oglutv48 = AnonymousEnum<{
     "AssetConversion": Anonymize<Ia06pia7pbkurh>;
     "Treasury": Anonymize<Iepn86nr1kqtu0>;
     "ConvictionVoting": Anonymize<Ie5kd08tutk56t>;
-    "Referenda": Anonymize<I1sdjapeklo4jr>;
-    "Whitelist": Anonymize<Iailr4h14uumt9>;
+    "Referenda": Anonymize<I14r6iht02cda8>;
+    "Whitelist": Anonymize<I936okcjle0mdf>;
     "Bounties": Anonymize<Idkeds3pi8flqr>;
     "ChildBounties": Anonymize<I1b6drdhvt5hl9>;
     "AssetRate": Anonymize<If582h5gr5gh6f>;
-    "MultiAssetBounties": Anonymize<I5t09dnejpfl63>;
+    "MultiAssetBounties": Anonymize<I28m52rbmk065o>;
     "StateTrieMigration": Anonymize<I39l72gdmkk30t>;
     "NominationPools": Anonymize<I57mljkkr28m9p>;
     "VoterList": Anonymize<Ifvfo1l0vu2o7e>;
@@ -18893,51 +19018,16 @@ export type Iag8b7oglutv48 = AnonymousEnum<{
     "MultiBlockElectionUnsigned": Anonymize<I5suq7n956d9bl>;
     "MultiBlockElectionSigned": Anonymize<Ifnfj3imdjs5t>;
     "Staking": Anonymize<I21t34budhd0hh>;
-    "MembersSubscriber": Anonymize<Ie56pob79qcs5c>;
-    "AliasAccounts": Anonymize<Ibqt7h8h9v4psr>;
+    "MembersSubscriber": Anonymize<I6rhp64sltk7q4>;
+    "AliasAccounts": Anonymize<I1lrs3qts7onc2>;
     "Pgas": Anonymize<Ie02h3cgqokv4i>;
-    "Revive": Anonymize<I8jcme2bs05dl9>;
+    "Revive": Anonymize<I97gf6nd4f6j10>;
     "DotnsGateway": Anonymize<Iakqocr9uru9md>;
     "OriginRestriction": Anonymize<Ier6ji7bgtceji>;
-    "Sudo": Anonymize<I5o3lgfkmr6jvp>;
+    "NetworkSuffix": Anonymize<I7c0v5l51fkdhc>;
+    "Sudo": Anonymize<I8eefpvuiu3e6k>;
     "AhOps": Anonymize<Im5s4mco7v75d>;
 }>;
-export type Idp0ot5sj4l28h = ResultPayload<Anonymize<I92luu1npc10cg>, Anonymize<I5nrjkj9qumobs>>;
-export type Ic32osvq328s8t = ResultPayload<{
-    "execution_result": Anonymize<I9atibdbi0omss>;
-    "emitted_events": Anonymize<Ibltetba77trsu>;
-    "local_xcm"?: Anonymize<Ieqgqma27vbupd>;
-    "forwarded_xcms": Anonymize<Ialhmrpub9sefe>;
-}, Anonymize<I55ku9c5gk50hb>>;
-export type Ibltetba77trsu = Array<Anonymize<I3vqdln3cqr01e>>;
-export type I8l4l0329bukfi = ResultPayload<{
-    "execution_result": Anonymize<Ieqhmksji3pmv5>;
-    "emitted_events": Anonymize<Ibltetba77trsu>;
-    "forwarded_xcms": Anonymize<Ialhmrpub9sefe>;
-}, Anonymize<I55ku9c5gk50hb>>;
-export type Iaruiltgfqb5g1 = {
-    "weight_consumed": Anonymize<I4q39t5hn830vp>;
-    "weight_required": Anonymize<I4q39t5hn830vp>;
-    "storage_deposit": Anonymize<If7bmpttbdmqu4>;
-    "max_storage_deposit": Anonymize<If7bmpttbdmqu4>;
-    "gas_consumed": bigint;
-    "result": ResultPayload<Anonymize<I620n7irgfspm4>, Anonymize<I3v48tp5484oth>>;
-};
-export type I8mk4egnd52l3v = {
-    "weight_consumed": Anonymize<I4q39t5hn830vp>;
-    "weight_required": Anonymize<I4q39t5hn830vp>;
-    "storage_deposit": Anonymize<If7bmpttbdmqu4>;
-    "max_storage_deposit": Anonymize<If7bmpttbdmqu4>;
-    "gas_consumed": bigint;
-    "result": ResultPayload<Anonymize<I6cm3omaniofs7>, Anonymize<I3v48tp5484oth>>;
-};
-export type Ib0ssegjtc3be6 = ResultPayload<Anonymize<Icjs1v5avc8kdj>, Anonymize<I3v48tp5484oth>>;
-export type Idi8u55mdv7qd1 = ResultPayload<Anonymize<Iabpgqcjikia83>, Enum<{
-    "DoesntExist": undefined;
-    "KeyDecodingFailed": undefined;
-    "StorageWriteFailed": Anonymize<I3v48tp5484oth>;
-}>>;
-export type I40k710moo3ghm = (SizedHex<64>) | undefined;
 export type I1uglf8pvj966e = (Enum<{
     "Claim": {
         "proof": Uint8Array;
@@ -18947,13 +19037,11 @@ export type I1uglf8pvj966e = (Enum<{
         "day": number;
     };
 }>) | undefined;
-export type Ibde2kn6a3h6jg = (Enum<{
-    "WithAccount": number;
-}>) | undefined;
-export type I1rcvckb8i5tcv = (Enum<{
+export type Iapbjptjr70817 = (Enum<{
     "RegisterFullName": {
         "proof": Uint8Array;
         "ring_index": number;
+        "revision": number;
         "signature": Anonymize<I3fo6882e5tjh8>;
     };
 }>) | undefined;

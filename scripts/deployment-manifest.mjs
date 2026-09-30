@@ -6,7 +6,10 @@ const ZERO = /^0x0+$/i;
 const HASH = /^0x[0-9a-fA-F]{64}$/;
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
 const DECIMAL = /^\d+$/;
-const PHASE2_DURATION = 7n * 24n * 60n * 60n;
+export const PHASE2_DURATION_SECONDS = {
+  staging: 60n * 60n,
+  production: 15n * 24n * 60n * 60n,
+};
 const required = (value, name) => { if (value === undefined || value === "") throw new Error(`MISSING_${name}`); return value; };
 const check = (value, pattern, name) => { if (typeof value !== "string" || !pattern.test(value)) throw new Error(`INVALID_${name}`); return value; };
 const isLoopback = (value, protocols) => {
@@ -104,7 +107,8 @@ function validateGenesisPhases(genesis, environment) {
   if (environment !== "local" && (BigInt(phase2.startPriceX18) !== 3_500_000_000_000_000n || BigInt(phase2.endPriceX18) !== 5_500_000_000_000_000n)) throw new Error(`INVALID_GENESIS_PHASE2_PRICES_${environment}`);
   if (BigInt(phase2.allocationMini) === 0n || BigInt(phase2.startPriceX18) === 0n || BigInt(phase2.endPriceX18) <= BigInt(phase2.startPriceX18)) throw new Error(`INVALID_GENESIS_PHASE2_ECONOMICS_${environment}`);
   if (BigInt(phase2.endTime) <= BigInt(phase2.startTime)) throw new Error(`INVALID_GENESIS_PHASE2_TIME_${environment}`);
-  if (environment !== "local" && BigInt(phase2.endTime) - BigInt(phase2.startTime) !== PHASE2_DURATION) throw new Error(`INVALID_GENESIS_PHASE2_DURATION_${environment}`);
+  const expectedDuration = PHASE2_DURATION_SECONDS[environment];
+  if (expectedDuration !== undefined && BigInt(phase2.endTime) - BigInt(phase2.startTime) !== expectedDuration) throw new Error(`INVALID_GENESIS_PHASE2_DURATION_${environment}`);
   if (phase2.status !== "ended") return;
   const snapshot = phase2.snapshot;
   if (!snapshot || snapshot.phase !== 2 || snapshot.status !== "ended") throw new Error(`MISSING_GENESIS_PHASE2_SNAPSHOT_${environment}`);

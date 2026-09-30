@@ -7,7 +7,7 @@ Do not mark production ready until every item is evidenced.
 - [ ] Slither passes with only reviewed, local suppressions. Phase I's reviewed `startBlock == 0` state sentinel is excluded from only the `incorrect-equality` detector; Phase II receives the full detector set.
 - [ ] Phase I ABI, manifest fields, contract, and tests are unchanged.
 - [ ] `MiniGenesisCurve.json` and frontend generated ABI pass the ABI check.
-- [ ] Deployment manifest validation and manifest tests pass, including the exact seven-day production duration gate.
+- [ ] Deployment manifest validation and manifest tests pass, including staging at exactly 1 hour and production at exactly 15 days.
 - [ ] Frontend typecheck, tests, and production-equivalent build pass.
 - [ ] Staging EVM purchase, second-buyer repricing, refund, treasury, and finality checks pass.
 - [ ] Staging Substrate Native purchase and account-mapping checks pass.
@@ -15,7 +15,7 @@ Do not mark production ready until every item is evidenced.
 - [ ] Production verifier reads the deployed immutable values directly.
 - [ ] Allocation is 2,000,000 MINI; prices are 0.003500 and 0.005500 DOT/MINI.
 - [ ] Full-sale capacity is 9,000 DOT; treasury address is independently reviewed.
-- [ ] Start and end timestamps are public, correct, and exactly seven days apart.
+- [ ] Production start and end timestamps are public, correct, and exactly 15 days apart.
 - [ ] Network is Polkadot Hub Mainnet.
 - [ ] `deployments/production.json` and generated frontend config are committed.
 - [ ] Production Pages is published only through the manual workflow dispatch.
