@@ -181,20 +181,17 @@
         ]
       },
       "phase2": {
-        "status": "template",
+        "status": "active",
         "mechanism": "linear-bonding-curve",
-        "previousDeployment": {
-          "status": "retained-immutable",
-          "contract": "0x59964457dc4045988eaa7cf4d928970798aa5adf",
-          "treasury": "0x78B02E176e587E163661fBe70232CCDDEb11759e",
-          "deploymentBlock": "13780830",
-          "runtimeCodeHash": "0x45c347916ad1ee3724d09caf77d5544056c233f6a09b9750d2445bf146f01c12",
-          "allocationMini": "2000000000000000000000000",
-          "startPriceX18": "3500000000000000",
-          "endPriceX18": "5500000000000000",
-          "startTime": "1790551932",
-          "endTime": "1791156732"
-        },
+        "contract": "0xe5107b4bdf83dbe4fee3aebb866ad076e04aa526",
+        "treasury": "0x2A8E2fFc8d10e04a477623252026F4378d210b3A",
+        "deploymentBlock": "13880768",
+        "runtimeCodeHash": "0xc1ad6ef82791fd44765ba34a1d41cda9f17cc6b29c33df11873dbab80c89a863",
+        "allocationMini": "2000000000000000000000000",
+        "startPriceX18": "3500000000000000",
+        "endPriceX18": "5500000000000000",
+        "startTime": "1790766936",
+        "endTime": "1790770536",
         "workItems": [
           {
             "id": "minijam",
@@ -488,7 +485,19 @@
               }
             ]
           }
-        ]
+        ],
+        "previousDeployment": {
+          "status": "retained-immutable",
+          "contract": "0x59964457dc4045988eaa7cf4d928970798aa5adf",
+          "treasury": "0x78B02E176e587E163661fBe70232CCDDEb11759e",
+          "deploymentBlock": "13780830",
+          "runtimeCodeHash": "0x45c347916ad1ee3724d09caf77d5544056c233f6a09b9750d2445bf146f01c12",
+          "allocationMini": "2000000000000000000000000",
+          "startPriceX18": "3500000000000000",
+          "endPriceX18": "5500000000000000",
+          "startTime": "1790551932",
+          "endTime": "1791156732"
+        }
       },
       "phase3": {
         "status": "locked"
