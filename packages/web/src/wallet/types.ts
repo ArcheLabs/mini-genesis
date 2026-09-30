@@ -1,5 +1,5 @@
 import type { Address } from "viem";
-import type { InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
+import type { PolkadotSigner } from "polkadot-api";
 import type { Eip1193Provider } from "./eip1193";
 
 export type MappingState = "checking" | "unmapped" | "mapping" | "mapped" | "conflict" | "failed";
@@ -7,7 +7,7 @@ export type MappingState = "checking" | "unmapped" | "mapping" | "mapped" | "con
 export type PolkadotAccount = {
   address: string;
   name?: string;
-  txCreator: InjectedPolkadotAccount["txCreator"];
+  signer: PolkadotSigner;
   accountId32: Uint8Array;
 };
 
@@ -34,8 +34,6 @@ export type PolkadotWalletSession = {
   api: any | null;
   contractIdentity: Address | null;
   contractIdentityStatus: "loading" | "verified" | "error";
-  nativeRuntimeStatus: "checking" | "supported" | "unsupported" | "error";
-  nativeWalletStatus: "checking" | "supported" | "unsupported" | "error";
 };
 
 export type WalletSession = EvmWalletSession | PolkadotWalletSession | null;

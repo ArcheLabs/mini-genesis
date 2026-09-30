@@ -19,6 +19,7 @@ describe("Genesis routes", () => {
 
   it("keeps the development smoke route opt-in", () => {
     expect(routeFromHash("#/native-signer-smoke")).toBe("phase2");
+    expect(routeFromHash("#/native-signer-smoke", true)).toBe("native-signer-smoke");
   });
 
   it("uses canonical stage hashes", () => {

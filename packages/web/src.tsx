@@ -13,6 +13,7 @@ import { NotificationCenter } from "./src/feedback/NotificationCenter";
 import { SystemBanner } from "./src/feedback/SystemBanner";
 import { useFeedback } from "./src/feedback/use-feedback";
 import type { FeedbackContext, NormalizedFeedback } from "./src/feedback/types";
+import { NativeSignerSmoke } from "./src/dev/native-signer-smoke";
 import { GenesisStages } from "./src/genesis/GenesisStages";
 import { GenesisStageNavigation } from "./src/genesis/GenesisStageNavigation";
 import { canonicalizeHash, routeFromHash, hashForRoute, type AppRoute } from "./src/navigation/routing";
@@ -30,6 +31,7 @@ import "./src/interaction-overrides.css";
 type Language = "zh-CN" | "en";
 type Theme = "light" | "dark";
 const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
+const NATIVE_SMOKE_ENABLED = import.meta.env.MODE === "development" || import.meta.env.VITE_DEPLOYMENT_ENV === "staging";
 
 const copy = {
   "zh-CN": {
@@ -48,7 +50,7 @@ function App() {
   const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem("mini-genesis-theme") as Theme) || "light");
   const text = copy[language];
   const feedback = useFeedback();
-  const [route, setRoute] = useState<AppRoute>(() => routeFromHash(window.location.hash));
+  const [route, setRoute] = useState<AppRoute>(() => routeFromHash(window.location.hash, NATIVE_SMOKE_ENABLED));
   const [phase2HeaderStatus, setPhase2HeaderStatus] = useState("LIVE");
   const [runtimeSelection] = useState(() => currentRuntimeSelection(import.meta.env.MODE, import.meta.env.VITE_DEPLOYMENT_ENV));
   const [manifest] = useState<DeploymentManifest | null>(() => getManifest(runtimeSelection.environment));
@@ -89,9 +91,9 @@ function App() {
   const bootSearchRef = useRef(window.location.search);
   useEffect(() => {
     const canonicalizeCurrentHash = () => {
-      const normalized = canonicalizeHash(window.location.hash);
+      const normalized = canonicalizeHash(window.location.hash, NATIVE_SMOKE_ENABLED);
       if (window.location.hash !== normalized) window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${normalized}`);
-      setRoute(routeFromHash(normalized));
+      setRoute(routeFromHash(normalized, NATIVE_SMOKE_ENABLED));
     };
     canonicalizeCurrentHash();
     const onHashChange = () => canonicalizeCurrentHash();
@@ -253,7 +255,8 @@ function App() {
   const assetsPage = <main className="assets-page"><div className="assets-heading"><span className="section-index">{text.account}</span><h1>{text.mine}</h1><p className="my-address">{shortHash(selectedSourceAddress)}</p></div>{!session && !demoMode ? <section className="assets-empty"><p>{text.assetsEmpty}</p><button className="submit-button" type="button" onClick={() => setWalletMenu(true)}>{text.connect}</button></section> : <><div className="my-grid">{miniAssetCard}{ecosystemAssetCard}</div>{miniHistory}</>}</main>;
   const configurationErrorPage = <main className="configuration-error-page" role="alert"><h1>{language === "zh-CN" ? "页面配置不匹配" : "Configuration mismatch"}</h1><p>{language === "zh-CN" ? "所选网络未包含在此页面的部署配置中。" : "The selected network is not included in this page deployment."}</p></main>;
   const genesisStagesPage = isGenesisRoute ? <GenesisStages language={language} stage={activeStage} refreshKey={phase2RefreshKey} onPhase2StatusChange={setPhase2HeaderStatus} manifest={manifest} publicClient={publicClient} session={session} provider={provider} correctChain={correctChain} demoMode={demoMode} onConnect={() => setWalletMenu(true)} onReconcile={onReconcile} /> : null;
-  return <><NotificationCenter items={feedback.notifications} onDismiss={feedback.dismiss} onAction={handleFeedbackAction} />{header}<SystemBanner items={feedback.banners} onAction={handleFeedbackAction} />{runtimeSelection.error ? configurationErrorPage : route === "assets" ? assetsPage : genesisStagesPage}</>;
+  const smokePage = NATIVE_SMOKE_ENABLED ? <NativeSignerSmoke manifest={manifest} session={session} availablePolkadotWallets={availablePolkadotWallets} connectPolkadot={connectPolkadot} /> : null;
+  return <><NotificationCenter items={feedback.notifications} onDismiss={feedback.dismiss} onAction={handleFeedbackAction} />{header}<SystemBanner items={feedback.banners} onAction={handleFeedbackAction} />{runtimeSelection.error ? configurationErrorPage : route === "native-signer-smoke" ? smokePage : route === "assets" ? assetsPage : genesisStagesPage}</>;
 }
 
 createRoot(document.getElementById("root")!).render(<GenesisWalletProvider><App /></GenesisWalletProvider>);

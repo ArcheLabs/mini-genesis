@@ -1,0 +1,2 @@
+patchedDependencies:
+  '@polkadot-api/json-rpc-provider-proxy@0.4.1': patches/@polkadot-api__json-rpc-provider-proxy@0.4.1.patch
