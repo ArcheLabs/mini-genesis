@@ -1,5 +1,5 @@
-import { StorageDescriptor, PlainDescriptor, TxDescriptor, Enum, ApisFromDef, QueryFromPalletsDef, TxFromPalletsDef, EventsFromPalletsDef, ErrorsFromPalletsDef, ConstFromPalletsDef, ViewFnsFromPalletsDef, SS58String, SizedHex, FixedSizeArray } from "polkadot-api";
-import type { I5sesotjlssv2d, Iffmde3ekjedi9, I4mddgoa69c0a2, Ie13a6ppb66mks, I95g6i7ilua7lq, Ieniouoqkq4icf, Phase, Ibgl04rn6nbfm6, I4q39t5hn830vp, I8re9183nrhr3n, I1v7jbnil3tjns, I8jgj1nhcr2dg8, Ifn6q3equiq9qi, Ia3sb0vgvovhtg, Iav8k1edbj86k7, Itom7fk49o0c9, I4i91h98n3cv1b, I4iumukclgj8ej, Iqnbvitf7a7l3, I48i407regf59r, I6r5cbv8ttrb09, Inofn0qqbjtb9, PreimageOldRequestStatus, PreimageRequestStatus, I4pact7n2e9a0i, Iaqsrnkbbmb97b, I56u24ncejr5kt, I9jd27rnpm8ttv, I1l3sdv10o52gd, I5li9kjoo8jjeo, Iepbsvlk3qceij, I1q8tnt1cluu5j, I8ds64oj6581v0, Ia7pdug7cdsg8g, I3a3gt3bf28qh7, I762rjtdaa553f, TransactionPaymentReleases, Ifble4juuml5ig, Version, I2phecamkn3pej, ClaimsStatementKind, Ib2ccgbk23rsam, Ia2lhg7l2hilo3, Ifi4da1gej1fri, Ifvgo9568rpmqc, I82jm9g7pufuel, Ic5m5lp1oioo8r, I6cs1itejju2vv, Icgljjb6j82uhn, I5mpbmq1ooiq9i, I5g2vv0ckl2m8b, Ifup3lg9ro8a0f, I5qfubnuvrnqn6, I8t3u2dv73ahbd, I7vlvrrl2pnbgk, Ie0rpl5bahldfk, XcmPalletVersionMigrationStage, I7e5oaj2qi4kl1, Ie849h3gncgvok, Iat62vud7hlod2, Ict03eedr8de9s, Ibkm2gcn4pji30, XcmVersionedLocation, I7f4alf2hnuu8s, Idh2ug6ou4a8og, Iejeo53sea6n4q, I53esa2ms463bk, Ib4jhb8tt3uung, Ibqjcgmcid3dll, Iag146hmjgqfgj, I8uo3fpd3bcc6f, Iag7gka4fmp5er, I9p9lq3rej5bhc, Iff9heri56m1mb, I3qklfjubrljqh, Iag3f1hum3p4c8, I7svnfko10tq2e, I4s6jkha20aoh0, I2brm5b9jij1st, I78s05f59eoi8b, I35l6p7kq19mr0, Ianufjuplcj6u4, Id32h28hjj1tch, I6ouflveob4eli, I2mv9dvsaj3kcr, I7781vnk0rm9eq, Ie2iqtdb0stqo1, I5irutptk105do, Ic9nev69d8grv1, I18m6a0sc4k7s9, Ic9iokm15iigt6, I35m96p3u4vl0p, Iapmji0h53pmkn, Idrr42svup341f, I4ugih6gb4fmug, Idac0t49lnd4ls, I72ndo6phms8ik, If9iqq7i64mur8, I4v5g6i7bmt06o, I84bhscllvv07n, If2801grpltbp8, If21n82i0516em, Iegmj7n48sc3am, I2l0beelkqtf0a, ConvictionVotingVoteVoting, If9jidduiuq7vv, Ic6burlpovfhi6, Ict0fmb8krq1lk, Ibofbvvaehln4e, I2q3ri6itcjj5u, I64c5iroci157c, I72g4e3mnj3e6d, Ifmarq0v77ok, If354jrdedj0pj, Ib17t3992hb64n, I215mkl885p4da, Idphjddn2h69vc, Idhh9vuu2bderg, If6qa32dj75gu1, I7oo2mprv1qd1s, NominationPoolsClaimPermission, Ic5t26f9cp3tvk, I39k39h6vu4hbq, I542q009qbgt8k, I4e5ujckjq61g8, I3fgbanmq2lnk2, I6765e2s56217t, I7d4qtdlascfk8, I9cpogojpnsq8h, I4bboqsv44evel, I8je4hjun1hc3g, I3mj0igdqvh474, I8s6n43okuj2b1, I29575k8s6asco, I3rfe446il0rb7, I1nvcsqg39g26j, Ia8896dq44k9m4, Iefkd2klketjfh, I69tqqtpr9n8ie, StakingRewardDestination, I9o7ssi9vmhmgr, Ic3m9d6tdl6gi2, Ib3j7gb0jgs38u, I6flrronqs3l6n, I97fulj5h3ik95, Iff9p3c7k6pfoi, StakingForcing, I7oqom2n34q7u8, I921dks5d4ov9t, Idm2c96td6cqkk, Iam8h8p165t5uu, I205qrookusi3d, I4ojmnsk1dchql, I70u6ma6po0va2, Ic2seb0fn4tqs, Ifsgohug5cpb9, I4hus3s8lblmj7, Id2b1qsnd0q3jb, Ifl2ank31rkhm0, Idvob66qflhcgd, Ia1cba3u875b3, I5k86f11ne5gjd, I8g5kqku53c190, Ia892jrs62vldc, I9jea06984vfti, I834nfrf667ag1, I14i9pui8lc778, I2na29tt2afp0j, I4hkhloodl7q5t, I8t4pajubp34g3, Idq3n4esn5nvc5, I3oiqcurom3m43, I20ichc5j0l1u7, I1p16diuhde12h, I1vfb3ajo1hl6k, I4totqt881mlti, I76g8pnvlrcvkk, If85gvv84rc1b, Idfos1hk75i7fm, Icj0tssrh6ika3, I4pgs2j4mmb12q, I6o6dmud53u1fj, I95l2k9b1re95f, In7a38730s6qs, Ibtil0ss5munbk, I9s0ave7t0vnrk, I4fo08joqmcqnm, XcmV5Junctions, Iasb8k6ash5mjn, Ibafpkl9hhno69, I35p85j063s0il, Iafqnechp3omqg, If0d1j56sjc2vd, I8ofcg5rbj0g2c, I4adgbll7gku4i, I6pjjpfvhvcfru, I9pj91mj79qekl, I39uah9nss64h9, Ik64dknsq7k08, I3m5sq54sjdlso, Ib51vk42m1po4n, Ial23jn8hp0aen, Ifpj261e8s63m3, Idcr6u6361oad9, I82nfqfkd48n10, I1jm8m1rh9e20v, I3o5j3bli1pd8e, Ikcj0uucb0tlk, I5n4sebgkfr760, Iaeuepm7g9fa41, Ifs1i5fk9cqvr6, Ian2lnfkc73gle, I2mj6qem5oo9bh, Ieg3fd8p4pkt10, I8kg5ll427kfqq, I467333262q1l9, Ib2514p0nqisbg, Ibou4u1engb441, Id6nbvqoqdj4o2, I95iqep3b8snn9, I4ktuaksf5i1gk, I9bqtpv2ii35mp, I9j7pagd6d4bda, I2h9pmio37r7fb, Ibmr18suc9ikh9, I9iq22t0burs89, I5u8olqbbvfnvf, I5utcetro501ir, Id9uqtigc0il3v, Iaa2o6cgjdpdn5, Iam6hrl7ptd85l, Ict9ivhr2c5hv0, I8t4vv03357lk9, I6uag8j5aql8q, Isq3k9rh2c0l4, I1dqiovk0tpoah, I1ntko0oih7v1a, I2tf5qmg09624f, Ib5bko2vt0c3eu, Ifccifqltb5obi, Iadtsfv699cq8b, Ialpmgmhr3gk5r, I4cbvqmqadhrea, I3sdol54kg5jaq, I8fougodaj6di6, I81vt5eq60l4b6, I3vh014cqgmrfd, Ia5cotcvi888ln, I21jsa919m88fd, Iegif7m3upfe1k, I9kt8c221c83ln, Ic76kfh5ebqkpl, Icscpmubum33bq, I21d2olof7eb60, Ibgm4rnf22lal1, Ie68np0vpihith, I9bnv6lu0crf1q, Iauhjqifrdklq7, Ie1uso9m8rt5cf, Idlampfle3vh6q, I40pqum1mu8qg3, I1r4c2ghbtvjuc, I9i6b1362umn1t, Iel0ml15497i7b, Icp5j0naoi9qh2, I3ntd9i7877oak, Idvq9g9ibrkvtu, Ial13es6f4qc2i, I4trno9ou8ib0t, I9gf6vu5rhvslt, I1mr337ef5gtdo, I32i7b1p0ee9ap, Ideaemvoneh309, I3d9o9d7epp66v, I6lqh1vgb4mcja, Icfe90kbu2ohi7, I5bdpjlmj4phdc, Iag45j3iuog165, I9fg860lp990m2, I2eb501t8s6hsq, Ianmuoljk2sk1u, Ifbb755k5glf9c, I666bl2fqjkejo, I6o1er683vod1j, I5bq561t4gpfva, Ic357tcepuvo5c, I2rnoam876ruhj, Ic5b47dj4coa3r, Ib3qnc19gu633c, Ifira6u9hi7cu1, I72tqocvdoqfff, I2i27f3sfmvc05, I1nlrtd1epki2d, I3abtumcmempjs, Id81m8flopt8ha, I8hff7chabggkd, I49i39mtj1ivbs, Ifkr2kcak2vto1, I1ju6r8q0cs9jt, I4kpeq6j7cd5bu, I5na1ka76k6811, I59mhdb9omdqfa, I9vl5kpk0fpakt, I717jt61hu19b4, I7f7v8192r1lmq, Idjrs24gh0qv5l, If66ivi02f7256, I223jtcatlfkrc, I223jg78mng8hq, I4iiuiftkpq3fd, Ibra6533h92c0a, Ibgvkh96s68a66, If9vko7pv0231m, Iafkqus0ohh6l6, I6cu7obfo0rr0o, I736lv5q9m5bot, I1ap9tlenhr44l, Ib92t90p616grb, Ieipuujd6879do, Ie56eq9sg1rsoc, I5tvvgui05tn6e, Ibal0joadvdc2h, Iceq9fmmp9aeqv, I9viqhmdtuof5e, Ibqooroq6rr5kr, I6h88h8vba22v8, Ia9cd4jqb5eecb, I19jiel1ftbcce, I43aobns89nbkh, Iamd7rovec1hfb, I77ie723ncd4co, Ieebloeahma3ke, I4mbtpf4pu3rec, I1ahf3pvgsgbu, I9uapdn16emsti, Ie5i0q2glmr0md, I97qcg6i3l8gee, Ib5udrahak005b, I1jj31tn29ie3c, I5llu6o6a0go5i, Ic8b8561e6t9ie, I93r2effh7od84, I6afd7fllr8otc, Icrkms46uh8tpb, I78u60nqh0etah, I1lso3vlgherue, I26c8p47106toa, Iq82b3qvf20ne, Ic3j8ku6mbsms4, I3nvoqsi8f05ph, I4dr6q8duftm2l, I4da75oqso1rqj, I7t2thek61ghou, I61tdrsafr1vf3, Ibsk5g3rhm45pu, Icfoe9q8d4vs8f, Ibrfmvjrg4trnb, Iedih7t34maii9, I4e902qbfel1f1, Ie4met0joi8sv0, I1t8vq6a06ohhu, Icvt3pdunbinm7, I9ui3n41balr2q, I89sl7btgl24g2, I3u6g26k9kn96u, If1invp94rsjms, Ie5nc19gtiv5sv, Iald3dgvt1hjkb, Iurrhahet4gno, I5tamv2nk8bj8o, I8apq8e7c7qcpp, Id1e31ij0c35fv, Ic6vatc0h2tbq8, I3ip09dj7i1e8n, Ide34bfv94bvut, I6c7mabde89bp, I9sbpodgd8ilku, Ialnqi1f4kpb, Icnrv1mfbd3in1, Icm9m0qeemu66d, I79dicn2l2lfgs, Idnsr2pndm36h0, Ia1pvdcbhuqf8m, I8steo882k7qns, I4pa4q37gj6fua, I5f178ab6b89t3, I4nakhtbsk3c5s, If2a2827j1eg7m, Icbio0e1f0034b, I8c0vkqjjipnuj, I1adbcfi5uc62r, Ibf6ucefn8fh49, Ifr706bjpl0fi8, I2a839vbf5817q, Ia9p5bg6p18r0i, I42bqh279uf7oa, I4p6v96cffstms, I90n6nnkpdahrh, I8mk5kjgn02hi8, Ieqvq91sbe02ko, I2gr10p66od9ch, I9mcq66cm3gibo, I9c4d50jrp7as1, Ifplevr9hp8jo3, Ic7vv426t45o81, Ic5qjcpspmr75n, I9usg3e2ik3sk, I9bg8aubpi9e76, I6k9enqukp95rq, I8g22bn83j942k, I7psec5e6ghc64, I2psb0sladd863, I585tk8khua0gk, I3ut99di214ru2, Iemkp87d26vsbh, I4ahfrt5dscf6q, Ieg1oc56mamrl5, I2vu5vj7173ik9, I6galqkn58q3bl, I36uoc8t9liv80, Ibunghsg9qa7f7, I8qnouj2c0igph, Ic30e2k517a3ns, I47a2tsd2o2b1c, Ifc9k1s0e9nv8e, I4ihj26hl75e5p, I2dl8ekhm2t22h, I13us5e5h5645o, I931cottvong90, I7sujb8gfvuo7n, I1ors0vru14it3, I40s11r8nagn2g, I6bjj87fr5g9nl, I8cbluptqo8kbp, I81cc4plffa1dm, I3ihan8icf0c5k, I7ibh0fckqou49, Id9js0aucdivjk, I1vj3e1a62je3o, I6c1t14l6giceg, Ibqeqpelookfc7, Idluhda5fs51me, I5fth63b1m9g33, Ial45quj87eu6f, I5gjo9p1b18ftr, I5rijfvcqtmsdc, Ib8qhbmc61qu95, I6041egnb3am04, I7ej7mean6mih8, Iehi3mdadqmlp5, Id9gv8k0nmtfsc, I2eip8tc75dpje, I564va64vtidbq, Ie5v6njpckr05b, I328av3j0bgmjb, I4tuqm9ato907i, Iagi89qt4h1lqg, I9dgmcnuamt5p8, Ifhs60omlhvt3, If34udpd5e57vi, Ie5vbnd9198quk, Ib1db5b4tm2bvc, I6k6jf8ncesuu3, I3qhk481i120pk, I1640pio56addk, Idl3umm12u5pa, I5ont0141q9ss5, Ie6j49utvii126, I3v6ks33uluhnj, I3kiiim1cds68i, I4k60mkh2r6jjg, I70mou2rha6f5o, I9bur6p3ovq9mo, Ifej8h55fqfna0, I3pd97rr0bl0ai, Ifv2oev86nk73e, Icec749qc1mpna, Iab0nqc372eia, I6fhhpo0k6s6lr, I9gel4bv68gacj, Ic2gkpk0orj06b, Ip2b8725fmudi, Ida37oe44osb06, I6v02o6j4snahe, I27569neuh5t1o, Id92o6smntb9m5, I5nmb2hfkgk9ol, Iav55bcqlrqn51, I4fl6nptnfv4q3, I10ra4g1rl6k2f, I1uihehkdsggvp, I1hdbgb10envte, I9ov5hft672si3, Ibl1gaa0rn2c67, Icbccs0ug47ilf, Itmchvgqfl28g, I6at0amaqc5r60, I8serkotvgpn40, I8k3rnvpeeh4hv, Iaf1nsti3s4eks, Ikkngcosp7bof, I22bm4d7re21j9, Idq94m670fbari, Ia82mnkmeo2rhc, I1qdgrqvt473n4, I855j4i3kr8ko1, Ier5r85jd90cop, Ifovqevul1hv3t, Idd7hd99u0ho0n, Iafscmv8tjf0ou, I100l07kaehdlp, I6gnbnvip5vvdi, I5bk5hu4ak2ltv, Ia3c82eadg79bj, Ienusoeb625ftq, Ibtsa3docbr9el, I2nv6j2h8imgbl, If1co0pilmi7oq, Iae74gjak1qibn, I3escdojpj0551, Icv68aq8841478, Ic262ibdoec56a, Iflcfm9b6nlmdd, Ijrsf4mnp3eka, Id5fm4p8lj5qgi, I8tjvj9uq4b7hi, I3qt1hgg4djhgb, I4fooe9dun9o0t, I8jo5jmsfnhqqg, I21r16r4j2912m, I672l1i4ipl36t, Iph9c4rn81ub2, Ier2cke86dqbr2, Imhre0s2vm68p, Icjchvrijclvlv, Ih04jp733tqqa, Ievr89968437gm, Ie3hcrrq6r18fs, I3b1k9tid058uk, I65mhg1smm31sn, I29uq5455vq130, I39t01nnod9109, I6v8sm60vvkmk7, I1qmtmbe5so8r3, Ih99m6ehpcar7, Idgorhsbgdq2ap, I9ubb2kqevnu6t, I2hq50pu2kdjpo, I9acqruh7322g2, I137t1cld92pod, I61d51nv4cou88, If8u5kl4h8070m, Ibmuil6p3vl83l, I7lul91g50ae87, Icl7nl1rfeog3i, Iasr6pj6shs0fl, I2uqmls7kcdnii, Idg69klialbkb8, I7r6b7145022pp, I30pg328m00nr3, Icmrn7bogp28cs, I7m9b5plj4h5ot, I9onhk772nfs4f, I3l6bnksrmt56r, Idh09k0l2pmdcg, I7uoiphbm0tj4r, I512p1n7qt24l8, I6s1nbislhk619, I3gghqnh2mj0is, I6iv852roh6t3h, I9oc2o6itbiopq, Ibslgga81p36aa, Ie8hpsm3jhsvo3, I1rvj4ubaplho0, Ia3uu7lqcc1q1i, I7crucfnonitkn, I7tmrp94r9sq4n, I5t0h3v31vercb, Ioq9h2ok08d7n, Idfvckuklc9fg5, Ibmjpstvdjcrai, Iep27ialq4a7o7, Iasu5jvoqr43mv, I8glmdpumtd6gi, I5qolde99acmd1, I8gtde5abn1g9a, I4dt3661bsu4r4, Ied80rdpusan1f, I2ur0oeqg495j8, I75c7qrsfp7nlg, I1bhd210c3phjj, Ia1u3jll6a06ae, Ic9g5lvl9iddc5, I88ff3u4dpivk, I33cp947glv1ks, Ic9om1gmmqu7rq, I5hfov2b68ppb6, Ibthhb2m9vneds, Iaitn5bqfacj7k, If4ebvclj2ugvi, Ia5le7udkgbaq9, Ieduc1e6frq8rb, I9h6gbtabovtm4, Ifnsa0dkkpf465, I65dtqr2egjbc3, Ibqj3vg5s5lk0c, I6l73u513p8rna, Iefqmt2htu1dlu, If8bgtgqrchjtu, Idusmq77988cmt, Ifhs6ggbuiec5i, Id2vo4qi5agnp0, I9gqanbbbe917p, Id1m1230297f7a, Ifvb1p5munhhv4, I46h83ilqeed3g, Icahse3uoi76n7, I75sj3uv7gnemk, I5fjkvcb5vr6nb, I2gr1toekv86b9, I2v2ikqt2trp52, If3057hi1g5qlo, Iaii5qf41d5n3d, Ico8bnjc6taa27, I78i1bvlonei69, I9i1f9mrso1hmf, I9ksla2si91s56, Id9j7b85otvjru, Iaihk9pek2ajl9, Id9av23h47ufb2, Ib4kpnijas4jqp, I2vnu5k0u1i65h, Icqe266pmnr25o, I5hoiph0lqphp, I5k7oropl9ofc7, I48vagp1omigob, Ib5tst4ppem1g6, Ibn64edsrg3737, I83r9d02dh47j9, I3jnhifvaeuama, I8n1gia0lo42ok, I6gb0o7lqjfdjq, Idh36v6iegkmpq, I27hnueutmchbe, Iectm2em66uhao, I7q57goff3j72h, Ibe49veu9i9nro, I1rnkmiu7usb82, Iadvnek4gbu68j, Ibtugueatkkr9s, I1q546n7mmm8nk, If7i5aoh4lk0a1, If9prqbk25189q, Icugn66dlnp8rd, I1bfrt15apsnp, Id3old33tr9erj, I17i7j1j46bce3, I8iksqi3eani0a, I16enopmju1p0q, I43kq8qudg7pq9, I76riseemre533, I38bmcrmh852rk, I4hcillge8de5f, I6pl54js63fnua, Iek7v4hrgnq6iv, I7svrbkiu01iec, I8cbok7qd7ru4t, I7kij8p9kchdjo, I229ijht536qdu, I62nte77gksm0f, I9cg2delv92pvq, Ilhp45uime5tp, I4f1hv034jf1dt, I13h3fcccd3vd6, Id9idaj83175f9, Ie1semicfuv5uu, If25fjs9o37co1, I70sc1pdo8vtos, Ibck5e4jpm96l8, I60p8l86a8cm59, I3m3sk2lgcabvp, I5pf572duh4oeg, Idrugh2blv81ia, I41bt7lr6c2cqa, I200voven22cdm, I2j7mp9h804tg2, I1hl2lumftiuhm, Iccp9ugd60cntc, I32klqpv3q0cp4, Iagqcb06kbevb1, Iec8defeh924b6, I1ti389kf8t6oi, If4nnre373amul, I55kbor0ocqk6h, Idsj9cg7j96kpc, Ido4u9drncfaml, Ie8c7ctks8ur2p, I6c6fpqmnqijqd, I6mik29s5073td, I2m0sqmb75cnpb, I49agc5b62mehu, Iatq9jda4hq6pg, I2g87evcjlgmqi, I93ajn7brqs8df, Ib2q8vnsr19t9b, If6q1q7op2gvqf, I37454vatvmm1l, Iblau1qa7u7fet, Id2aanom2jncf1, I1b9s29roqhg41, I9kd1anrch3gtm, I9i3iv964ch4c9, I87u3l28logste, I44bc4bblti9at, I7hv3qbsnqi6a5, I2g5n39rtm1si0, Icr28nsmo3thmu, I1csu4ejte2mno, I9lrippm0l6t0c, Icsknfl0f6r973, I1au3fq4n84nv3, Iejaj7m7qka9tr, Idnak900lt5lm8, Ifk8eme5o7mukf, Iau4cgm6ih61cf, Ith132hqfb27q, Ic19as7nbst738, I54umskavgc9du, I2ip7o9e2tc5sf, I5egvk6hadac5h, I1td4upnup9gqv, I3m3s3nqk2k59p, I4rl33s8t7uju2, Icgsl781ka0jnq, I9s54l74mrft0k, Ia5ob51vsq2d0j, I4ivg4grtu56me, I6vle0jppq6m24, I545psrfbokuc2, I37mpns1l5dsq, I41otkavempbl, Ij28ljhcuk0a1, Ibd55ljc5eg0ot, Idjiu7vp8ovdab, I2k5q8tu497vml, Ib5nd4b60msfgt, I3v5hj167gg0lm, Iav577o5q7lojg, I7svbvm6hg57aj, I8jhsbaiultviu, I534irpjp31lfe, I139g3ciecrt3g, I5oke0ng9d28gs, Ifph6tiih28159, Ievh3p2v3irpv2, I23hh2qt15pn3s, I5rtkmhm2dng4u, I6vpqg1ssj0gc7, I4g1444e4lrvko, I605froskfgu31, I5r8t4iaend96p, Ie2db4l6126rkt, Ictkqqlhdjt761, I1hvvfhug26jll, Id32c233f14hs1, I1uglf8pvj966e, Iapbjptjr70817, ExtensionsCheckMortality, I182pt4kr56mhn, I87rnrnks7g0hm, I4s6vifaf8k998, I61h1b445e14of } from "./common-types";
+import { StorageDescriptor, PlainDescriptor, TxDescriptor, RuntimeDescriptor, Enum, ApisFromDef, QueryFromPalletsDef, TxFromPalletsDef, EventsFromPalletsDef, ErrorsFromPalletsDef, ConstFromPalletsDef, ViewFnsFromPalletsDef, SS58String, SizedHex, FixedSizeArray } from "polkadot-api";
+import type { I5sesotjlssv2d, Iffmde3ekjedi9, I4mddgoa69c0a2, Ie13a6ppb66mks, I95g6i7ilua7lq, Ieniouoqkq4icf, Phase, Ibgl04rn6nbfm6, I4q39t5hn830vp, I8re9183nrhr3n, I1v7jbnil3tjns, I8jgj1nhcr2dg8, Ifn6q3equiq9qi, Ia3sb0vgvovhtg, Iav8k1edbj86k7, Itom7fk49o0c9, I4i91h98n3cv1b, I4iumukclgj8ej, Iqnbvitf7a7l3, I48i407regf59r, I6r5cbv8ttrb09, Inofn0qqbjtb9, PreimageOldRequestStatus, PreimageRequestStatus, I4pact7n2e9a0i, Iaqsrnkbbmb97b, I56u24ncejr5kt, I9jd27rnpm8ttv, I1l3sdv10o52gd, I5li9kjoo8jjeo, Iepbsvlk3qceij, I1q8tnt1cluu5j, I8ds64oj6581v0, Ia7pdug7cdsg8g, I3a3gt3bf28qh7, I762rjtdaa553f, TransactionPaymentReleases, Ifble4juuml5ig, Version, I2phecamkn3pej, ClaimsStatementKind, Ib2ccgbk23rsam, Ia2lhg7l2hilo3, Ifi4da1gej1fri, Ifvgo9568rpmqc, I82jm9g7pufuel, Ic5m5lp1oioo8r, I6cs1itejju2vv, Icgljjb6j82uhn, I5mpbmq1ooiq9i, I5g2vv0ckl2m8b, Ifup3lg9ro8a0f, I5qfubnuvrnqn6, I8t3u2dv73ahbd, I7vlvrrl2pnbgk, Ie0rpl5bahldfk, XcmPalletVersionMigrationStage, I7e5oaj2qi4kl1, Ie849h3gncgvok, Iat62vud7hlod2, Ict03eedr8de9s, Ibkm2gcn4pji30, XcmVersionedLocation, I7f4alf2hnuu8s, Idh2ug6ou4a8og, Iejeo53sea6n4q, I53esa2ms463bk, Ib4jhb8tt3uung, Ibqjcgmcid3dll, Iag146hmjgqfgj, I8uo3fpd3bcc6f, Iag7gka4fmp5er, I9p9lq3rej5bhc, Iff9heri56m1mb, I3qklfjubrljqh, Iag3f1hum3p4c8, I7svnfko10tq2e, I4s6jkha20aoh0, I2brm5b9jij1st, I78s05f59eoi8b, I35l6p7kq19mr0, Ianufjuplcj6u4, Id32h28hjj1tch, I6ouflveob4eli, I2mv9dvsaj3kcr, I7781vnk0rm9eq, Ie2iqtdb0stqo1, I5irutptk105do, Ic9nev69d8grv1, I18m6a0sc4k7s9, Ic9iokm15iigt6, I35m96p3u4vl0p, Iapmji0h53pmkn, Idrr42svup341f, I4ugih6gb4fmug, Idac0t49lnd4ls, I72ndo6phms8ik, If9iqq7i64mur8, I4v5g6i7bmt06o, I84bhscllvv07n, If2801grpltbp8, If21n82i0516em, Iegmj7n48sc3am, I2l0beelkqtf0a, ConvictionVotingVoteVoting, If9jidduiuq7vv, Ic6burlpovfhi6, Ict0fmb8krq1lk, Ibofbvvaehln4e, I2q3ri6itcjj5u, I64c5iroci157c, I72g4e3mnj3e6d, Ifmarq0v77ok, If354jrdedj0pj, Ib17t3992hb64n, I215mkl885p4da, Idphjddn2h69vc, Idhh9vuu2bderg, If6qa32dj75gu1, I7oo2mprv1qd1s, NominationPoolsClaimPermission, Ic5t26f9cp3tvk, I39k39h6vu4hbq, I542q009qbgt8k, I4e5ujckjq61g8, I3fgbanmq2lnk2, I6765e2s56217t, I7d4qtdlascfk8, I9cpogojpnsq8h, I4bboqsv44evel, I8je4hjun1hc3g, I3mj0igdqvh474, I8s6n43okuj2b1, I29575k8s6asco, I3rfe446il0rb7, I1nvcsqg39g26j, Ia8896dq44k9m4, Iefkd2klketjfh, I69tqqtpr9n8ie, StakingRewardDestination, I9o7ssi9vmhmgr, Ic3m9d6tdl6gi2, Ib3j7gb0jgs38u, I6flrronqs3l6n, I97fulj5h3ik95, Iff9p3c7k6pfoi, StakingForcing, I7oqom2n34q7u8, I921dks5d4ov9t, Idm2c96td6cqkk, Iam8h8p165t5uu, I205qrookusi3d, I4ojmnsk1dchql, I70u6ma6po0va2, Ic2seb0fn4tqs, Ifsgohug5cpb9, I4hus3s8lblmj7, Id2b1qsnd0q3jb, Ifl2ank31rkhm0, Idvob66qflhcgd, Ia1cba3u875b3, I5k86f11ne5gjd, I8g5kqku53c190, Ia892jrs62vldc, I9jea06984vfti, I834nfrf667ag1, I14i9pui8lc778, I2na29tt2afp0j, I4hkhloodl7q5t, I8t4pajubp34g3, Idq3n4esn5nvc5, I3oiqcurom3m43, I20ichc5j0l1u7, I1p16diuhde12h, I1vfb3ajo1hl6k, I4totqt881mlti, I76g8pnvlrcvkk, If85gvv84rc1b, Idfos1hk75i7fm, Icj0tssrh6ika3, I4pgs2j4mmb12q, I6o6dmud53u1fj, I95l2k9b1re95f, In7a38730s6qs, Ibtil0ss5munbk, I9s0ave7t0vnrk, I4fo08joqmcqnm, XcmV5Junctions, Iasb8k6ash5mjn, Ibafpkl9hhno69, I35p85j063s0il, Iafqnechp3omqg, If0d1j56sjc2vd, I8ofcg5rbj0g2c, I4adgbll7gku4i, I6pjjpfvhvcfru, I9pj91mj79qekl, I39uah9nss64h9, Ik64dknsq7k08, I3m5sq54sjdlso, Ib51vk42m1po4n, Ial23jn8hp0aen, Ifpj261e8s63m3, Idcr6u6361oad9, I82nfqfkd48n10, I1jm8m1rh9e20v, I3o5j3bli1pd8e, Ikcj0uucb0tlk, I5n4sebgkfr760, Iaeuepm7g9fa41, Ifs1i5fk9cqvr6, Ian2lnfkc73gle, I2mj6qem5oo9bh, Ieg3fd8p4pkt10, I8kg5ll427kfqq, I467333262q1l9, Ib2514p0nqisbg, Ibou4u1engb441, Id6nbvqoqdj4o2, I95iqep3b8snn9, I4ktuaksf5i1gk, I9bqtpv2ii35mp, I9j7pagd6d4bda, I2h9pmio37r7fb, Ibmr18suc9ikh9, I9iq22t0burs89, I5u8olqbbvfnvf, I5utcetro501ir, Id9uqtigc0il3v, Iaa2o6cgjdpdn5, Iam6hrl7ptd85l, Ict9ivhr2c5hv0, I8t4vv03357lk9, I6uag8j5aql8q, Isq3k9rh2c0l4, I1dqiovk0tpoah, I1ntko0oih7v1a, I2tf5qmg09624f, Ib5bko2vt0c3eu, Ifccifqltb5obi, Iadtsfv699cq8b, Ialpmgmhr3gk5r, I4cbvqmqadhrea, I3sdol54kg5jaq, I8fougodaj6di6, I81vt5eq60l4b6, I3vh014cqgmrfd, Ia5cotcvi888ln, I21jsa919m88fd, Iegif7m3upfe1k, I9kt8c221c83ln, Ic76kfh5ebqkpl, Icscpmubum33bq, I21d2olof7eb60, Ibgm4rnf22lal1, Ie68np0vpihith, I9bnv6lu0crf1q, Iauhjqifrdklq7, Ie1uso9m8rt5cf, Idlampfle3vh6q, I40pqum1mu8qg3, I1r4c2ghbtvjuc, I9i6b1362umn1t, Iel0ml15497i7b, Icp5j0naoi9qh2, I3ntd9i7877oak, Idvq9g9ibrkvtu, Ial13es6f4qc2i, I4trno9ou8ib0t, I9gf6vu5rhvslt, I1mr337ef5gtdo, I32i7b1p0ee9ap, Ideaemvoneh309, I3d9o9d7epp66v, I6lqh1vgb4mcja, Icfe90kbu2ohi7, I5bdpjlmj4phdc, Iag45j3iuog165, I9fg860lp990m2, I2eb501t8s6hsq, Ianmuoljk2sk1u, Ifbb755k5glf9c, I666bl2fqjkejo, I6o1er683vod1j, I5bq561t4gpfva, Ic357tcepuvo5c, I2rnoam876ruhj, Ic5b47dj4coa3r, Ib3qnc19gu633c, Ifira6u9hi7cu1, I72tqocvdoqfff, I2i27f3sfmvc05, I1nlrtd1epki2d, I3abtumcmempjs, Id81m8flopt8ha, I8hff7chabggkd, I49i39mtj1ivbs, Ifkr2kcak2vto1, I1ju6r8q0cs9jt, I4kpeq6j7cd5bu, I5na1ka76k6811, I59mhdb9omdqfa, I9vl5kpk0fpakt, I717jt61hu19b4, I7f7v8192r1lmq, Idjrs24gh0qv5l, If66ivi02f7256, I223jtcatlfkrc, I223jg78mng8hq, I4iiuiftkpq3fd, Ibra6533h92c0a, Ibgvkh96s68a66, If9vko7pv0231m, Iafkqus0ohh6l6, I6cu7obfo0rr0o, I736lv5q9m5bot, I1ap9tlenhr44l, Ib92t90p616grb, Ieipuujd6879do, Ie56eq9sg1rsoc, I5tvvgui05tn6e, Ibal0joadvdc2h, Iceq9fmmp9aeqv, I9viqhmdtuof5e, Ibqooroq6rr5kr, I6h88h8vba22v8, Ia9cd4jqb5eecb, I19jiel1ftbcce, I43aobns89nbkh, Iamd7rovec1hfb, I77ie723ncd4co, Ieebloeahma3ke, I4mbtpf4pu3rec, I1ahf3pvgsgbu, I9uapdn16emsti, Ie5i0q2glmr0md, I97qcg6i3l8gee, Ib5udrahak005b, I1jj31tn29ie3c, I5llu6o6a0go5i, Ic8b8561e6t9ie, I93r2effh7od84, I6afd7fllr8otc, Icrkms46uh8tpb, I78u60nqh0etah, I1lso3vlgherue, I26c8p47106toa, Iq82b3qvf20ne, Ic3j8ku6mbsms4, I3nvoqsi8f05ph, I4dr6q8duftm2l, I4da75oqso1rqj, I7t2thek61ghou, I61tdrsafr1vf3, Ibsk5g3rhm45pu, Icfoe9q8d4vs8f, Ibrfmvjrg4trnb, Iedih7t34maii9, I4e902qbfel1f1, Ie4met0joi8sv0, I1t8vq6a06ohhu, Icvt3pdunbinm7, I9ui3n41balr2q, I89sl7btgl24g2, I3u6g26k9kn96u, If1invp94rsjms, Ie5nc19gtiv5sv, Iald3dgvt1hjkb, Iurrhahet4gno, I5tamv2nk8bj8o, I8apq8e7c7qcpp, Id1e31ij0c35fv, Ic6vatc0h2tbq8, I3ip09dj7i1e8n, Ide34bfv94bvut, I6c7mabde89bp, I9sbpodgd8ilku, Ialnqi1f4kpb, Icnrv1mfbd3in1, Icm9m0qeemu66d, I79dicn2l2lfgs, Idnsr2pndm36h0, Ia1pvdcbhuqf8m, I8steo882k7qns, I4pa4q37gj6fua, I5f178ab6b89t3, I4nakhtbsk3c5s, If2a2827j1eg7m, Icbio0e1f0034b, I8c0vkqjjipnuj, I1adbcfi5uc62r, Ibf6ucefn8fh49, Ifr706bjpl0fi8, I2a839vbf5817q, Ia9p5bg6p18r0i, I42bqh279uf7oa, I4p6v96cffstms, I90n6nnkpdahrh, I8mk5kjgn02hi8, Ieqvq91sbe02ko, I2gr10p66od9ch, I9mcq66cm3gibo, I9c4d50jrp7as1, Ifplevr9hp8jo3, Ic7vv426t45o81, Ic5qjcpspmr75n, I9usg3e2ik3sk, I9bg8aubpi9e76, I6k9enqukp95rq, I8g22bn83j942k, I7psec5e6ghc64, I2psb0sladd863, I585tk8khua0gk, I3ut99di214ru2, Iemkp87d26vsbh, I4ahfrt5dscf6q, Ieg1oc56mamrl5, I2vu5vj7173ik9, I6galqkn58q3bl, I36uoc8t9liv80, Ibunghsg9qa7f7, I8qnouj2c0igph, Ic30e2k517a3ns, I47a2tsd2o2b1c, Ifc9k1s0e9nv8e, I4ihj26hl75e5p, I2dl8ekhm2t22h, I13us5e5h5645o, I931cottvong90, I7sujb8gfvuo7n, I1ors0vru14it3, I40s11r8nagn2g, I6bjj87fr5g9nl, I8cbluptqo8kbp, I81cc4plffa1dm, I3ihan8icf0c5k, I7ibh0fckqou49, Id9js0aucdivjk, I1vj3e1a62je3o, I6c1t14l6giceg, Ibqeqpelookfc7, Idluhda5fs51me, I5fth63b1m9g33, Ial45quj87eu6f, I5gjo9p1b18ftr, I5rijfvcqtmsdc, Ib8qhbmc61qu95, I6041egnb3am04, I7ej7mean6mih8, Iehi3mdadqmlp5, Id9gv8k0nmtfsc, I2eip8tc75dpje, I564va64vtidbq, Ie5v6njpckr05b, I328av3j0bgmjb, I4tuqm9ato907i, Iagi89qt4h1lqg, I9dgmcnuamt5p8, Ifhs60omlhvt3, If34udpd5e57vi, Ie5vbnd9198quk, Ib1db5b4tm2bvc, I6k6jf8ncesuu3, I3qhk481i120pk, I1640pio56addk, Idl3umm12u5pa, I5ont0141q9ss5, Ie6j49utvii126, I3v6ks33uluhnj, I3kiiim1cds68i, I4k60mkh2r6jjg, I70mou2rha6f5o, I9bur6p3ovq9mo, Ifej8h55fqfna0, I3pd97rr0bl0ai, Ifv2oev86nk73e, Icec749qc1mpna, Iab0nqc372eia, I6fhhpo0k6s6lr, I9gel4bv68gacj, Ic2gkpk0orj06b, Ip2b8725fmudi, Ida37oe44osb06, I6v02o6j4snahe, I27569neuh5t1o, Id92o6smntb9m5, I5nmb2hfkgk9ol, Iav55bcqlrqn51, I4fl6nptnfv4q3, I10ra4g1rl6k2f, I1uihehkdsggvp, I1hdbgb10envte, I9ov5hft672si3, Ibl1gaa0rn2c67, Icbccs0ug47ilf, Itmchvgqfl28g, I6at0amaqc5r60, I8serkotvgpn40, I8k3rnvpeeh4hv, Iaf1nsti3s4eks, Ikkngcosp7bof, I22bm4d7re21j9, Idq94m670fbari, Ia82mnkmeo2rhc, I1qdgrqvt473n4, I855j4i3kr8ko1, Ier5r85jd90cop, Ifovqevul1hv3t, Idd7hd99u0ho0n, Iafscmv8tjf0ou, I100l07kaehdlp, I6gnbnvip5vvdi, I5bk5hu4ak2ltv, Ia3c82eadg79bj, Ienusoeb625ftq, Ibtsa3docbr9el, I2nv6j2h8imgbl, If1co0pilmi7oq, Iae74gjak1qibn, I3escdojpj0551, Icv68aq8841478, Ic262ibdoec56a, Iflcfm9b6nlmdd, Ijrsf4mnp3eka, Id5fm4p8lj5qgi, I8tjvj9uq4b7hi, I3qt1hgg4djhgb, I4fooe9dun9o0t, I8jo5jmsfnhqqg, I21r16r4j2912m, I672l1i4ipl36t, Iph9c4rn81ub2, Ier2cke86dqbr2, Imhre0s2vm68p, Icjchvrijclvlv, Ih04jp733tqqa, Ievr89968437gm, Ie3hcrrq6r18fs, I3b1k9tid058uk, I65mhg1smm31sn, I29uq5455vq130, I39t01nnod9109, I6v8sm60vvkmk7, I1qmtmbe5so8r3, Ih99m6ehpcar7, Idgorhsbgdq2ap, I9ubb2kqevnu6t, I2hq50pu2kdjpo, I9acqruh7322g2, I137t1cld92pod, I61d51nv4cou88, If8u5kl4h8070m, Ibmuil6p3vl83l, I7lul91g50ae87, Icl7nl1rfeog3i, Iasr6pj6shs0fl, I2uqmls7kcdnii, Idg69klialbkb8, I7r6b7145022pp, I30pg328m00nr3, Icmrn7bogp28cs, I7m9b5plj4h5ot, I9onhk772nfs4f, I3l6bnksrmt56r, Idh09k0l2pmdcg, I7uoiphbm0tj4r, I512p1n7qt24l8, I6s1nbislhk619, I3gghqnh2mj0is, I6iv852roh6t3h, I9oc2o6itbiopq, Ibslgga81p36aa, Ie8hpsm3jhsvo3, I1rvj4ubaplho0, Ia3uu7lqcc1q1i, I7crucfnonitkn, I7tmrp94r9sq4n, I5t0h3v31vercb, Ioq9h2ok08d7n, Idfvckuklc9fg5, Ibmjpstvdjcrai, Iep27ialq4a7o7, Iasu5jvoqr43mv, I8glmdpumtd6gi, I5qolde99acmd1, I8gtde5abn1g9a, I4dt3661bsu4r4, Ied80rdpusan1f, I2ur0oeqg495j8, I75c7qrsfp7nlg, I1bhd210c3phjj, Ia1u3jll6a06ae, Ic9g5lvl9iddc5, I88ff3u4dpivk, I33cp947glv1ks, Ic9om1gmmqu7rq, I5hfov2b68ppb6, Ibthhb2m9vneds, Iaitn5bqfacj7k, If4ebvclj2ugvi, Ia5le7udkgbaq9, Ieduc1e6frq8rb, I9h6gbtabovtm4, Ifnsa0dkkpf465, I65dtqr2egjbc3, Ibqj3vg5s5lk0c, I6l73u513p8rna, Iefqmt2htu1dlu, If8bgtgqrchjtu, Idusmq77988cmt, Ifhs6ggbuiec5i, Id2vo4qi5agnp0, I9gqanbbbe917p, Id1m1230297f7a, Ifvb1p5munhhv4, I46h83ilqeed3g, Icahse3uoi76n7, I75sj3uv7gnemk, I5fjkvcb5vr6nb, I2gr1toekv86b9, I2v2ikqt2trp52, If3057hi1g5qlo, Iaii5qf41d5n3d, Ico8bnjc6taa27, I78i1bvlonei69, I9i1f9mrso1hmf, I9ksla2si91s56, Id9j7b85otvjru, Iaihk9pek2ajl9, Id9av23h47ufb2, Ib4kpnijas4jqp, I2vnu5k0u1i65h, Icqe266pmnr25o, I5hoiph0lqphp, I5k7oropl9ofc7, I48vagp1omigob, Ib5tst4ppem1g6, Ibn64edsrg3737, I83r9d02dh47j9, I3jnhifvaeuama, I8n1gia0lo42ok, I6gb0o7lqjfdjq, Idh36v6iegkmpq, I27hnueutmchbe, Iectm2em66uhao, I7q57goff3j72h, Ibe49veu9i9nro, I1rnkmiu7usb82, Iadvnek4gbu68j, Ibtugueatkkr9s, I1q546n7mmm8nk, If7i5aoh4lk0a1, If9prqbk25189q, Icugn66dlnp8rd, I1bfrt15apsnp, Id3old33tr9erj, I17i7j1j46bce3, I8iksqi3eani0a, I16enopmju1p0q, I43kq8qudg7pq9, I76riseemre533, I38bmcrmh852rk, I4hcillge8de5f, I6pl54js63fnua, Iek7v4hrgnq6iv, I7svrbkiu01iec, I8cbok7qd7ru4t, I7kij8p9kchdjo, I229ijht536qdu, I62nte77gksm0f, I9cg2delv92pvq, Ilhp45uime5tp, I4f1hv034jf1dt, I13h3fcccd3vd6, Id9idaj83175f9, Ie1semicfuv5uu, If25fjs9o37co1, I70sc1pdo8vtos, Ibck5e4jpm96l8, I60p8l86a8cm59, I3m3sk2lgcabvp, I5pf572duh4oeg, Idrugh2blv81ia, I41bt7lr6c2cqa, I200voven22cdm, I2j7mp9h804tg2, I1hl2lumftiuhm, Iccp9ugd60cntc, I32klqpv3q0cp4, Iagqcb06kbevb1, Iec8defeh924b6, I1ti389kf8t6oi, If4nnre373amul, I55kbor0ocqk6h, Idsj9cg7j96kpc, Ido4u9drncfaml, Ie8c7ctks8ur2p, I6c6fpqmnqijqd, I6mik29s5073td, I2m0sqmb75cnpb, I49agc5b62mehu, Iatq9jda4hq6pg, I2g87evcjlgmqi, I93ajn7brqs8df, Ib2q8vnsr19t9b, If6q1q7op2gvqf, I37454vatvmm1l, Iblau1qa7u7fet, Id2aanom2jncf1, I1b9s29roqhg41, I9kd1anrch3gtm, I9i3iv964ch4c9, I87u3l28logste, I44bc4bblti9at, I7hv3qbsnqi6a5, I2g5n39rtm1si0, Icr28nsmo3thmu, I1csu4ejte2mno, I9lrippm0l6t0c, Icsknfl0f6r973, I1au3fq4n84nv3, Iejaj7m7qka9tr, Idnak900lt5lm8, Ifk8eme5o7mukf, Iau4cgm6ih61cf, Ith132hqfb27q, Ic19as7nbst738, I54umskavgc9du, I2ip7o9e2tc5sf, I5egvk6hadac5h, I1td4upnup9gqv, I3m3s3nqk2k59p, I4rl33s8t7uju2, Icgsl781ka0jnq, I9s54l74mrft0k, Ia5ob51vsq2d0j, I4ivg4grtu56me, I6vle0jppq6m24, I545psrfbokuc2, I37mpns1l5dsq, I41otkavempbl, Ij28ljhcuk0a1, Ibd55ljc5eg0ot, Idjiu7vp8ovdab, I2k5q8tu497vml, Ib5nd4b60msfgt, I3v5hj167gg0lm, Iav577o5q7lojg, I7svbvm6hg57aj, I8jhsbaiultviu, I534irpjp31lfe, I139g3ciecrt3g, I5oke0ng9d28gs, Ifph6tiih28159, Ievh3p2v3irpv2, I23hh2qt15pn3s, I5rtkmhm2dng4u, I6vpqg1ssj0gc7, I4g1444e4lrvko, I605froskfgu31, I5r8t4iaend96p, Ie2db4l6126rkt, Ictkqqlhdjt761, I1hvvfhug26jll, I9vodnt2k1kha, I4ao1le27fcisl, Ih4ursllob8fg, I1uo97mh0ejq2k, Id32c233f14hs1, Iq3dapmsriggs, I6052turo9tavh, Iemk0s5gdc9ruv, I6f85d1dn5kg37, Iba6ec6u9n2dc1, I1dp7qidnaqhcj, Iffpbtnc90lulf, Iaqet9jc3ihboe, Ic952bubvq4k7d, I2v50gu3s1aqk6, Iabpgqcjikia83, I49e4laoe7gk9t, If7uv525tdvv7a, I2an1fs2eiebjp, TransactionValidityTransactionSource, I9ask1o4tfvcvs, I4ph3d1eepnmr1, Icerf8h8pdu8ss, I4gil44d08grh, I7u915mvkdsb08, I6spmpef2c7svf, Iei2mvq0mjvt81, Iftvbctbo05fu4, XcmVersionedXcm, Ic0c3req3mlc1l, XcmVersionedAssetId, I7ocn4njqde3v5, Iek7ha36da9mf5, I1ilf2k8puf0h4, I2d2csf5jtu1u3, Ieehc7rdhpfa1c, Ieh6nis3hdbtgi, XcmVersionedAsset, Icujp6hmv35vbn, I4tjame31218k9, I5gif8vomct5i8, I8fk5filgollou, Ic1d4u2opv3fst, Ie9sr1iqcg3cgm, I1mqgk2tmnn9i2, I6lr8sctk0bi4e, I5vv5n03oo8gas, Ies018ev98ebq7, I4s6vifaf8k998, Idfd4b09pdcebl, I9sijb8gfrns29, Ibi8b4f26ih5vv, I6f9v7emp7t5ba, Ida7d8eqrkav55, I9mq0s1ommikm5, I2806mq9p1klk7, Iau1ib3fio8i01, I5mla0vm6dnsl0, Ib8pon7110jta2, Ift65j5o2ie116, I4t66mvvs4nlcp, Ifccp4hviaqmur, I2bg9cnbto6e89, Id22r0gklsr0ok, I512dtcl0pn07c, I1uglf8pvj966e, Iapbjptjr70817, ExtensionsCheckMortality, I182pt4kr56mhn, I87rnrnks7g0hm, I61h1b445e14of } from "./common-types";
 type AnonymousEnum<T extends {}> = T & {
     __anonymous: true;
 };
@@ -336,7 +336,7 @@ type IStorage = {
     };
     ParachainInfo: {
         /**
-        
+
          */
         ParachainId: StorageDescriptor<[], number, false, never>;
     };
@@ -350,7 +350,7 @@ type IStorage = {
          */
         RequestStatusFor: StorageDescriptor<[Key: SizedHex<32>], PreimageRequestStatus, true, never>;
         /**
-        
+
          */
         PreimageFor: StorageDescriptor<[Key: Anonymize<I4pact7n2e9a0i>], Uint8Array, true, never>;
     };
@@ -456,11 +456,11 @@ type IStorage = {
     };
     TransactionPayment: {
         /**
-        
+
          */
         NextFeeMultiplier: StorageDescriptor<[], bigint, false, never>;
         /**
-        
+
          */
         StorageVersion: StorageDescriptor<[], TransactionPaymentReleases, false, never>;
         /**
@@ -484,11 +484,11 @@ type IStorage = {
     };
     Claims: {
         /**
-        
+
          */
         Claims: StorageDescriptor<[Key: SizedHex<20>], bigint, true, never>;
         /**
-        
+
          */
         Total: StorageDescriptor<[], bigint, false, never>;
         /**
@@ -1144,7 +1144,7 @@ type IStorage = {
     };
     Whitelist: {
         /**
-        
+
          */
         WhitelistedCall: StorageDescriptor<[Key: SizedHex<32>], null, true, never>;
     };
@@ -1587,7 +1587,7 @@ type IStorage = {
          */
         Invulnerables: StorageDescriptor<[], Anonymize<Ia2lhg7l2hilo3>, false, never>;
         /**
-        
+
          */
         SortedScores: StorageDescriptor<[Key: number], Anonymize<I3rfe446il0rb7>, false, never>;
         /**
@@ -2339,7 +2339,7 @@ type ICalls = {
          */
         remark_with_event: TxDescriptor<Anonymize<I8ofcg5rbj0g2c>>;
         /**
-        
+
          */
         do_task: TxDescriptor<Anonymize<I3m5sq54sjdlso>>;
         /**
@@ -2387,7 +2387,7 @@ type ICalls = {
          */
         set_validation_data: TxDescriptor<Anonymize<Ial23jn8hp0aen>>;
         /**
-        
+
          */
         sudo_send_upward_message: TxDescriptor<Anonymize<Ifpj261e8s63m3>>;
     };
@@ -2844,7 +2844,7 @@ type ICalls = {
          */
         attest: TxDescriptor<Anonymize<I1ntko0oih7v1a>>;
         /**
-        
+
          */
         move_claim: TxDescriptor<Anonymize<I2tf5qmg09624f>>;
     };
@@ -3011,7 +3011,7 @@ type ICalls = {
     };
     PolkadotXcm: {
         /**
-        
+
          */
         send: TxDescriptor<Anonymize<Ia5cotcvi888ln>>;
         /**
@@ -7007,19 +7007,19 @@ type ICalls = {
     };
     Whitelist: {
         /**
-        
+
          */
         whitelist_call: TxDescriptor<Anonymize<I1adbcfi5uc62r>>;
         /**
-        
+
          */
         remove_whitelisted_call: TxDescriptor<Anonymize<I1adbcfi5uc62r>>;
         /**
-        
+
          */
         dispatch_whitelisted_call: TxDescriptor<Anonymize<Ibf6ucefn8fh49>>;
         /**
-        
+
          */
         dispatch_whitelisted_call_with_preimage: TxDescriptor<Anonymize<Ifr706bjpl0fi8>>;
     };
@@ -8074,7 +8074,7 @@ type ICalls = {
          */
         relay_session_report: TxDescriptor<Anonymize<Ibqeqpelookfc7>>;
         /**
-        
+
          */
         relay_new_offence_paged: TxDescriptor<Anonymize<Idluhda5fs51me>>;
         /**
@@ -8151,7 +8151,7 @@ type ICalls = {
          */
         manage: TxDescriptor<Anonymize<I5gjo9p1b18ftr>>;
         /**
-        
+
          */
         admin: TxDescriptor<Anonymize<I5rijfvcqtmsdc>>;
     };
@@ -10628,11 +10628,11 @@ type IEvent = {
     };
     AssetsFreezer: {
         /**
-        
+
          */
         Frozen: PlainDescriptor<Anonymize<Idusmq77988cmt>>;
         /**
-        
+
          */
         Thawed: PlainDescriptor<Anonymize<Idusmq77988cmt>>;
     };
@@ -10745,11 +10745,11 @@ type IEvent = {
          */
         DecisionStarted: PlainDescriptor<Anonymize<I9cg2delv92pvq>>;
         /**
-        
+
          */
         ConfirmStarted: PlainDescriptor<Anonymize<I666bl2fqjkejo>>;
         /**
-        
+
          */
         ConfirmAborted: PlainDescriptor<Anonymize<I666bl2fqjkejo>>;
         /**
@@ -10791,15 +10791,15 @@ type IEvent = {
     };
     Whitelist: {
         /**
-        
+
          */
         CallWhitelisted: PlainDescriptor<Anonymize<I1adbcfi5uc62r>>;
         /**
-        
+
          */
         WhitelistedCallRemoved: PlainDescriptor<Anonymize<I1adbcfi5uc62r>>;
         /**
-        
+
          */
         WhitelistedCallDispatched: PlainDescriptor<Anonymize<I13h3fcccd3vd6>>;
     };
@@ -10873,15 +10873,15 @@ type IEvent = {
     };
     AssetRate: {
         /**
-        
+
          */
         AssetRateCreated: PlainDescriptor<Anonymize<I9c4d50jrp7as1>>;
         /**
-        
+
          */
         AssetRateRemoved: PlainDescriptor<Anonymize<Ifplevr9hp8jo3>>;
         /**
-        
+
          */
         AssetRateUpdated: PlainDescriptor<Anonymize<Idrugh2blv81ia>>;
     };
@@ -11261,7 +11261,7 @@ type IEvent = {
          */
         SnapshotTargetsSizeExceeded: PlainDescriptor<Anonymize<I54umskavgc9du>>;
         /**
-        
+
          */
         ForceEra: PlainDescriptor<Anonymize<I2ip7o9e2tc5sf>>;
         /**
@@ -13176,7 +13176,7 @@ type IError = {
          */
         RefundError: PlainDescriptor<undefined>;
         /**
-        
+
          */
         PayoutError: PlainDescriptor<undefined>;
         /**
@@ -14393,13 +14393,13 @@ type IConstants = {
          */
         MinVestedTransfer: PlainDescriptor<bigint>;
         /**
-        
+
          */
         MaxVestingSchedules: PlainDescriptor<number>;
     };
     Claims: {
         /**
-        
+
          */
         Prefix: PlainDescriptor<Uint8Array>;
     };
@@ -14448,7 +14448,7 @@ type IConstants = {
          */
         MaxInvulnerables: PlainDescriptor<number>;
         /**
-        
+
          */
         KickThreshold: PlainDescriptor<number>;
         /**
@@ -15412,11 +15412,11 @@ type IConstants = {
          */
         MaxStaleAliasBatch: PlainDescriptor<number>;
         /**
-        
+
          */
         PeopleCollectionIdentifier: PlainDescriptor<SizedHex<32>>;
         /**
-        
+
          */
         PeopleLiteCollectionIdentifier: PlainDescriptor<SizedHex<32>>;
     };
@@ -15569,8 +15569,918 @@ type IConstants = {
         MaxFutureSkewSeconds: PlainDescriptor<bigint>;
     };
 };
-type IViewFns = {};
-type IRuntimeCalls = {};
+type IViewFns = {
+    MultiBlockMigrations: {
+        /**
+         * Returns the ongoing status of migrations.
+         */
+        ongoing_status: RuntimeDescriptor<[], Anonymize<I9vodnt2k1kha>>;
+        /**
+         * Returns progress information about the current migration, if any.
+         *
+         * This function provides detailed information about the current migration's progress,
+         * including the number of steps completed and the maximum allowed steps.
+         */
+        progress: RuntimeDescriptor<[], Anonymize<I4ao1le27fcisl>>;
+        /**
+         * Returns the storage prefixes affected by the current migration.
+         *
+         * Can be empty if the migration does not know or there are no prefixes.
+         */
+        affected_prefixes: RuntimeDescriptor<[], Anonymize<Itom7fk49o0c9>>;
+        /**
+         * Returns the comprehensive status of multi-block migrations.
+         */
+        status: RuntimeDescriptor<[], Anonymize<Ih4ursllob8fg>>;
+    };
+    Dap: {
+        /**
+         * All registered budget recipients with their current allocation shares.
+         *
+         * The `Perbill` is taken from `BudgetAllocation`; recipients absent from
+         * the map appear with `Perbill::zero()`.
+         */
+        budget_recipients: RuntimeDescriptor<[], Anonymize<I1uo97mh0ejq2k>>;
+        /**
+         * Account that holds burned/slashed funds before they are drained into
+         * the DAP buffer by `on_idle`. Exposed to clients so they don't have to
+         * re-derive the sub-account themselves.
+         */
+        staging: RuntimeDescriptor<[], SS58String>;
+    };
+    Proxy: {
+        /**
+         * Check if a `RuntimeCall` is allowed for a given `ProxyType`.
+         */
+        check_permissions: RuntimeDescriptor<[call: Anonymize<Id32c233f14hs1>, proxy_type: Anonymize<Iq3dapmsriggs>], boolean>;
+        /**
+         * Check if one `ProxyType` is a subset of another `ProxyType`.
+         */
+        is_superset: RuntimeDescriptor<[to_check: Anonymize<Iq3dapmsriggs>, against: Anonymize<Iq3dapmsriggs>], boolean>;
+    };
+    Assets: {
+        /**
+         * Provide the asset details for asset `id`.
+         */
+        asset_details: RuntimeDescriptor<[id: number], Anonymize<I6052turo9tavh>>;
+        /**
+         * Provide the balance of `who` for asset `id`.
+         */
+        balance_of: RuntimeDescriptor<[who: SS58String, id: number], Anonymize<I35p85j063s0il>>;
+        /**
+         * Provide the configured metadata for asset `id`.
+         */
+        get_metadata: RuntimeDescriptor<[id: number], Anonymize<Iemk0s5gdc9ruv>>;
+        /**
+         * Provide the configured reserves data for asset `id`.
+         */
+        get_reserves_data: RuntimeDescriptor<[id: number], Anonymize<I35l6p7kq19mr0>>;
+    };
+    ForeignAssets: {
+        /**
+         * Provide the asset details for asset `id`.
+         */
+        asset_details: RuntimeDescriptor<[id: Anonymize<If9iqq7i64mur8>], Anonymize<I6052turo9tavh>>;
+        /**
+         * Provide the balance of `who` for asset `id`.
+         */
+        balance_of: RuntimeDescriptor<[who: SS58String, id: Anonymize<If9iqq7i64mur8>], Anonymize<I35p85j063s0il>>;
+        /**
+         * Provide the configured metadata for asset `id`.
+         */
+        get_metadata: RuntimeDescriptor<[id: Anonymize<If9iqq7i64mur8>], Anonymize<Iemk0s5gdc9ruv>>;
+        /**
+         * Provide the configured reserves data for asset `id`.
+         */
+        get_reserves_data: RuntimeDescriptor<[id: Anonymize<If9iqq7i64mur8>], Anonymize<If2801grpltbp8>>;
+    };
+    PoolAssets: {
+        /**
+         * Provide the asset details for asset `id`.
+         */
+        asset_details: RuntimeDescriptor<[id: number], Anonymize<I6052turo9tavh>>;
+        /**
+         * Provide the balance of `who` for asset `id`.
+         */
+        balance_of: RuntimeDescriptor<[who: SS58String, id: number], Anonymize<I35p85j063s0il>>;
+        /**
+         * Provide the configured metadata for asset `id`.
+         */
+        get_metadata: RuntimeDescriptor<[id: number], Anonymize<Iemk0s5gdc9ruv>>;
+        /**
+         * Provide the configured reserves data for asset `id`.
+         */
+        get_reserves_data: RuntimeDescriptor<[id: number], Anonymize<I35l6p7kq19mr0>>;
+    };
+    AssetConversion: {
+        /**
+         * Returns the balance of each asset in the pool.
+         * The tuple result is in the order requested (not necessarily the same as pool order).
+         */
+        get_reserves: RuntimeDescriptor<[asset1: Anonymize<If9iqq7i64mur8>, asset2: Anonymize<If9iqq7i64mur8>], Anonymize<I6f85d1dn5kg37>>;
+        /**
+         * Gets a quote for swapping an exact amount of `asset1` for `asset2`.
+         *
+         * If `include_fee` is true, the quote will include the liquidity provider fee.
+         * If the pool does not exist or has no liquidity, `None` is returned.
+         * Note that the price may have changed by the time the transaction is executed.
+         * (Use `amount_out_min` to control slippage.)
+         * Returns `Some(quoted_amount)` on success.
+         */
+        quote_price_exact_tokens_for_tokens: RuntimeDescriptor<[asset1: Anonymize<If9iqq7i64mur8>, asset2: Anonymize<If9iqq7i64mur8>, amount: bigint, include_fee: boolean], Anonymize<I35p85j063s0il>>;
+        /**
+         * Gets a quote for swapping `amount` of `asset1` for an exact amount of `asset2`.
+         *
+         * If `include_fee` is true, the quote will include the liquidity provider fee.
+         * If the pool does not exist or has no liquidity, `None` is returned.
+         * Note that the price may have changed by the time the transaction is executed.
+         * (Use `amount_in_max` to control slippage.)
+         * Returns `Some(quoted_amount)` on success.
+         */
+        quote_price_tokens_for_exact_tokens: RuntimeDescriptor<[asset1: Anonymize<If9iqq7i64mur8>, asset2: Anonymize<If9iqq7i64mur8>, amount: bigint, include_fee: boolean], Anonymize<I35p85j063s0il>>;
+    };
+    VoterList: {
+        /**
+         * Get the current `score` of a given account.
+         *
+         * Returns `(current, real_score)`, the former being the current score that this pallet is
+         * aware of, which may or may not be up to date, and the latter being the real score, as
+         * provided by
+         * If the two differ, it means this node is eligible for [`Call::rebag`].
+         */
+        scores: RuntimeDescriptor<[who: SS58String], Anonymize<Iba6ec6u9n2dc1>>;
+    };
+    MultiBlockElectionSigned: {
+        /**
+         * Get the deposit amount that will be held for a solution of `pages`.
+         *
+         * This allows an offchain application to know what [`Config::DepositPerPage`] and
+         * [`Config::DepositBase`] are doing under the hood. It also takes into account if `who` is
+         * [`Invulnerables`] or not.
+         */
+        deposit_for: RuntimeDescriptor<[who: SS58String, pages: number], bigint>;
+    };
+    Staking: {
+        /**
+         * Resolve the account ID for a given reward pot.
+         */
+        pot_account: RuntimeDescriptor<[pot: Anonymize<I1dp7qidnaqhcj>], SS58String>;
+        /**
+         * Current balance held in a given reward pot.
+         */
+        pot_balance: RuntimeDescriptor<[pot: Anonymize<I1dp7qidnaqhcj>], bigint>;
+        /**
+         * Per-era reward allocation (staker rewards + validator incentive budget).
+         *
+         * Both fields are zero for eras created in legacy minting mode.
+         */
+        era_reward_allocation: RuntimeDescriptor<[era: number], Anonymize<Iffpbtnc90lulf>>;
+    };
+};
+type IRuntimeCalls = {
+    /**
+     * API necessary for block authorship with aura.
+     */
+    AuraApi: {
+        /**
+         * Returns the slot duration for Aura.
+         *
+         * Currently, only the value provided by this type at genesis will be used.
+         */
+        slot_duration: RuntimeDescriptor<[], bigint>;
+        /**
+         * Return the current set of authorities.
+         */
+        authorities: RuntimeDescriptor<[], Anonymize<Ic5m5lp1oioo8r>>;
+    };
+    /**
+     * API to tell the node side how the relay parent should be chosen and how claim queue
+     * offsets are determined.
+     *
+     * A larger relay parent offset indicates that the relay parent should not be the tip of
+     * the relay chain, but `N` blocks behind the tip. This offset is then enforced by the
+     * runtime.
+     *
+     * The max claim queue offset determines how far "into the future" collators target when
+     * selecting cores from the claim queue. This provides async backing flexibility while
+     * preventing collators from skipping slots.
+     * See: <https://github.com/paritytech/polkadot-sdk/issues/8893>
+     *
+     * Version history:
+     * - Version 1: Initial version with `relay_parent_offset` only
+     * - Version 2: Added `max_claim_queue_offset` method
+     */
+    RelayParentOffsetApi: {
+        /**
+         * Fetch the relay parent offset that is expected from the relay chain.
+         *
+         * This determines how many blocks behind the relay chain tip the relay parent should be.
+         */
+        relay_parent_offset: RuntimeDescriptor<[], number>;
+        /**
+         * Maximum claim queue offset for async backing flexibility.
+         *
+         * Bounds how far "into the future" a candidate may look in the claim queue when
+         * selecting a core. The effective claim queue depth depends on the candidate version:
+         *
+         * - **V1/V2 candidates**: the claim queue is looked up at the candidate's `relay_parent`,
+         * which is `relay_parent_offset` blocks behind the relay-chain tip. The effective
+         * depth is `relay_parent_offset + max_claim_queue_offset`.
+         *
+         * - **V3 candidates**: the claim queue is looked up at the candidate's
+         * `scheduling_parent` — the relay-chain block of the *last finished* slot, decoupled
+         * from the execution-context `relay_parent`. The effective depth is just
+         * `max_claim_queue_offset`.
+         *
+         * Collators select a core via an offset in `[0, max_claim_queue_offset]`.
+         *
+         * - **V2 candidates**: `max_claim_queue_offset = 1` is sufficient. The claim queue is
+         * looked up at `relay_parent`, which sits behind the tip. Offset 0 covers synchronous
+         * backing in the next relay block; offset 1 covers asynchronous backing in the relay
+         * block after that.
+         *
+         * - **V3 candidates**: offset 0 is not reachable — the `scheduling_parent`
+         * is usually the leaf when picked, but its child is already being built, so there is
+         * no opportunity to land in the next relay block. Offset 1 is reachable under
+         * synchronous-backing semantics. For elastic scaling the last block in the bundle is
+         * built near the end of the current slot, which makes offset 1 too tight —
+         * `max_claim_queue_offset = 2` is the minimum cap that keeps elastic scaling viable.
+         *
+         * Note: this method was added in `api_version = 2`. Collators calling on runtimes that
+         * only implement `api_version = 1` of [`RelayParentOffsetApi`] will receive an error
+         * and should fall back to a sensible default (current collator defaults: `1` on the
+         * V3 path, `0` on the V1/V2 path).
+         *
+         * See: <https://github.com/paritytech/polkadot-sdk/issues/8893>
+         */
+        max_claim_queue_offset: RuntimeDescriptor<[], number>;
+    };
+    /**
+     * This runtime API is used to inform potential block authors whether they will
+     * have the right to author at a slot, assuming they have claimed the slot.
+     *
+     * In particular, this API allows Aura-based parachains to regulate their "unincluded segment",
+     * which is the section of the head of the chain which has not yet been made available in the
+     * relay chain.
+     *
+     * When the unincluded segment is short, Aura chains will allow authors to create multiple
+     * blocks per slot in order to build a backlog. When it is saturated, this API will limit
+     * the amount of blocks that can be created.
+     *
+     * Changes:
+     * - Version 2: Update to `can_build_upon` to take a relay chain `Slot` instead of a parachain `Slot`.
+     */
+    AuraUnincludedSegmentApi: {
+        /**
+         * Whether it is legal to extend the chain, assuming the given block is the most
+         * recently included one as-of the relay parent that will be built against, and
+         * the given relay chain slot.
+         *
+         * This should be consistent with the logic the runtime uses when validating blocks to
+         * avoid issues.
+         *
+         * When the unincluded segment is empty, i.e. `included_hash == at`, where at is the block
+         * whose state we are querying against, this must always return `true` as long as the slot
+         * is more recent than the included block itself.
+         */
+        can_build_upon: RuntimeDescriptor<[included_hash: SizedHex<32>, slot: bigint], boolean>;
+    };
+    /**
+     * The `Core` runtime api that every Substrate runtime needs to implement.
+     */
+    Core: {
+        /**
+         * Returns the version of the runtime.
+         */
+        version: RuntimeDescriptor<[], Anonymize<I4fo08joqmcqnm>>;
+        /**
+         * Execute the given block.
+         */
+        execute_block: RuntimeDescriptor<[block: Anonymize<Iaqet9jc3ihboe>], undefined>;
+        /**
+         * Initialize a block with the given header and return the runtime executive mode.
+         */
+        initialize_block: RuntimeDescriptor<[header: Anonymize<Ic952bubvq4k7d>], Anonymize<I2v50gu3s1aqk6>>;
+    };
+    /**
+     * The `Metadata` api trait that returns metadata for the runtime.
+     */
+    Metadata: {
+        /**
+         * Returns the metadata of a runtime.
+         */
+        metadata: RuntimeDescriptor<[], Uint8Array>;
+        /**
+         * Returns the metadata at a given version.
+         *
+         * If the given `version` isn't supported, this will return `None`.
+         * Use [`Self::metadata_versions`] to find out about supported metadata version of the runtime.
+         */
+        metadata_at_version: RuntimeDescriptor<[version: number], Anonymize<Iabpgqcjikia83>>;
+        /**
+         * Returns the supported metadata versions.
+         *
+         * This can be used to call `metadata_at_version`.
+         */
+        metadata_versions: RuntimeDescriptor<[], Anonymize<Icgljjb6j82uhn>>;
+    };
+    /**
+     * The `BlockBuilder` api trait that provides the required functionality for building a block.
+     */
+    BlockBuilder: {
+        /**
+         * Apply the given extrinsic.
+         *
+         * Returns an inclusion outcome which specifies if this extrinsic is included in
+         * this block or not.
+         */
+        apply_extrinsic: RuntimeDescriptor<[extrinsic: Uint8Array], Anonymize<I49e4laoe7gk9t>>;
+        /**
+         * Finish the current block.
+         */
+        finalize_block: RuntimeDescriptor<[], Anonymize<Ic952bubvq4k7d>>;
+        /**
+         * Generate inherent extrinsics. The inherent data will vary from chain to chain.
+         */
+        inherent_extrinsics: RuntimeDescriptor<[inherent: Anonymize<If7uv525tdvv7a>], Anonymize<Itom7fk49o0c9>>;
+        /**
+         * Check that the inherents are valid. The inherent data will vary from chain to chain.
+         */
+        check_inherents: RuntimeDescriptor<[block: Anonymize<Iaqet9jc3ihboe>, data: Anonymize<If7uv525tdvv7a>], Anonymize<I2an1fs2eiebjp>>;
+    };
+    /**
+     * The `TaggedTransactionQueue` api trait for interfering with the transaction queue.
+     */
+    TaggedTransactionQueue: {
+        /**
+         * Validate the transaction.
+         *
+         * This method is invoked by the transaction pool to learn details about given transaction.
+         * The implementation should make sure to verify the correctness of the transaction
+         * against current state. The given `block_hash` corresponds to the hash of the block
+         * that is used as current state.
+         *
+         * Note that this call may be performed by the pool multiple times and transactions
+         * might be verified in any possible order.
+         */
+        validate_transaction: RuntimeDescriptor<[source: TransactionValidityTransactionSource, tx: Uint8Array, block_hash: SizedHex<32>], Anonymize<I9ask1o4tfvcvs>>;
+    };
+    /**
+     * The offchain worker api.
+     */
+    OffchainWorkerApi: {
+        /**
+         * Starts the off-chain task for given block header.
+         */
+        offchain_worker: RuntimeDescriptor<[header: Anonymize<Ic952bubvq4k7d>], undefined>;
+    };
+    /**
+     * Session keys runtime api.
+     */
+    SessionKeys: {
+        /**
+         * Generate a set of session keys with optionally using the given seed.
+         * The keys should be stored within the keystore exposed via runtime
+         * externalities.
+         *
+         * The seed needs to be a valid `utf8` string.
+         *
+         * Returns the concatenated SCALE encoded public keys.
+         */
+        generate_session_keys: RuntimeDescriptor<[owner: Uint8Array, seed: Anonymize<Iabpgqcjikia83>], Anonymize<I4ph3d1eepnmr1>>;
+        /**
+         * Decode the given public session keys.
+         *
+         * Returns the list of public raw public keys + key type.
+         */
+        decode_session_keys: RuntimeDescriptor<[encoded: Uint8Array], Anonymize<Icerf8h8pdu8ss>>;
+    };
+    /**
+     * Runtime API for executing view functions
+     */
+    RuntimeViewFunction: {
+        /**
+         * Execute a view function query.
+         */
+        execute_view_function: RuntimeDescriptor<[query_id: Anonymize<I4gil44d08grh>, input: Uint8Array], Anonymize<I7u915mvkdsb08>>;
+    };
+    /**
+     * The API to query account nonce.
+     */
+    AccountNonceApi: {
+        /**
+         * Get current account nonce of given `AccountId`.
+         */
+        account_nonce: RuntimeDescriptor<[account: SS58String], number>;
+    };
+    /**
+
+     */
+    TransactionPaymentApi: {
+        /**
+
+         */
+        query_info: RuntimeDescriptor<[uxt: Uint8Array, len: number], Anonymize<I6spmpef2c7svf>>;
+        /**
+
+         */
+        query_fee_details: RuntimeDescriptor<[uxt: Uint8Array, len: number], Anonymize<Iei2mvq0mjvt81>>;
+        /**
+
+         */
+        query_weight_to_fee: RuntimeDescriptor<[weight: Anonymize<I4q39t5hn830vp>], bigint>;
+        /**
+
+         */
+        query_length_to_fee: RuntimeDescriptor<[length: number], bigint>;
+    };
+    /**
+
+     */
+    TransactionPaymentCallApi: {
+        /**
+         * Query information of a dispatch class, weight, and fee of a given encoded `Call`.
+         */
+        query_call_info: RuntimeDescriptor<[call: Anonymize<Id32c233f14hs1>, len: number], Anonymize<I6spmpef2c7svf>>;
+        /**
+         * Query fee details of a given encoded `Call`.
+         */
+        query_call_fee_details: RuntimeDescriptor<[call: Anonymize<Id32c233f14hs1>, len: number], Anonymize<Iei2mvq0mjvt81>>;
+        /**
+         * Query the output of the current `WeightToFee` given some input.
+         */
+        query_weight_to_fee: RuntimeDescriptor<[weight: Anonymize<I4q39t5hn830vp>], bigint>;
+        /**
+         * Query the output of the current `LengthToFee` given some input.
+         */
+        query_length_to_fee: RuntimeDescriptor<[length: number], bigint>;
+    };
+    /**
+     * A trait of XCM payment API.
+     *
+     * API provides functionality for obtaining:
+     *
+     * * the weight required to execute an XCM message,
+     * * a list of acceptable `AssetId`s for message execution payment,
+     * * the cost of the weight in the specified acceptable `AssetId`.
+     * * the fees for an XCM message delivery.
+     *
+     * To determine the execution weight of the calls required for
+     * [`xcm::latest::Instruction::Transact`] instruction, `TransactionPaymentCallApi` can be used.
+     */
+    XcmPaymentApi: {
+        /**
+         * Returns a list of acceptable payment assets.
+         *
+         * # Arguments
+         *
+         * * `xcm_version`: Version.
+         */
+        query_acceptable_payment_assets: RuntimeDescriptor<[xcm_version: number], Anonymize<Iftvbctbo05fu4>>;
+        /**
+         * Returns a weight needed to execute a XCM.
+         *
+         * # Arguments
+         *
+         * * `message`: `VersionedXcm`.
+         */
+        query_xcm_weight: RuntimeDescriptor<[message: XcmVersionedXcm], Anonymize<Ic0c3req3mlc1l>>;
+        /**
+         * Converts a weight into a fee for the specified `AssetId`.
+         *
+         * # Arguments
+         *
+         * * `weight`: convertible `Weight`.
+         * * `asset`: `VersionedAssetId`.
+         */
+        query_weight_to_asset_fee: RuntimeDescriptor<[weight: Anonymize<I4q39t5hn830vp>, asset: XcmVersionedAssetId], Anonymize<I7ocn4njqde3v5>>;
+        /**
+         * Query delivery fees V2.
+         *
+         * Get delivery fees for sending a specific `message` to a `destination`.
+         * These always come in a specific asset, defined by the chain.
+         *
+         * # Arguments
+         * * `message`: The message that'll be sent, necessary because most delivery fees are based on the
+         * size of the message.
+         * * `destination`: The destination to send the message to. Different destinations may use
+         * different senders that charge different fees.
+         */
+        query_delivery_fees: RuntimeDescriptor<[destination: XcmVersionedLocation, message: XcmVersionedXcm, asset_id: XcmVersionedAssetId], Anonymize<Iek7ha36da9mf5>>;
+    };
+    /**
+     * API for dry-running extrinsics and XCM programs to get the programs that need to be passed to the fees API.
+     *
+     * All calls return a vector of tuples (location, xcm) where each "xcm" is executed in "location".
+     * If there's local execution, the location will be "Here".
+     * This vector can be used to calculate both execution and delivery fees.
+     *
+     * Calls or XCMs might fail when executed, this doesn't mean the result of these calls will be an `Err`.
+     * In those cases, there might still be a valid result, with the execution error inside it.
+     * The only reasons why these calls might return an error are listed in the [`Error`] enum.
+     */
+    DryRunApi: {
+        /**
+         * Dry run call V2.
+         */
+        dry_run_call: RuntimeDescriptor<[origin: Anonymize<I1ilf2k8puf0h4>, call: Anonymize<Id32c233f14hs1>, result_xcms_version: number], Anonymize<I2d2csf5jtu1u3>>;
+        /**
+         * Dry run XCM program
+         */
+        dry_run_xcm: RuntimeDescriptor<[origin_location: XcmVersionedLocation, xcm: XcmVersionedXcm], Anonymize<Ieehc7rdhpfa1c>>;
+    };
+    /**
+     * API for useful conversions between XCM `Location` and `AccountId`.
+     */
+    LocationToAccountApi: {
+        /**
+         * Converts `Location` to `AccountId`.
+         */
+        convert_location: RuntimeDescriptor<[location: XcmVersionedLocation], Anonymize<Ieh6nis3hdbtgi>>;
+    };
+    /**
+     * API for querying trusted reserves and trusted teleporters.
+     */
+    TrustedQueryApi: {
+        /**
+         * Returns if the location is a trusted reserve for the asset.
+         *
+         * # Arguments
+         * * `asset`: `VersionedAsset`.
+         * * `location`: `VersionedLocation`.
+         */
+        is_trusted_reserve: RuntimeDescriptor<[asset: XcmVersionedAsset, location: XcmVersionedLocation], Anonymize<Icujp6hmv35vbn>>;
+        /**
+         * Returns if the asset can be teleported to the location.
+         *
+         * # Arguments
+         * * `asset`: `VersionedAsset`.
+         * * `location`: `VersionedLocation`.
+         */
+        is_trusted_teleporter: RuntimeDescriptor<[asset: XcmVersionedAsset, location: XcmVersionedLocation], Anonymize<Icujp6hmv35vbn>>;
+    };
+    /**
+     * API for querying XCM authorized aliases
+     */
+    AuthorizedAliasersApi: {
+        /**
+         * Returns locations allowed to alias into and act as `target`.
+         */
+        authorized_aliasers: RuntimeDescriptor<[target: XcmVersionedLocation], Anonymize<I4tjame31218k9>>;
+        /**
+         * Returns whether `origin` is allowed to alias into and act as `target`.
+         */
+        is_authorized_alias: RuntimeDescriptor<[origin: XcmVersionedLocation, target: XcmVersionedLocation], Anonymize<I5gif8vomct5i8>>;
+    };
+    /**
+     * The API for querying account's balances from runtime.
+     */
+    FungiblesApi: {
+        /**
+         * Returns the list of all [`Asset`] that an `AccountId` has.
+         */
+        query_account_balances: RuntimeDescriptor<[account: SS58String], Anonymize<I8fk5filgollou>>;
+    };
+    /**
+     * Runtime api to collect information about a collation.
+     *
+     * Version history:
+     * - Version 2: Changed [`Self::collect_collation_info`] signature
+     * - Version 3: Signals to the node to use version 1 of [`ParachainBlockData`].
+     */
+    CollectCollationInfo: {
+        /**
+         * Collect information about a collation.
+         *
+         * The given `header` is the header of the built block for that
+         * we are collecting the collation info for.
+         */
+        collect_collation_info: RuntimeDescriptor<[header: Anonymize<Ic952bubvq4k7d>], Anonymize<Ic1d4u2opv3fst>>;
+    };
+    /**
+     * API to interact with `RuntimeGenesisConfig` for the runtime
+     */
+    GenesisBuilder: {
+        /**
+         * Build `RuntimeGenesisConfig` from a JSON blob not using any defaults and store it in the
+         * storage.
+         *
+         * In the case of a FRAME-based runtime, this function deserializes the full
+         * `RuntimeGenesisConfig` from the given JSON blob and puts it into the storage. If the
+         * provided JSON blob is incorrect or incomplete or the deserialization fails, an error
+         * is returned.
+         *
+         * Please note that provided JSON blob must contain all `RuntimeGenesisConfig` fields, no
+         * defaults will be used.
+         */
+        build_state: RuntimeDescriptor<[json: Uint8Array], Anonymize<Ie9sr1iqcg3cgm>>;
+        /**
+         * Returns a JSON blob representation of the built-in `RuntimeGenesisConfig` identified by
+         * `id`.
+         *
+         * If `id` is `None` the function should return JSON blob representation of the default
+         * `RuntimeGenesisConfig` struct of the runtime. Implementation must provide default
+         * `RuntimeGenesisConfig`.
+         *
+         * Otherwise function returns a JSON representation of the built-in, named
+         * `RuntimeGenesisConfig` preset identified by `id`, or `None` if such preset does not
+         * exist. Returned `Vec<u8>` contains bytes of JSON blob (patch) which comprises a list of
+         * (potentially nested) key-value pairs that are intended for customizing the default
+         * runtime genesis config. The patch shall be merged (rfc7386) with the JSON representation
+         * of the default `RuntimeGenesisConfig` to create a comprehensive genesis config that can
+         * be used in `build_state` method.
+         */
+        get_preset: RuntimeDescriptor<[id: Anonymize<I1mqgk2tmnn9i2>], Anonymize<Iabpgqcjikia83>>;
+        /**
+         * Returns a list of identifiers for available builtin `RuntimeGenesisConfig` presets.
+         *
+         * The presets from the list can be queried with [`GenesisBuilder::get_preset`] method. If
+         * no named presets are provided by the runtime the list is empty.
+         */
+        preset_names: RuntimeDescriptor<[], Anonymize<I6lr8sctk0bi4e>>;
+    };
+    /**
+     * This runtime api allows people to query the size of the liquidity pools
+     * and quote prices for swaps.
+     */
+    AssetConversionApi: {
+        /**
+         * Provides a quote for [`Pallet::swap_tokens_for_exact_tokens`].
+         *
+         * Note that the price may have changed by the time the transaction is executed.
+         * (Use `amount_in_max` to control slippage.)
+         */
+        quote_price_tokens_for_exact_tokens: RuntimeDescriptor<[asset1: Anonymize<If9iqq7i64mur8>, asset2: Anonymize<If9iqq7i64mur8>, amount: bigint, include_fee: boolean], Anonymize<I35p85j063s0il>>;
+        /**
+         * Provides a quote for [`Pallet::swap_exact_tokens_for_tokens`].
+         *
+         * Note that the price may have changed by the time the transaction is executed.
+         * (Use `amount_out_min` to control slippage.)
+         */
+        quote_price_exact_tokens_for_tokens: RuntimeDescriptor<[asset1: Anonymize<If9iqq7i64mur8>, asset2: Anonymize<If9iqq7i64mur8>, amount: bigint, include_fee: boolean], Anonymize<I35p85j063s0il>>;
+        /**
+         * Returns the size of the liquidity pool for the given asset pair.
+         */
+        get_reserves: RuntimeDescriptor<[asset1: Anonymize<If9iqq7i64mur8>, asset2: Anonymize<If9iqq7i64mur8>], Anonymize<I5vv5n03oo8gas>>;
+    };
+    /**
+     * Runtime api used to access general info about a parachain runtime.
+     */
+    GetParachainInfo: {
+        /**
+         * Retrieve the parachain id used for runtime.
+         */
+        parachain_id: RuntimeDescriptor<[], number>;
+    };
+    /**
+     * Runtime api for accessing information about nomination pools.
+     */
+    NominationPoolsApi: {
+        /**
+         * Returns the pending rewards for the member that the AccountId was given for.
+         */
+        pending_rewards: RuntimeDescriptor<[who: SS58String], bigint>;
+        /**
+         * Returns the equivalent balance of `points` for a given pool.
+         */
+        points_to_balance: RuntimeDescriptor<[pool_id: number, points: bigint], bigint>;
+        /**
+         * Returns the equivalent points of `new_funds` for a given pool.
+         */
+        balance_to_points: RuntimeDescriptor<[pool_id: number, new_funds: bigint], bigint>;
+        /**
+         * Returns the pending slash for a given pool.
+         */
+        pool_pending_slash: RuntimeDescriptor<[pool_id: number], bigint>;
+        /**
+         * Returns the pending slash for a given pool member.
+         *
+         * If pending slash of the member exceeds `ExistentialDeposit`, it can be reported on
+         * chain.
+         */
+        member_pending_slash: RuntimeDescriptor<[member: SS58String], bigint>;
+        /**
+         * Returns true if the pool with `pool_id` needs migration.
+         *
+         * This can happen when the `pallet-nomination-pools` has switched to using strategy
+         * [`DelegateStake`](pallet_nomination_pools::adapter::DelegateStake) but the pool
+         * still has funds that were staked using the older strategy
+         * [TransferStake](pallet_nomination_pools::adapter::TransferStake). Use
+         * [`migrate_pool_to_delegate_stake`](pallet_nomination_pools::Call::migrate_pool_to_delegate_stake)
+         * to migrate the pool.
+         */
+        pool_needs_delegate_migration: RuntimeDescriptor<[pool_id: number], boolean>;
+        /**
+         * Returns true if the delegated funds of the pool `member` needs migration.
+         *
+         * Once a pool has successfully migrated to the strategy
+         * [`DelegateStake`](pallet_nomination_pools::adapter::DelegateStake), the funds of the
+         * member can be migrated from pool account to the member's account. Use
+         * [`migrate_delegation`](pallet_nomination_pools::Call::migrate_delegation)
+         * to migrate the funds of the pool member.
+         */
+        member_needs_delegate_migration: RuntimeDescriptor<[member: SS58String], boolean>;
+        /**
+         * Returns the total contribution of a pool member including any balance that is unbonding.
+         */
+        member_total_balance: RuntimeDescriptor<[who: SS58String], bigint>;
+        /**
+         * Total balance contributed to the pool.
+         */
+        pool_balance: RuntimeDescriptor<[pool_id: number], bigint>;
+        /**
+         * Returns the bonded account and reward account associated with the pool_id.
+         */
+        pool_accounts: RuntimeDescriptor<[pool_id: number], Anonymize<I2na29tt2afp0j>>;
+    };
+    /**
+
+     */
+    StakingApi: {
+        /**
+         * Returns the nominations quota for a nominator with a given balance.
+         */
+        nominations_quota: RuntimeDescriptor<[balance: bigint], number>;
+        /**
+         * Returns the page count of exposures for a validator `account` in a given era.
+         */
+        eras_stakers_page_count: RuntimeDescriptor<[era: number, account: SS58String], number>;
+        /**
+         * Returns true if a validator `account` has pages to be claimed for the given era.
+         */
+        pending_rewards: RuntimeDescriptor<[era: number, account: SS58String], boolean>;
+    };
+    /**
+
+     */
+    Inflation: {
+        /**
+         * Return the current estimates of the issuance amount.
+         *
+         * This is marked as experimental in light of RFC#89. Nonetheless, its usage is highly
+         * recommended over trying to read-storage, or re-create the onchain logic.
+         */
+        experimental_issuance_prediction_info: RuntimeDescriptor<[], Anonymize<Ies018ev98ebq7>>;
+    };
+    /**
+     * The API used to dry-run contract interactions.
+     */
+    ReviveApi: {
+        /**
+         * Returns the current ETH block.
+         *
+         * This is one block behind the substrate block.
+         */
+        eth_block: RuntimeDescriptor<[], Anonymize<Idq3n4esn5nvc5>>;
+        /**
+         * Returns the ETH block hash for the given block number.
+         */
+        eth_block_hash: RuntimeDescriptor<[number: Anonymize<I4totqt881mlti>], Anonymize<I4s6vifaf8k998>>;
+        /**
+         * The details needed to reconstruct the receipt information offchain.
+         *
+         * # Note
+         *
+         * Each entry corresponds to the appropriate Ethereum transaction in the current block.
+         */
+        eth_receipt_data: RuntimeDescriptor<[], Anonymize<I3oiqcurom3m43>>;
+        /**
+         * Returns the block gas limit.
+         */
+        block_gas_limit: RuntimeDescriptor<[], Anonymize<I4totqt881mlti>>;
+        /**
+         * Returns the block gas limit as calculated from the weights.
+         */
+        max_extrinsic_weight_in_gas: RuntimeDescriptor<[], Anonymize<I4totqt881mlti>>;
+        /**
+         * Returns the free balance of the given `[H160]` address, using EVM decimals.
+         */
+        balance: RuntimeDescriptor<[address: SizedHex<20>], Anonymize<I4totqt881mlti>>;
+        /**
+         * Returns the gas price.
+         */
+        gas_price: RuntimeDescriptor<[], Anonymize<I4totqt881mlti>>;
+        /**
+         * Returns the nonce of the given `[H160]` address.
+         */
+        nonce: RuntimeDescriptor<[address: SizedHex<20>], number>;
+        /**
+         * Perform a call from a specified account to a given contract.
+         *
+         * See [`crate::Pallet::bare_call`].
+         */
+        call: RuntimeDescriptor<[origin: SS58String, dest: SizedHex<20>, value: bigint, gas_limit: Anonymize<Iasb8k6ash5mjn>, storage_deposit_limit: Anonymize<I35p85j063s0il>, input_data: Uint8Array], Anonymize<Idfd4b09pdcebl>>;
+        /**
+         * Instantiate a new contract.
+         *
+         * See `[crate::Pallet::bare_instantiate]`.
+         */
+        instantiate: RuntimeDescriptor<[origin: SS58String, value: bigint, gas_limit: Anonymize<Iasb8k6ash5mjn>, storage_deposit_limit: Anonymize<I35p85j063s0il>, code: Anonymize<I9sijb8gfrns29>, data: Uint8Array, salt: Anonymize<I4s6vifaf8k998>], Anonymize<Ibi8b4f26ih5vv>>;
+        /**
+         * Perform an Ethereum call.
+         *
+         * Deprecated use `v2` version instead.
+         * See [`crate::Pallet::dry_run_eth_transact`]
+         */
+        eth_transact: RuntimeDescriptor<[tx: Anonymize<I6f9v7emp7t5ba>], Anonymize<Ida7d8eqrkav55>>;
+        /**
+         * Perform an Ethereum call.
+         *
+         * See [`crate::Pallet::dry_run_eth_transact`]
+         */
+        eth_transact_with_config: RuntimeDescriptor<[tx: Anonymize<I6f9v7emp7t5ba>, config: Anonymize<I9mq0s1ommikm5>], Anonymize<Ida7d8eqrkav55>>;
+        /**
+         * Estimates the amount of gas that a transactions requires.
+         *
+         * This function estimates the gas of the transaction according to the same binary search
+         * algorithm that's implemented in Geth. It stops when with an acceptable error ratio of
+         * 1.5% so that the algorithm terminates early.
+         */
+        eth_estimate_gas: RuntimeDescriptor<[tx: Anonymize<I6f9v7emp7t5ba>, config: Anonymize<I9mq0s1ommikm5>], Anonymize<I2806mq9p1klk7>>;
+        /**
+         * Return the pre-dispatch weight booked for the signed Ethereum transaction payload.
+         */
+        eth_pre_dispatch_weight: RuntimeDescriptor<[tx: Uint8Array], Anonymize<Iau1ib3fio8i01>>;
+        /**
+         * Upload new code without instantiating a contract from it.
+         *
+         * See [`crate::Pallet::bare_upload_code`].
+         */
+        upload_code: RuntimeDescriptor<[origin: SS58String, code: Uint8Array, storage_deposit_limit: Anonymize<I35p85j063s0il>], Anonymize<I5mla0vm6dnsl0>>;
+        /**
+         * Query a given storage key in a given contract.
+         *
+         * Returns `Ok(Some(Vec<u8>))` if the storage value exists under the given key in the
+         * specified account and `Ok(None)` if it doesn't. If the account specified by the address
+         * doesn't exist, or doesn't have a contract then `Err` is returned.
+         */
+        get_storage: RuntimeDescriptor<[address: SizedHex<20>, key: SizedHex<32>], Anonymize<Ib8pon7110jta2>>;
+        /**
+         * Query a given variable-sized storage key in a given contract.
+         *
+         * Returns `Ok(Some(Vec<u8>))` if the storage value exists under the given key in the
+         * specified account and `Ok(None)` if it doesn't. If the account specified by the address
+         * doesn't exist, or doesn't have a contract then `Err` is returned.
+         */
+        get_storage_var_key: RuntimeDescriptor<[address: SizedHex<20>, key: Uint8Array], Anonymize<Ib8pon7110jta2>>;
+        /**
+         * Traces the execution of an entire block and returns call traces.
+         *
+         * This is intended to be called through `state_call` to replay the block from the
+         * parent block.
+         *
+         * See eth-rpc `debug_traceBlockByNumber` for usage.
+         */
+        trace_block: RuntimeDescriptor<[block: Anonymize<Iaqet9jc3ihboe>, config: Anonymize<Ift65j5o2ie116>], Anonymize<I4t66mvvs4nlcp>>;
+        /**
+         * Traces the execution of a specific transaction within a block.
+         *
+         * This is intended to be called through `state_call` to replay the block from the
+         * parent hash up to the transaction.
+         *
+         * See eth-rpc `debug_traceTransaction` for usage.
+         */
+        trace_tx: RuntimeDescriptor<[block: Anonymize<Iaqet9jc3ihboe>, tx_index: number, config: Anonymize<Ift65j5o2ie116>], Anonymize<Ifccp4hviaqmur>>;
+        /**
+         * Dry run and return the trace of the given call.
+         *
+         * See eth-rpc `debug_traceCall` for usage.
+         */
+        trace_call: RuntimeDescriptor<[tx: Anonymize<I6f9v7emp7t5ba>, config: Anonymize<Ift65j5o2ie116>], Anonymize<I2bg9cnbto6e89>>;
+        /**
+         * Dry run and return the trace of the given call with additional configuration.
+         *
+         * Like [`Self::trace_call`], but accepts a [`TracingConfig`] that can carry state
+         * overrides and future extensibility. The config must be the **last argument** for
+         * backwards compatibility — see [`TracingConfig`] documentation.
+         */
+        trace_call_with_config: RuntimeDescriptor<[tx: Anonymize<I6f9v7emp7t5ba>, tracer_type: Anonymize<Ift65j5o2ie116>, config: Anonymize<Id22r0gklsr0ok>], Anonymize<I2bg9cnbto6e89>>;
+        /**
+         * The address of the validator that produced the current block.
+         */
+        block_author: RuntimeDescriptor<[], SizedHex<20>>;
+        /**
+         * Get the H160 address associated to this account id
+         */
+        address: RuntimeDescriptor<[account_id: SS58String], SizedHex<20>>;
+        /**
+         * Get the account id associated to this H160 address.
+         */
+        account_id: RuntimeDescriptor<[address: SizedHex<20>], SS58String>;
+        /**
+         * The address used to call the runtime's pallets dispatchables
+         */
+        runtime_pallets_address: RuntimeDescriptor<[], SizedHex<20>>;
+        /**
+         * The code at the specified address taking pre-compiles into account.
+         */
+        code: RuntimeDescriptor<[address: SizedHex<20>], Uint8Array>;
+        /**
+         * Construct the new balance and dust components of this EVM balance.
+         */
+        new_balance_with_dust: RuntimeDescriptor<[balance: Anonymize<I4totqt881mlti>], Anonymize<I512dtcl0pn07c>>;
+    };
+};
 export type Paseo_asset_hubDispatchError = Anonymize<I61h1b445e14of>;
 export type Paseo_asset_hubExtensions = {
     "AsPgas": {
@@ -15924,8 +16834,47 @@ type AllInteractions = {
         AssetsPrecompilesPermit: ['ChainId'];
         DotnsGateway: ['MaxContractCallWeight', 'MaxValiditySeconds', 'MaxFutureSkewSeconds'];
     };
-    viewFns: {};
-    apis: {};
+    viewFns: {
+        MultiBlockMigrations: ['ongoing_status', 'progress', 'affected_prefixes', 'status'];
+        Dap: ['budget_recipients', 'staging'];
+        Proxy: ['check_permissions', 'is_superset'];
+        Assets: ['asset_details', 'balance_of', 'get_metadata', 'get_reserves_data'];
+        ForeignAssets: ['asset_details', 'balance_of', 'get_metadata', 'get_reserves_data'];
+        PoolAssets: ['asset_details', 'balance_of', 'get_metadata', 'get_reserves_data'];
+        AssetConversion: ['get_reserves', 'quote_price_exact_tokens_for_tokens', 'quote_price_tokens_for_exact_tokens'];
+        VoterList: ['scores'];
+        MultiBlockElectionSigned: ['deposit_for'];
+        Staking: ['pot_account', 'pot_balance', 'era_reward_allocation'];
+    };
+    apis: {
+        AuraApi: ['slot_duration', 'authorities'];
+        RelayParentOffsetApi: ['relay_parent_offset', 'max_claim_queue_offset'];
+        AuraUnincludedSegmentApi: ['can_build_upon'];
+        Core: ['version', 'execute_block', 'initialize_block'];
+        Metadata: ['metadata', 'metadata_at_version', 'metadata_versions'];
+        BlockBuilder: ['apply_extrinsic', 'finalize_block', 'inherent_extrinsics', 'check_inherents'];
+        TaggedTransactionQueue: ['validate_transaction'];
+        OffchainWorkerApi: ['offchain_worker'];
+        SessionKeys: ['generate_session_keys', 'decode_session_keys'];
+        RuntimeViewFunction: ['execute_view_function'];
+        AccountNonceApi: ['account_nonce'];
+        TransactionPaymentApi: ['query_info', 'query_fee_details', 'query_weight_to_fee', 'query_length_to_fee'];
+        TransactionPaymentCallApi: ['query_call_info', 'query_call_fee_details', 'query_weight_to_fee', 'query_length_to_fee'];
+        XcmPaymentApi: ['query_acceptable_payment_assets', 'query_xcm_weight', 'query_weight_to_asset_fee', 'query_delivery_fees'];
+        DryRunApi: ['dry_run_call', 'dry_run_xcm'];
+        LocationToAccountApi: ['convert_location'];
+        TrustedQueryApi: ['is_trusted_reserve', 'is_trusted_teleporter'];
+        AuthorizedAliasersApi: ['authorized_aliasers', 'is_authorized_alias'];
+        FungiblesApi: ['query_account_balances'];
+        CollectCollationInfo: ['collect_collation_info'];
+        GenesisBuilder: ['build_state', 'get_preset', 'preset_names'];
+        AssetConversionApi: ['quote_price_tokens_for_exact_tokens', 'quote_price_exact_tokens_for_tokens', 'get_reserves'];
+        GetParachainInfo: ['parachain_id'];
+        NominationPoolsApi: ['pending_rewards', 'points_to_balance', 'balance_to_points', 'pool_pending_slash', 'member_pending_slash', 'pool_needs_delegate_migration', 'member_needs_delegate_migration', 'member_total_balance', 'pool_balance', 'pool_accounts'];
+        StakingApi: ['nominations_quota', 'eras_stakers_page_count', 'pending_rewards'];
+        Inflation: ['experimental_issuance_prediction_info'];
+        ReviveApi: ['eth_block', 'eth_block_hash', 'eth_receipt_data', 'block_gas_limit', 'max_extrinsic_weight_in_gas', 'balance', 'gas_price', 'nonce', 'call', 'instantiate', 'eth_transact', 'eth_transact_with_config', 'eth_estimate_gas', 'eth_pre_dispatch_weight', 'upload_code', 'get_storage', 'get_storage_var_key', 'trace_block', 'trace_tx', 'trace_call', 'trace_call_with_config', 'block_author', 'address', 'account_id', 'runtime_pallets_address', 'code', 'new_balance_with_dust'];
+    };
 };
 export type Paseo_asset_hubWhitelistEntry = PalletKey | `query.${NestedKey<AllInteractions['storage']>}` | `tx.${NestedKey<AllInteractions['tx']>}` | `event.${NestedKey<AllInteractions['events']>}` | `error.${NestedKey<AllInteractions['errors']>}` | `const.${NestedKey<AllInteractions['constants']>}` | `view.${NestedKey<AllInteractions['viewFns']>}` | `api.${NestedKey<AllInteractions['apis']>}`;
 type PalletKey = `*.${({

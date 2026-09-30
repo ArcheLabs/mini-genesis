@@ -16080,10 +16080,11 @@ export type Iek7ha36da9mf5 = ResultPayload<XcmVersionedAssets, Anonymize<Iavct6f
 export type Ibnsp8n876tnd7 = ResultPayload<{
     "execution_result": Anonymize<I78cd4a1ojtkk9>;
     "emitted_events": Anonymize<I8ijns20nhseh5>;
-    "local_xcm"?: (XcmVersionedXcm) | undefined;
+    "local_xcm"?: Anonymize<Ieqgqma27vbupd>;
     "forwarded_xcms": Anonymize<Ialhmrpub9sefe>;
 }, Anonymize<I55ku9c5gk50hb>>;
 export type I8ijns20nhseh5 = Array<Anonymize<I12hc7fqa1l39c>>;
+export type Ieqgqma27vbupd = (XcmVersionedXcm) | undefined;
 export type Ialhmrpub9sefe = Array<[XcmVersionedLocation, Array<XcmVersionedXcm>]>;
 export type I55ku9c5gk50hb = AnonymousEnum<{
     "Unimplemented": undefined;
@@ -16159,10 +16160,11 @@ export type Iaorknft5vtg7f = {
     "storage_deposit": Anonymize<If7bmpttbdmqu4>;
     "max_storage_deposit": Anonymize<If7bmpttbdmqu4>;
     "gas_consumed": bigint;
-    "result": ResultPayload<{
-        "result": Anonymize<I620n7irgfspm4>;
-        "addr": SizedHex<20>;
-    }, Anonymize<I2nb5ki21eadb1>>;
+    "result": ResultPayload<Anonymize<I6cm3omaniofs7>, Anonymize<I2nb5ki21eadb1>>;
+};
+export type I6cm3omaniofs7 = {
+    "result": Anonymize<I620n7irgfspm4>;
+    "addr": SizedHex<20>;
 };
 export type I6f9v7emp7t5ba = {
     "access_list"?: (Anonymize<Ieap15h2pjii9u>) | undefined;
@@ -16213,10 +16215,11 @@ export type Id22r0gklsr0ok = (Array<[SizedHex<20>, {
 }]>) | undefined;
 export type I2806mq9p1klk7 = ResultPayload<Anonymize<I4totqt881mlti>, Anonymize<I8mb9f26m2cgi5>>;
 export type Iau1ib3fio8i01 = ResultPayload<Anonymize<I4q39t5hn830vp>, Anonymize<I8mb9f26m2cgi5>>;
-export type Ibitbjt0urruo8 = ResultPayload<{
+export type Ibitbjt0urruo8 = ResultPayload<Anonymize<Icjs1v5avc8kdj>, Anonymize<I2nb5ki21eadb1>>;
+export type Icjs1v5avc8kdj = {
     "code_hash": SizedHex<32>;
     "deposit": bigint;
-}, Anonymize<I2nb5ki21eadb1>>;
+};
 export type I8i7cn80akt4h6 = ResultPayload<Anonymize<Iabpgqcjikia83>, Enum<{
     "DoesntExist": undefined;
     "KeyDecodingFailed": undefined;
@@ -16590,68 +16593,69 @@ export type I87rnrnks7g0hm = AnonymousEnum<{
 }>;
 export type Ie13a6ppb66mks = Array<{
     "phase": Phase;
-    "event": Enum<{
-        "System": Anonymize<Idd6fopulbu07j>;
-        "ParachainSystem": Anonymize<Icbsekf57miplo>;
-        "Preimage": PreimageEvent;
-        "Scheduler": Anonymize<I6o6htu8mlmk1h>;
-        "Parameters": Anonymize<I9rb8kcpcp6r4b>;
-        "MultiBlockMigrations": Anonymize<I94co7vj7h6bo>;
-        "Balances": Anonymize<Id6ehgrdf2t13l>;
-        "TransactionPayment": TransactionPaymentEvent;
-        "AssetTxPayment": Anonymize<I78bosroad52fa>;
-        "Vesting": Anonymize<I7uu9ebnucfti5>;
-        "Claims": CommonClaimsEvent;
-        "Dap": Anonymize<Ief0bj0s54t81l>;
-        "CollatorSelection": Anonymize<I4srakrmf0fspo>;
-        "Session": Anonymize<I6ue0ck5fc3u44>;
-        "XcmpQueue": Anonymize<Idsqc7mhp6nnle>;
-        "PolkadotXcm": Anonymize<If95hivmqmkiku>;
-        "CumulusXcm": Anonymize<I5uv57c3fffoi9>;
-        "ToKusamaXcmRouter": Anonymize<Ift4p4jnj5bri1>;
-        "MessageQueue": Anonymize<I2kosejppk3jon>;
-        "SnowbridgeSystemFrontend": Anonymize<I190sdd2js8aqk>;
-        "Utility": Anonymize<Ibhau0utosgvfv>;
-        "Multisig": Anonymize<I1805suvp0bj8l>;
-        "Proxy": Anonymize<I7mmkg3rsgm83b>;
-        "Indices": Anonymize<I2pejk6do5vg4t>;
-        "Assets": Anonymize<Ibse1c0pgtcdtn>;
-        "Uniques": Anonymize<Ia0j71vjrjqu9p>;
-        "Nfts": Anonymize<I6qicn8jn4fftj>;
-        "ForeignAssets": Anonymize<I4nr69fhfof48s>;
-        "PoolAssets": Anonymize<Ibse1c0pgtcdtn>;
-        "AssetConversion": Anonymize<Ievo2o32gc42ng>;
-        "AssetsFreezer": Anonymize<I7omheqbc53plq>;
-        "AssetsHolder": Anonymize<I94pmbd2ej3cid>;
-        "Treasury": Anonymize<I4jdb4j2c6meuu>;
-        "ConvictionVoting": Anonymize<I7pql8a2uf8mlq>;
-        "Referenda": Anonymize<Idfraa3b4eu018>;
-        "Whitelist": Anonymize<I24ok278rsrsvp>;
-        "Bounties": Anonymize<Ialf8tlustkp17>;
-        "ChildBounties": ChildBountiesEvent;
-        "AssetRate": Anonymize<I1dcjapt414ijf>;
-        "MultiAssetBounties": Anonymize<I18q76v9nfp680>;
-        "StateTrieMigration": Anonymize<I61dksvl51aujo>;
-        "NominationPools": Anonymize<Id0dkgikq71n9h>;
-        "VoterList": BagsListEvent;
-        "DelegatedStaking": Anonymize<I1nq1se98idofq>;
-        "StakingRcClient": Anonymize<I7djm8pmbv58rp>;
-        "MultiBlockElection": Anonymize<If1r9qhn1k7698>;
-        "MultiBlockElectionVerifier": Anonymize<Ia3me59518l5g2>;
-        "MultiBlockElectionSigned": Anonymize<I5ljekabnc2mck>;
-        "Staking": Anonymize<Idpojgcc8rlqkh>;
-        "MembersSubscriber": Anonymize<I4eou53mkprt8j>;
-        "AliasAccounts": Anonymize<I39r4c1qe1vpi9>;
-        "Pgas": Anonymize<Ibla01o1pjh7at>;
-        "Revive": Anonymize<I8ifearsvh7egi>;
-        "DotnsGateway": Anonymize<I15f34i89ie0mj>;
-        "OriginRestriction": Anonymize<Ioa4m5v0ajjt0>;
-        "NetworkSuffix": Anonymize<I9svlea5bgeoju>;
-        "Sudo": Anonymize<I8l9753il9abbr>;
-        "PgasAllowance": Anonymize<Iddese4sd5hoka>;
-        "AhOps": Anonymize<I4f830gria90rg>;
-    }>;
+    "event": Anonymize<If8no2r6gbbbdn>;
     "topics": Anonymize<Ic5m5lp1oioo8r>;
+}>;
+export type If8no2r6gbbbdn = AnonymousEnum<{
+    "System": Anonymize<Idd6fopulbu07j>;
+    "ParachainSystem": Anonymize<Icbsekf57miplo>;
+    "Preimage": PreimageEvent;
+    "Scheduler": Anonymize<I6o6htu8mlmk1h>;
+    "Parameters": Anonymize<I9rb8kcpcp6r4b>;
+    "MultiBlockMigrations": Anonymize<I94co7vj7h6bo>;
+    "Balances": Anonymize<Id6ehgrdf2t13l>;
+    "TransactionPayment": TransactionPaymentEvent;
+    "AssetTxPayment": Anonymize<I78bosroad52fa>;
+    "Vesting": Anonymize<I7uu9ebnucfti5>;
+    "Claims": CommonClaimsEvent;
+    "Dap": Anonymize<Ief0bj0s54t81l>;
+    "CollatorSelection": Anonymize<I4srakrmf0fspo>;
+    "Session": Anonymize<I6ue0ck5fc3u44>;
+    "XcmpQueue": Anonymize<Idsqc7mhp6nnle>;
+    "PolkadotXcm": Anonymize<If95hivmqmkiku>;
+    "CumulusXcm": Anonymize<I5uv57c3fffoi9>;
+    "ToKusamaXcmRouter": Anonymize<Ift4p4jnj5bri1>;
+    "MessageQueue": Anonymize<I2kosejppk3jon>;
+    "SnowbridgeSystemFrontend": Anonymize<I190sdd2js8aqk>;
+    "Utility": Anonymize<Ibhau0utosgvfv>;
+    "Multisig": Anonymize<I1805suvp0bj8l>;
+    "Proxy": Anonymize<I7mmkg3rsgm83b>;
+    "Indices": Anonymize<I2pejk6do5vg4t>;
+    "Assets": Anonymize<Ibse1c0pgtcdtn>;
+    "Uniques": Anonymize<Ia0j71vjrjqu9p>;
+    "Nfts": Anonymize<I6qicn8jn4fftj>;
+    "ForeignAssets": Anonymize<I4nr69fhfof48s>;
+    "PoolAssets": Anonymize<Ibse1c0pgtcdtn>;
+    "AssetConversion": Anonymize<Ievo2o32gc42ng>;
+    "AssetsFreezer": Anonymize<I7omheqbc53plq>;
+    "AssetsHolder": Anonymize<I94pmbd2ej3cid>;
+    "Treasury": Anonymize<I4jdb4j2c6meuu>;
+    "ConvictionVoting": Anonymize<I7pql8a2uf8mlq>;
+    "Referenda": Anonymize<Idfraa3b4eu018>;
+    "Whitelist": Anonymize<I24ok278rsrsvp>;
+    "Bounties": Anonymize<Ialf8tlustkp17>;
+    "ChildBounties": ChildBountiesEvent;
+    "AssetRate": Anonymize<I1dcjapt414ijf>;
+    "MultiAssetBounties": Anonymize<I18q76v9nfp680>;
+    "StateTrieMigration": Anonymize<I61dksvl51aujo>;
+    "NominationPools": Anonymize<Id0dkgikq71n9h>;
+    "VoterList": BagsListEvent;
+    "DelegatedStaking": Anonymize<I1nq1se98idofq>;
+    "StakingRcClient": Anonymize<I7djm8pmbv58rp>;
+    "MultiBlockElection": Anonymize<If1r9qhn1k7698>;
+    "MultiBlockElectionVerifier": Anonymize<Ia3me59518l5g2>;
+    "MultiBlockElectionSigned": Anonymize<I5ljekabnc2mck>;
+    "Staking": Anonymize<Idpojgcc8rlqkh>;
+    "MembersSubscriber": Anonymize<I4eou53mkprt8j>;
+    "AliasAccounts": Anonymize<I39r4c1qe1vpi9>;
+    "Pgas": Anonymize<Ibla01o1pjh7at>;
+    "Revive": Anonymize<I8ifearsvh7egi>;
+    "DotnsGateway": Anonymize<I15f34i89ie0mj>;
+    "OriginRestriction": Anonymize<Ioa4m5v0ajjt0>;
+    "NetworkSuffix": Anonymize<I9svlea5bgeoju>;
+    "Sudo": Anonymize<I8l9753il9abbr>;
+    "PgasAllowance": Anonymize<Iddese4sd5hoka>;
+    "AhOps": Anonymize<I4f830gria90rg>;
 }>;
 export type Idd6fopulbu07j = AnonymousEnum<{
     /**
@@ -17265,11 +17269,12 @@ export type I24ok278rsrsvp = AnonymousEnum<{
 }>;
 export type I13h3fcccd3vd6 = {
     "call_hash": SizedHex<32>;
-    "result": ResultPayload<Anonymize<Ia1u1r3n74r13c>, {
-        "post_info": Anonymize<Ia1u1r3n74r13c>;
-        "error": Anonymize<I61h1b445e14of>;
-    }>;
+    "result": Anonymize<Idir7hma5ordbd>;
 };
+export type Idir7hma5ordbd = ResultPayload<Anonymize<Ia1u1r3n74r13c>, {
+    "post_info": Anonymize<Ia1u1r3n74r13c>;
+    "error": Anonymize<I61h1b445e14of>;
+}>;
 export type I4eou53mkprt8j = AnonymousEnum<{
     /**
      * Ring roots have been initialized from the notifier.
@@ -19028,6 +19033,41 @@ export type Id32c233f14hs1 = AnonymousEnum<{
     "Sudo": Anonymize<I8eefpvuiu3e6k>;
     "AhOps": Anonymize<Im5s4mco7v75d>;
 }>;
+export type I49e4laoe7gk9t = ResultPayload<Anonymize<I4p171dr2futft>, Anonymize<I5nrjkj9qumobs>>;
+export type I2d2csf5jtu1u3 = ResultPayload<{
+    "execution_result": Anonymize<Idir7hma5ordbd>;
+    "emitted_events": Anonymize<Idq4aogqkrot0p>;
+    "local_xcm"?: Anonymize<Ieqgqma27vbupd>;
+    "forwarded_xcms": Anonymize<Ialhmrpub9sefe>;
+}, Anonymize<I55ku9c5gk50hb>>;
+export type Idq4aogqkrot0p = Array<Anonymize<If8no2r6gbbbdn>>;
+export type Ieehc7rdhpfa1c = ResultPayload<{
+    "execution_result": Anonymize<Ieqhmksji3pmv5>;
+    "emitted_events": Anonymize<Idq4aogqkrot0p>;
+    "forwarded_xcms": Anonymize<Ialhmrpub9sefe>;
+}, Anonymize<I55ku9c5gk50hb>>;
+export type Idfd4b09pdcebl = {
+    "weight_consumed": Anonymize<I4q39t5hn830vp>;
+    "weight_required": Anonymize<I4q39t5hn830vp>;
+    "storage_deposit": Anonymize<If7bmpttbdmqu4>;
+    "max_storage_deposit": Anonymize<If7bmpttbdmqu4>;
+    "gas_consumed": bigint;
+    "result": ResultPayload<Anonymize<I620n7irgfspm4>, Anonymize<I61h1b445e14of>>;
+};
+export type Ibi8b4f26ih5vv = {
+    "weight_consumed": Anonymize<I4q39t5hn830vp>;
+    "weight_required": Anonymize<I4q39t5hn830vp>;
+    "storage_deposit": Anonymize<If7bmpttbdmqu4>;
+    "max_storage_deposit": Anonymize<If7bmpttbdmqu4>;
+    "gas_consumed": bigint;
+    "result": ResultPayload<Anonymize<I6cm3omaniofs7>, Anonymize<I61h1b445e14of>>;
+};
+export type I5mla0vm6dnsl0 = ResultPayload<Anonymize<Icjs1v5avc8kdj>, Anonymize<I61h1b445e14of>>;
+export type Ib8pon7110jta2 = ResultPayload<Anonymize<Iabpgqcjikia83>, Enum<{
+    "DoesntExist": undefined;
+    "KeyDecodingFailed": undefined;
+    "StorageWriteFailed": Anonymize<I61h1b445e14of>;
+}>>;
 export type I1uglf8pvj966e = (Enum<{
     "Claim": {
         "proof": Uint8Array;

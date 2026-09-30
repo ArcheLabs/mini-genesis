@@ -14,8 +14,8 @@ const toBinary = (base64) => {
   return bytes;
 };
 
-const descriptorValues$1 = import('./descriptors-C1eE9k10.js').then((module) => module["Polkadot_asset_hub"]);
-const metadataTypes$1 = import('./metadataTypes-DFgKoO3k.js').then(
+const descriptorValues$1 = import('./descriptors-8JZ7q3vF.js').then((module) => module["Polkadot_asset_hub"]);
+const metadataTypes$1 = import('./metadataTypes-Bms788RY.js').then(
   (module) => toBinary("default" in module ? module.default : module)
 );
 const extensions$1 = {};
@@ -26,13 +26,13 @@ const getMetadata$2 = () => import('./polkadot_asset_hub_metadata-zM1M2eiK.js').
 const genesis$1 = "0x68d56f15f85d3136970ec16946040bc1752654e906147f7e43e9d539d7c3de2f";
 const _allDescriptors$1 = { descriptors: descriptorValues$1, metadataTypes: metadataTypes$1, extensions: extensions$1, requiredExtensions: requiredExtensions$1, getMetadata: getMetadata$2, genesis: genesis$1 };
 
-const descriptorValues = import('./descriptors-C1eE9k10.js').then((module) => module["Paseo_asset_hub"]);
-const metadataTypes = import('./metadataTypes-DFgKoO3k.js').then(
+const descriptorValues = import('./descriptors-8JZ7q3vF.js').then((module) => module["Paseo_asset_hub"]);
+const metadataTypes = import('./metadataTypes-Bms788RY.js').then(
   (module) => toBinary("default" in module ? module.default : module)
 );
 const extensions = {};
 const requiredExtensions = {};
-const getMetadata$1 = () => import('./paseo_asset_hub_metadata-CNHo8Cp0.js').then(
+const getMetadata$1 = () => import('./paseo_asset_hub_metadata-BfC2OfDV.js').then(
   (module) => toBinary("default" in module ? module.default : module)
 );
 const genesis = "0xd6eec26135305a8ad257a20d003357284c8aa03d0bdb2b357ab0a22371e11ef2";
