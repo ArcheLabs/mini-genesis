@@ -1,6 +1,7 @@
 import { access, readFile, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
+import { PHASE2_DURATION_SECONDS } from "./deployment-manifest.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const environment = process.argv[2];
@@ -8,7 +9,6 @@ const finalizeOnly = process.argv[3] === "--finalize-only";
 const PHASE2_ALLOCATION = 2_000_000n * 10n ** 18n;
 const PHASE2_START_PRICE_X18 = 3_500_000_000_000_000n;
 const PHASE2_END_PRICE_X18 = 5_500_000_000_000_000n;
-const PHASE2_DURATION_SECONDS = 7n * 24n * 60n * 60n;
 const deploymentEnvironment = [
   "RPC_URL",
   "TREASURY",
@@ -77,7 +77,8 @@ function ensurePhase2Constants() {
   if (BigInt(requiredEnv("PHASE2_END_PRICE_X18")) !== PHASE2_END_PRICE_X18) throw new Error("Phase II end price must be 0.005500 DOT/MINI");
   const start = BigInt(requiredEnv("PHASE2_START_TIMESTAMP"));
   const end = BigInt(requiredEnv("PHASE2_END_TIMESTAMP"));
-  if (end - start !== PHASE2_DURATION_SECONDS) throw new Error("Phase II duration must be exactly 7 days");
+  const expectedDuration = PHASE2_DURATION_SECONDS[environment];
+  if (end - start !== expectedDuration) throw new Error(`Phase II duration must be exactly ${expectedDuration} seconds for ${environment}`);
 }
 
 function assertExpectedChainId(rpcUrl) {

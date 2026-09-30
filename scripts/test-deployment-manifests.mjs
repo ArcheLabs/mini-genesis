@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { validateManifest } from "./deployment-manifest.mjs";
+import { PHASE2_DURATION_SECONDS, validateManifest } from "./deployment-manifest.mjs";
 import { validateStagingPagesManifest } from "./validate-staging-pages.mjs";
 
 for (const environment of ["local", "staging", "production"]) {
@@ -11,7 +12,7 @@ for (const environment of ["local", "staging", "production"]) {
     assert.equal(manifest.genesis.phases.phase2.status, "active");
     assert.match(manifest.source.rpcHttpUrls[0], /^http:\/\/127\.0\.0\.1:8545\/?$/);
     assert.match(manifest.source.substrateWsUrls[0], /^ws:\/\/127\.0\.0\.1:9944\/?$/);
-  } else if (environment === "staging" && manifest.status === "deployed") {
+  } else if (environment === "staging" && manifest.status === "deployed" && manifest.genesis.phases.phase2.status === "active") {
     validateStagingPagesManifest(manifest);
   } else {
     assert.equal(manifest.genesis.phases.phase2.status, "template");
@@ -40,9 +41,36 @@ for (const environment of ["staging", "production"]) {
   );
 }
 
+for (const [environment, offset] of [["staging", -1n], ["staging", 1n], ["production", -1n], ["production", 1n]]) {
+  const start = 2_000_000_000n;
+  const expected = PHASE2_DURATION_SECONDS[environment];
+  const result = spawnSync(process.execPath, ["scripts/deploy-phase2.mjs", environment, "--finalize-only"], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      RPC_URL: "https://rpc.example.invalid",
+      TREASURY: "0x2222222222222222222222222222222222222222",
+      PHASE2_ALLOCATION: (2_000_000n * 10n ** 18n).toString(),
+      PHASE2_START_PRICE_X18: "3500000000000000",
+      PHASE2_END_PRICE_X18: "5500000000000000",
+      PHASE2_START_TIMESTAMP: start.toString(),
+      PHASE2_END_TIMESTAMP: (start + expected + offset).toString(),
+      EXPECTED_CHAIN_ID: environment === "staging" ? "420420417" : "420420419",
+    },
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, new RegExp(`Phase II duration must be exactly ${expected} seconds for ${environment}`));
+}
+
 {
   const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
   validateManifest(staging, "staging");
+  assert.equal(staging.genesis.phases.phase2.previousDeployment.status, "retained-immutable");
+  assert.equal(staging.genesis.phases.phase2.previousDeployment.contract, "0x59964457dc4045988eaa7cf4d928970798aa5adf");
+  assert.equal(
+    BigInt(staging.genesis.phases.phase2.previousDeployment.endTime) - BigInt(staging.genesis.phases.phase2.previousDeployment.startTime),
+    7n * 24n * 60n * 60n,
+  );
   const firstWorkItem = staging.genesis.phases.phase2.workItems[0];
   const tasks = firstWorkItem.tasks;
   assert.doesNotThrow(() => validateManifest({
@@ -93,7 +121,7 @@ for (const environment of ["staging", "production"]) {
     startPriceX18: "3500000000000000",
     endPriceX18: "5500000000000000",
     startTime: "2000000000",
-    endTime: (2_000_000_000n + 7n * 24n * 60n * 60n).toString(),
+    endTime: (2_000_000_000n + PHASE2_DURATION_SECONDS.production).toString(),
   };
   const productionWithPhase2 = {
     ...manifest,
@@ -116,6 +144,21 @@ for (const environment of ["staging", "production"]) {
     }, "production"),
     /INVALID_GENESIS_PHASE2_DURATION_production/,
   );
+  for (const offset of [-1n, 1n]) {
+    assert.throws(
+      () => validateManifest({
+        ...productionWithPhase2,
+        genesis: {
+          ...productionWithPhase2.genesis,
+          phases: {
+            ...productionWithPhase2.genesis.phases,
+            phase2: { ...activePhase2, endTime: (BigInt(activePhase2.endTime) + offset).toString() },
+          },
+        },
+      }, "production"),
+      /INVALID_GENESIS_PHASE2_DURATION_production/,
+    );
+  }
 
   const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
   const stagingWithPhase2 = {
@@ -124,7 +167,11 @@ for (const environment of ["staging", "production"]) {
       ...staging.genesis,
       phases: {
         ...staging.genesis.phases,
-        phase2: { ...activePhase2, workItems: staging.genesis.phases.phase2.workItems },
+        phase2: {
+          ...activePhase2,
+          endTime: (BigInt(activePhase2.startTime) + PHASE2_DURATION_SECONDS.staging).toString(),
+          workItems: staging.genesis.phases.phase2.workItems,
+        },
       },
     },
   };
@@ -149,7 +196,25 @@ for (const environment of ["staging", "production"]) {
     }, "staging"),
     /INVALID_GENESIS_PHASE2_DURATION_staging/,
   );
+  for (const offset of [-1n, 1n]) {
+    assert.throws(
+      () => validateManifest({
+        ...stagingWithPhase2,
+        genesis: {
+          ...stagingWithPhase2.genesis,
+          phases: {
+            ...stagingWithPhase2.genesis.phases,
+            phase2: {
+              ...stagingWithPhase2.genesis.phases.phase2,
+              endTime: (BigInt(activePhase2.startTime) + PHASE2_DURATION_SECONDS.staging + offset).toString(),
+            },
+          },
+        },
+      }, "staging"),
+      /INVALID_GENESIS_PHASE2_DURATION_staging/,
+    );
+  }
 }
 
 console.log("Deployment manifest readiness tests passed: staging and production states are validated");
-console.log("Staging and production Phase II duration gates passed: only an exact seven-day window is accepted");
+console.log("Phase II duration gates passed: staging is exactly 1 hour; production is exactly 15 days");
