@@ -43,7 +43,7 @@ export async function checkNativeRuntime(client: PolkadotClient, manifest: Deplo
     const [runtime, codeHash, rawMetadata] = await Promise.all([
       client._request<{ specName: string; specVersion: number; transactionVersion: number }>("state_getRuntimeVersion", [finalized.hash]),
       client._request<string>("state_getStorageHash", ["0x3a636f6465", finalized.hash]),
-      client.getMetadata(finalized.hash),
+      client._request<string>("state_getMetadata", [finalized.hash]),
     ]);
     const actual = {
       genesisHash: actualGenesis,
@@ -56,7 +56,7 @@ export async function checkNativeRuntime(client: PolkadotClient, manifest: Deplo
     if (actual.specName !== expected.specName || actual.specVersion !== expected.specVersion || actual.transactionVersion !== expected.transactionVersion || actual.wasmCodeHash !== expected.wasmCodeHash.toLowerCase()) {
       return { compatibility: "runtime_changed", profileId: profile.id, actual, reason: "NATIVE_RUNTIME_PROFILE_MISMATCH" };
     }
-    if (!(rawMetadata instanceof Uint8Array) || rawMetadata.length === 0) {
+    if (typeof rawMetadata !== "string" || !/^0x[0-9a-f]+$/i.test(rawMetadata)) {
       return { compatibility: "profile_incomplete", profileId: profile.id, actual, reason: "NATIVE_RUNTIME_PROFILE_INCOMPLETE" };
     }
     const metadata = unifyMetadata(decAnyMetadata(rawMetadata));

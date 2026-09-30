@@ -15,7 +15,7 @@ const TEST_ACCOUNT = "111111111111111111111111111111111HC1" as SS58String;
 const TEST_CREATOR = getFakeTxCreator(TEST_ACCOUNT);
 const TX_HASH = `0x${"ab".repeat(32)}` as `0x${string}`;
 const BLOCK_HASH = `0x${"cd".repeat(32)}` as `0x${string}`;
-const LIVE_METADATA = new Uint8Array(readFileSync(".papi/metadata/paseo_asset_hub.scale"));
+const LIVE_METADATA = bytesToHex(new Uint8Array(readFileSync(".papi/metadata/paseo_asset_hub.scale")));
 
 function stagingManifest() {
   const base = manifest();
@@ -45,10 +45,10 @@ function runtimeClient(overrides: { genesisHash?: string; specVersion?: number; 
   return {
     getChainSpecData: vi.fn().mockResolvedValue({ name: "Polkadot Hub TestNet", genesisHash: overrides.genesisHash ?? manifest.source.substrateGenesisHash }),
     getFinalizedBlock: vi.fn().mockResolvedValue({ hash: BLOCK_HASH, number: 100 }),
-    getMetadata: vi.fn().mockResolvedValue(LIVE_METADATA),
     _request: vi.fn(async (method: string) => {
       if (method === "state_getRuntimeVersion") return { specName: "asset-hub-paseo", specVersion: overrides.specVersion ?? 2005002, transactionVersion: overrides.transactionVersion ?? 18 };
       if (method === "state_getStorageHash") return overrides.codeHash ?? "0x3d399dc2daeaaf831fc4fda6ddc1958494fc0f3319ebb8ec0c1e7ca8995eed56";
+      if (method === "state_getMetadata") return LIVE_METADATA;
       throw new Error(`unexpected rpc ${method}`);
     }),
   };
