@@ -25,7 +25,6 @@ type Props = {
   publicClient: PublicClient | null;
   session: WalletSession;
   provider: Eip1193Provider | null;
-  walletReady: boolean;
   correctChain: boolean;
   dynamic: GenesisCurveDynamic | null;
   demoMode: boolean;
@@ -58,6 +57,21 @@ function countdown(seconds: bigint, zh: boolean): string {
   return zh ? `${days ? `${days} 天 ` : ""}${hours} 小时` : days ? `${days}d ${hours}h` : `${hours}h ${minutes}m`;
 }
 
+type PurchaseWalletState = "disconnected" | "preparing" | "ready" | "unavailable";
+
+function purchaseWalletState(session: WalletSession): PurchaseWalletState {
+  if (!session) return "disconnected";
+  if (session.kind === "evm") return session.provider ? "ready" : "preparing";
+
+  if (session.nativeRuntimeStatus === "unsupported" || session.nativeRuntimeStatus === "error"
+    || session.nativeWalletStatus === "unsupported" || session.nativeWalletStatus === "error"
+    || session.balanceStatus === "error") return "unavailable";
+  if (!session.api || !session.accounts.some((account) => account.address === session.selectedAccountAddress)
+    || (session.balanceStatus !== "ready" && session.balanceStatus !== "refreshing")
+    || session.nativeRuntimeStatus !== "supported" || session.nativeWalletStatus !== "supported") return "preparing";
+  return "ready";
+}
+
 function errorText(code: string, zh: boolean): string {
   const messages: Record<string, [string, string]> = {
     WRONG_CHAIN: ["请先切换到当前 Genesis 网络。", "Switch to the selected Genesis network first."],
@@ -81,7 +95,7 @@ function errorText(code: string, zh: boolean): string {
   return localized ? localized[zh ? 0 : 1] : code;
 }
 
-export function GenesisPhase2({ language, manifest, publicClient, session, provider, walletReady, correctChain, dynamic, demoMode, onConnect, onReconcile }: Props) {
+export function GenesisPhase2({ language, manifest, publicClient, session, provider, correctChain, dynamic, demoMode, onConnect, onReconcile }: Props) {
   const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
   const [budget, setBudget] = useState("1.00");
   const [busy, setBusy] = useState(false);
@@ -121,6 +135,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
     const decimals = session.kind === "polkadot" ? manifest?.source.nativeDecimals ?? 10 : manifest?.evmNativeDecimals ?? 18;
     return Number(formatUnits(session.balance, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 });
   })();
+  const walletState = purchaseWalletState(session);
 
   useEffect(() => {
     const interval = window.setInterval(() => setClock(Math.floor(Date.now() / 1000)), 30_000);
@@ -130,7 +145,13 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
   const submit = async () => {
     setError(null);
     setMessage(null);
-    if (!session || !walletReady) { onConnect(); return; }
+    if (!session) { onConnect(); return; }
+    if (walletState !== "ready") {
+      setError(walletState === "preparing"
+        ? (zh ? "钱包仍在准备中，请稍后重试。" : "The wallet is still preparing. Please try again shortly.")
+        : (zh ? "钱包暂不可用于购买，请检查上方提示后重试。" : "The wallet is currently unavailable for purchases. Check the message above and try again."));
+      return;
+    }
     if (!manifest || !contract) { setError(errorText("CONFIGURATION_MISMATCH", zh)); return; }
     if (!dynamic || dynamic.phase !== 1) { setError(zh ? "当前阶段暂不接受购买。" : "Purchases are not active right now."); return; }
     if (affordableMini === 0n || quoteCost === 0n || budgetWei === 0n) { setError(zh ? "该预算不足以购买 MINI。" : "This budget is too small to acquire MINI."); return; }
@@ -210,6 +231,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
           <span>{nativeSymbol}</span>
         </div>
         <p className="purchase-balance" data-testid="phase2-wallet-balance">{zh ? "余额" : "Balance"} {balanceLabel} {nativeSymbol}</p>
+        {session?.kind === "polkadot" && session.balanceStatus === "error" && <p className="purchase-message error" role="status">{zh ? "暂时无法读取钱包余额，请稍后刷新或重新连接钱包。" : "Wallet balance could not be loaded. Refresh or reconnect the wallet and try again."}</p>}
         {session?.kind === "polkadot" && (session.nativeRuntimeStatus === "unsupported" || session.nativeRuntimeStatus === "error") && <p className="purchase-message error" role="status">{zh ? "当前网络 Runtime 暂不支持原生交易。" : "Native transactions are temporarily unavailable for the current network runtime."}</p>}
         {session?.kind === "polkadot" && session.nativeWalletStatus === "unsupported" && <p className="purchase-message error" role="status">{zh ? "当前钱包暂不支持此版本 Polkadot Hub TestNet 的原生交易。" : "This wallet does not support native transactions for the current Polkadot Hub TestNet runtime."}</p>}
         {session?.kind === "polkadot" && session.nativeWalletStatus === "error" && <p className="purchase-message error" role="status">{zh ? "无法验证当前钱包对 Runtime 的支持，已禁用原生签名。" : "Wallet support for this runtime could not be verified; native signing is disabled."}</p>}
@@ -221,8 +243,8 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
           <span>{zh ? "你将获得" : "You receive"}</span>
           <strong data-testid="phase2-mini-quote">≈ {formatMini(affordableMini)} MINI</strong>
         </div>
-        <button className="submit-button" type="button" disabled={busy || (session?.kind === "polkadot" && nativeVerificationPendingFor === session.selectedAccountAddress) || !purchaseEnabled || affordableMini === 0n || (session?.kind === "polkadot" && (session.nativeRuntimeStatus !== "supported" || session.nativeWalletStatus !== "supported"))} onClick={() => void submit()}>
-          {busy ? (zh ? "处理中…" : "Processing…") : session && walletReady ? (zh ? "获得 MINI" : "Get MINI") : (zh ? "连接钱包" : "Connect wallet")}
+        <button className="submit-button" type="button" disabled={busy || (session?.kind === "polkadot" && nativeVerificationPendingFor === session.selectedAccountAddress) || !purchaseEnabled || affordableMini === 0n || (walletState !== "disconnected" && walletState !== "ready")} onClick={() => void submit()}>
+          {busy ? (zh ? "处理中…" : "Processing…") : walletState === "disconnected" ? (zh ? "连接钱包" : "Connect wallet") : walletState === "ready" ? (zh ? "获得 MINI" : "Get MINI") : walletState === "preparing" ? (zh ? "正在准备钱包…" : "Preparing wallet…") : (zh ? "钱包暂不可用" : "Wallet unavailable")}
         </button>
         {message && <p className="purchase-message success" role="status">{message}</p>}
         {error && <p className="purchase-message error" role="alert">{error}</p>}
