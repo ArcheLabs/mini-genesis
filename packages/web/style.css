@@ -289,13 +289,13 @@ html.native-mainnet-override body::before {
   gap: 12px;
   padding: 20px;
   border-radius: inherit;
-  background: color-mix(in srgb, var(--panel-strong) 72%, var(--ink) 28%);
+  background: color-mix(in srgb, var(--panel-strong) 50%, transparent);
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
   text-align: center;
   cursor: wait;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(1px);
 }
 .purchase-processing-spinner {
   width: 24px;
