@@ -15,14 +15,15 @@ type Props = {
 export function MyMini({ language, genesis1Holding, genesis1Loading, genesis1Error, genesis2Holding, genesis2Loading, genesis2Error }: Props) {
   const zh = language === "zh-CN";
   const totalLoading = genesis1Loading || genesis2Loading;
-  const totalUnavailable = genesis1Error || genesis2Error || genesis1Holding === null || genesis2Holding === null;
+  const genesis1TotalHolding = genesis1Error ? 0n : genesis1Holding;
+  const totalUnavailable = genesis2Error || genesis1TotalHolding === null || genesis2Holding === null;
   const totalBalance = totalLoading
     ? (zh ? "读取中…" : "Loading…")
-    : totalUnavailable ? "—" : `${formatTokenAmount(genesis1Holding! + genesis2Holding!)} MINI`;
+    : totalUnavailable ? "—" : `${formatTokenAmount(genesis1TotalHolding! + genesis2Holding!)} MINI`;
   const genesis1Balance = genesis1Loading
     ? (zh ? "读取中…" : "Loading…")
     : genesis1Error
-      ? (zh ? "暂不可用" : "Unavailable")
+      ? `${formatTokenAmount(0n)} MINI`
       : genesis1Holding === null ? "—" : `${formatTokenAmount(genesis1Holding)} MINI`;
   const genesis2Balance = genesis2Loading
     ? (zh ? "读取中…" : "Loading…")
