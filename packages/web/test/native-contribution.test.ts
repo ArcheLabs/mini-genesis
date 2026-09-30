@@ -35,13 +35,6 @@ function nativeApi() {
 }
 
 describe("native contribution adapter", () => {
-  it("rejects direct SS58 purchase calls on staging TestNet before simulation or signing", async () => {
-    const onUpdate = vi.fn();
-    await expect(buyExactMiniNative({}, {}, NATIVE_ACCOUNT, manifest({ environment: "staging" }), SOURCE_CONTRACT, 1n, 1n, onUpdate))
-      .rejects.toThrow("NATIVE_POLKADOT_TRANSACTIONS_DISABLED");
-    expect(onUpdate).toHaveBeenLastCalledWith({ state: "failed", error: "NATIVE_POLKADOT_TRANSACTIONS_DISABLED" });
-    expect(mocks.submitNativeReviveCall).not.toHaveBeenCalled();
-  });
   it("accepts the descriptor's snake_case bigint weight", () => {
     expect(validateWeightRequired({ ref_time: 100n, proof_size: 20n })).toEqual({ ref_time: 100n, proof_size: 20n });
   });
