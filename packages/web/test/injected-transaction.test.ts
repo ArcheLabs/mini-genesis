@@ -59,17 +59,6 @@ describe("injected Native transaction", () => {
     expect(result.blockNumber).toBe(42n);
   });
 
-  it("blocks SS58 submission on the staging TestNet before RPC or wallet access", async () => {
-    await expect(submitNativeReviveCall({
-      manifest: manifest({ environment: "staging" }), address: "selected-account", contractAddress: SOURCE_CONTRACT, value: 1n,
-      weightLimit: { refTime: 1n, proofSize: 2n }, storageDepositLimit: 0n, data: "0x",
-    })).rejects.toThrow("NATIVE_POLKADOT_TRANSACTIONS_DISABLED");
-
-    expect(mocks.getApi).not.toHaveBeenCalled();
-    expect(mocks.web3Enable).not.toHaveBeenCalled();
-    expect(mocks.web3FromAddress).not.toHaveBeenCalled();
-  });
-
   it("normalizes a dispatch error to NATIVE_SUBMISSION_FAILED", async () => {
     const dispatchError = { isModule: true, asModule: "Balances.InsufficientBalance" };
     const { api } = nativeJsApi({ ...finalized, status: { ...finalized.status, isFinalized: false, isInBlock: true }, dispatchError });

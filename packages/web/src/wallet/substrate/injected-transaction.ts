@@ -1,7 +1,6 @@
 import type { ApiPromise } from "@polkadot/api";
 import { web3Enable, web3FromAddress } from "@polkadot/extension-dapp";
 import type { DeploymentManifest } from "../../config/manifest";
-import { genesisWalletCapabilities } from "../capabilities";
 import { getPolkadotJsApi } from "./polkadot-js-client";
 
 export type NativeSubmissionStatus = "ready" | "broadcast" | "inBlock" | "finalized" | "invalid" | "dropped" | "usurped" | "retracted";
@@ -123,7 +122,6 @@ function dispatchErrorDescription(api: ApiPromise, dispatchError: any): string {
 
 export async function submitNativeReviveCall(params: SubmitNativeReviveParams): Promise<NativeSubmissionResult> {
   const { manifest, address, contractAddress, value, weightLimit, storageDepositLimit, data, signal, onStatus = () => {}, onDiagnostic = () => {} } = params;
-  if (!genesisWalletCapabilities(manifest).nativePolkadotTransactions) throw new Error("NATIVE_POLKADOT_TRANSACTIONS_DISABLED");
   let api: ApiPromise;
   try {
     api = await getPolkadotJsApi(manifest);

@@ -85,22 +85,6 @@ function PurchaseHarness() {
   });
 }
 
-function StagingPolkadotPurchaseHarness() {
-  const address = "5GrwvaEF5zXb26Fz9rcQpDWSJ8U1h4QqN9u2Xh5iQ3cP5k1";
-  const session = {
-    kind: "polkadot" as const, status: "connected" as const, extensionId: "subwallet-js", walletName: "SubWallet",
-    accounts: [{ address, signer: {} as any, accountId32: new Uint8Array(32) }], selectedAccountAddress: address,
-    accountId32: `0x${"00".repeat(32)}` as `0x${string}`, balance: 20n * UNIT, balanceStatus: "ready" as const,
-    api: {} as any, contractIdentity: ACCOUNT, contractIdentityStatus: "verified" as const,
-  } as any;
-  return createElement(GenesisPhase2, {
-    language: "en", manifest: deployedManifest, publicClient: {} as any, session, provider: null,
-    walletReady: true, correctChain: true,
-    dynamic: dynamic({ sold: 0n, raised: 0n, buyers: 1n, spot: 3_500_000_000_000_000n }),
-    demoMode: false, onConnect: () => {}, onReconcile: async () => {},
-  });
-}
-
 describe("Genesis II purchase reconciliation", () => {
   beforeEach(() => {
     buyExactMiniMock.mockReset().mockResolvedValue({ hash: `0x${"ab".repeat(32)}`, blockNumber: 100n, miniAmount: 1n, dotCost: 1n, finalized: true });
@@ -136,18 +120,4 @@ describe("Genesis II purchase reconciliation", () => {
     expect(container!.querySelector('[data-testid="bonding-curve-interaction"]')?.getAttribute("data-current-position")).toBe("25.000000%");
   });
 
-  it("makes native SS58 purchase unreachable on staging TestNet", async () => {
-    await act(async () => { root!.render(createElement(StagingPolkadotPurchaseHarness)); });
-    const button = container!.querySelector(".submit-button") as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    expect(container!.querySelector('[data-testid="phase2-native-wallet-disabled"]')?.textContent).toContain("Connect an EVM wallet");
-
-    await act(async () => {
-      button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      await new Promise((resolve) => setTimeout(resolve, 0));
-    });
-
-    expect(buyExactMiniNativeMock).not.toHaveBeenCalled();
-    expect(buyExactMiniMock).not.toHaveBeenCalled();
-  });
 });

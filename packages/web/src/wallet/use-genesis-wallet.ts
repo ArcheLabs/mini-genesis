@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { bytesToHex, getAddress, type Address, type PublicClient } from "viem";
 import { useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from "@reown/appkit/react";
 import type { DeploymentManifest } from "../config/manifest";
-import { genesisWalletCapabilities } from "./capabilities";
 import { appKit, polkadotHubNetwork } from "./appkit";
 import { parseEip1193ChainId, readEip1193ChainId, switchEip1193Chain, type Eip1193Provider } from "./eip1193";
 import { accountId32FromSs58, resolveContractAddress } from "./substrate/account";
@@ -87,7 +86,6 @@ export function supportedAccounts(accounts: InjectedPolkadotAccount[]): Polkadot
 }
 
 export function useGenesisWallet(manifest: DeploymentManifest | null, publicClient: PublicClient | null = null, nativeManifest: DeploymentManifest | null = manifest) {
-  const polkadotWalletConnectionEnabled = genesisWalletCapabilities(manifest).polkadotWalletConnect;
   const { open } = useAppKit();
   const { address, isConnected, status } = useAppKitAccount({ namespace: "eip155" });
   const { walletProvider } = useAppKitProvider<unknown>("eip155");
@@ -106,17 +104,16 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const [contractIdentityStatus, setContractIdentityStatus] = useState<PolkadotWalletSession["contractIdentityStatus"]>("loading");
   const [evmBalance, setEvmBalance] = useState<bigint | null>(null);
   const [evmProviderChain, setEvmProviderChain] = useState<{ provider: Eip1193Provider; chainId: number | null } | null>(null);
-  const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" || !polkadotWalletConnectionEnabled ? [] : getInjectedExtensions().map(describePolkadotWallet));
-  const [restoreStatus, setRestoreStatus] = useState<PolkadotRestoreStatus>(() => polkadotWalletConnectionEnabled && readStoredPolkadotSession() ? "restoring" : "idle");
+  const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions().map(describePolkadotWallet));
+  const [restoreStatus, setRestoreStatus] = useState<PolkadotRestoreStatus>(() => readStoredPolkadotSession() ? "restoring" : "idle");
   const restorationAttempted = useRef(false);
   const evmConnectedRef = useRef(isConnected);
   evmConnectedRef.current = isConnected;
   const selectedAddressRef = useRef<string | null>(selectedPolkadotAddress);
   selectedAddressRef.current = selectedPolkadotAddress;
 
-  const refreshPolkadotWallets = useCallback(() => setAvailablePolkadotWallets(polkadotWalletConnectionEnabled ? getInjectedExtensions().map(describePolkadotWallet) : []), [polkadotWalletConnectionEnabled]);
+  const refreshPolkadotWallets = useCallback(() => setAvailablePolkadotWallets(getInjectedExtensions().map(describePolkadotWallet)), []);
   useEffect(() => {
-    refreshPolkadotWallets();
     window.addEventListener("focus", refreshPolkadotWallets);
     return () => window.removeEventListener("focus", refreshPolkadotWallets);
   }, [refreshPolkadotWallets]);
@@ -280,7 +277,6 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   }, [expectedChainId, manifest, provider]);
 
   const connectPolkadot = useCallback(async (extensionId?: string, preferredAccountId32?: `0x${string}`) => {
-    if (!polkadotWalletConnectionEnabled) throw new Error("NATIVE_POLKADOT_TRANSACTIONS_DISABLED");
     if (isConnected) throw new Error("WALLET_DISCONNECT_REQUIRED");
     const name = extensionId ?? getInjectedExtensions()[0];
     if (!name) throw new Error("NO_POLKADOT_WALLET");
@@ -305,7 +301,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     setContractIdentityStatus("loading");
     storePolkadotSession({ version: 1, extensionId: extension.name, accountId32: accountId32Hex(selected) });
     return selected.address;
-  }, [isConnected, polkadotWalletConnectionEnabled]);
+  }, [isConnected]);
 
   const selectPolkadotAccount = useCallback((addressToSelect: string) => {
     if (!substrateAccounts.some((account) => account.address === addressToSelect)) return;
@@ -369,12 +365,6 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   }, [disconnectPolkadot, isConnected, substrateExtension]);
 
   useEffect(() => {
-    if (!polkadotWalletConnectionEnabled) {
-      restorationAttempted.current = true;
-      clearStoredPolkadotSession();
-      setRestoreStatus("done");
-      return;
-    }
     if (restorationAttempted.current || status === "connecting" || isConnected || substrateExtension) return;
     restorationAttempted.current = true;
     const stored = readStoredPolkadotSession();
@@ -382,7 +372,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     if (!getInjectedExtensions().includes(stored.extensionId)) { clearStoredPolkadotSession(); setRestoreStatus("done"); return; }
     setRestoreStatus("restoring");
     void connectPolkadot(stored.extensionId, stored.accountId32).catch(() => clearStoredPolkadotSession()).finally(() => setRestoreStatus("done"));
-  }, [connectPolkadot, isConnected, polkadotWalletConnectionEnabled, status, substrateExtension]);
+  }, [connectPolkadot, isConnected, status, substrateExtension]);
 
   const { walletReady, walletStatus } = deriveWalletLifecycle(session, restoreStatus, status);
   return {
