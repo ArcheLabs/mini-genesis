@@ -196,6 +196,7 @@ async function deploy() {
   manifest.genesis ??= { phases: {} };
   manifest.genesis.phases ??= {};
   manifest.genesis.phases.phase1 ??= { status: "ended", mechanism: "stream", finalReferencePriceX18: "89460000000000" };
+  const previousDeployment = manifest.genesis.phases.phase2?.previousDeployment;
   const phase2WorkItems = manifest.genesis.phases.phase2?.workItems;
   manifest.genesis.phases.phase2 = {
     status: "active",
@@ -209,6 +210,7 @@ async function deploy() {
     endPriceX18,
     startTime,
     endTime,
+    ...(previousDeployment ? { previousDeployment } : {}),
     ...(phase2WorkItems ? { workItems: phase2WorkItems } : {}),
   };
   manifest.genesis.phases.phase3 ??= { status: "locked" };
