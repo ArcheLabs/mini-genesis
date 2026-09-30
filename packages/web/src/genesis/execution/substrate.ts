@@ -330,7 +330,7 @@ export function createSubstrateExecutionAdapter(api: any, txCreator: InjectedPol
         let finalized;
         try {
           finalized = await submitNativeTransaction({
-            client: getSubstrateClient(manifest), manifest, tx, txCreator, feeEstimate: fee,
+            client: getSubstrateClient(manifest), manifest, tx, txCreator,
             signal,
             onStatus: (status) => {
               if (status === "broadcast") onUpdate({ state: "submitted" });

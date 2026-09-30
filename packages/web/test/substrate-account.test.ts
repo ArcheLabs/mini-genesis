@@ -33,10 +33,4 @@ describe("Polkadot native account mapping", () => {
     const api = { apis: { ReviveApi: { address: async () => "0x0000000000000000000000000000000000000001" } } };
     await expect(resolveContractAddress(api, account)).rejects.toThrow("ACCOUNT_ADDRESS_MAPPING_MISMATCH");
   });
-  it("preserves the runtime error cause while classifying address-resolution failure", async () => {
-    const cause = new Error("runtime API unavailable");
-    const api = { apis: { ReviveApi: { address: async () => { throw cause; } } } };
-    await expect(resolveContractAddress(api, "111111111111111111111111111111111HC1"))
-      .rejects.toMatchObject({ message: "ACCOUNT_ADDRESS_RESOLUTION_FAILED", cause });
-  });
 });

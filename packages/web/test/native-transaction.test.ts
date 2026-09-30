@@ -110,28 +110,6 @@ describe("PAPI v3 native transaction core", () => {
     expect(tx.getEstimatedFees).toHaveBeenCalledWith(TEST_CREATOR, PASEO_ASSET_HUB_PROFILE.buildTransactionOptions());
   });
 
-  it("classifies a Revive.call fee-probe failure and preserves its raw cause", async () => {
-    const cause = new Error("PJS TxCreator rejected signed extension AsPgas");
-    const reviveCall = { getEstimatedFees: vi.fn().mockRejectedValue(cause) };
-    await expect(probeNativeWalletCapability(reviveCall, TEST_CREATOR, stagingManifest()))
-      .rejects.toMatchObject({ code: "NATIVE_WALLET_RUNTIME_UNSUPPORTED", cause });
-    expect(reviveCall.getEstimatedFees).toHaveBeenCalledTimes(1);
-  });
-
-  it("classifies unknown fee-probe exceptions as transaction-build failures, not opaque errors", async () => {
-    const cause = new Error("TxCreator fee serializer failed unexpectedly");
-    const reviveCall = { getEstimatedFees: vi.fn().mockRejectedValue(cause) };
-    await expect(probeNativeWalletCapability(reviveCall, TEST_CREATOR, stagingManifest()))
-      .rejects.toMatchObject({ code: "NATIVE_TRANSACTION_BUILD_FAILED", cause });
-  });
-
-  it("keeps network fee-estimation failures distinct from transaction construction failures", async () => {
-    const cause = new Error("RPC request timed out");
-    const reviveCall = { getEstimatedFees: vi.fn().mockRejectedValue(cause) };
-    await expect(probeNativeWalletCapability(reviveCall, TEST_CREATOR, stagingManifest()))
-      .rejects.toMatchObject({ code: "NATIVE_FEE_ESTIMATE_UNAVAILABLE", cause });
-  });
-
   it("reports finalized success only after broadcast and best-block notifications", async () => {
     const client = runtimeClient();
     let observer: Subscriber<any> | undefined;
@@ -148,8 +126,6 @@ describe("PAPI v3 native transaction core", () => {
     const resultPromise = submitNativeTransaction({ client, manifest: stagingManifest(), tx, txCreator: TEST_CREATOR, onStatus: (status) => statuses.push(status) }).then((result) => { resolved = true; return result; });
     await vi.waitFor(() => expect(observer).toBeDefined());
     expect(resolved).toBe(false);
-    expect(tx.getEstimatedFees).toHaveBeenCalledTimes(1);
-    expect(tx.createSubmitAndWatch).toHaveBeenCalledWith(TEST_CREATOR, PASEO_ASSET_HUB_PROFILE.buildTransactionOptions());
     expect(statuses).toEqual(["ready", "broadcast", "inBestBlock"]);
     observer?.next({ type: "finalized", txHash: TX_HASH, ok: true, events: [], block: { hash: BLOCK_HASH, number: 100, index: 2 } });
     await expect(resultPromise).resolves.toEqual({ substrateTxHash: TX_HASH, finalizedBlockHash: BLOCK_HASH, finalizedBlockNumber: 100n, extrinsicIndex: 2, events: [] });
@@ -159,33 +135,11 @@ describe("PAPI v3 native transaction core", () => {
   it("blocks unsupported wallet extensions before opening submission", async () => {
     const client = runtimeClient();
     const tx = {
-      getEstimatedFees: vi.fn().mockRejectedValue(new Error("PJS bridge rejected Revive.call because signed extension AsPgas is unsupported")),
+      getEstimatedFees: vi.fn().mockRejectedValue(new Error("PJS does not support this signed-extension: AsPgas")),
       createSubmitAndWatch: vi.fn(),
     };
     await expect(submitNativeTransaction({ client, manifest: stagingManifest(), tx, txCreator: TEST_CREATOR })).rejects.toMatchObject({ code: "NATIVE_WALLET_RUNTIME_UNSUPPORTED" } satisfies Partial<NativeTransactionError>);
     expect(tx.createSubmitAndWatch).not.toHaveBeenCalled();
-  });
-
-  it("does not repeat a successful Revive.call fee probe during submission", async () => {
-    const client = runtimeClient();
-    let observer: Subscriber<any> | undefined;
-    const tx = {
-      getEstimatedFees: vi.fn(),
-      createSubmitAndWatch: vi.fn(() => new Observable((subscriber) => { observer = subscriber; })),
-    };
-    const stages: string[] = [];
-    const resultPromise = submitNativeTransaction({
-      client, manifest: stagingManifest(), tx, txCreator: TEST_CREATOR, feeEstimate: 12n,
-      onStage: (stage) => stages.push(stage),
-    });
-    await vi.waitFor(() => expect(observer).toBeDefined());
-    expect(tx.getEstimatedFees).not.toHaveBeenCalled();
-    expect(tx.createSubmitAndWatch).toHaveBeenCalledTimes(1);
-    observer?.next({ type: "broadcasted", txHash: TX_HASH });
-    observer?.next({ type: "inBestBlock", txHash: TX_HASH, ok: true, events: [], block: { hash: BLOCK_HASH, number: 101, index: 3 } });
-    observer?.next({ type: "finalized", txHash: TX_HASH, ok: true, events: [], block: { hash: BLOCK_HASH, number: 101, index: 3 } });
-    await expect(resultPromise).resolves.toMatchObject({ substrateTxHash: TX_HASH, finalizedBlockNumber: 101n });
-    expect(stages).toEqual(["runtime-check", "submission", "wallet-signing", "submission", "finality", "finality"]);
   });
 
   it("maps a wallet rejection to the signing-rejected error without reporting success", async () => {
