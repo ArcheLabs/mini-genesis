@@ -8,6 +8,7 @@ import { getPhase2Contract, type GenesisCurveDynamic } from "./curve-reads";
 import { walletClient } from "../wallet/wallet-client";
 import type { Eip1193Provider } from "../wallet/eip1193";
 import type { WalletSession } from "../wallet/types";
+import { genesisWalletCapabilities } from "../wallet/capabilities";
 import { GenesisWorkItems } from "./GenesisWorkItems";
 import { genesisPhase2WorkItems, mergeGenesisWorkItems } from "./work-items";
 import { BasisInfo } from "./BasisInfo";
@@ -59,9 +60,10 @@ function countdown(seconds: bigint, zh: boolean): string {
 
 type PurchaseWalletState = "disconnected" | "preparing" | "ready" | "unavailable";
 
-function purchaseWalletState(session: WalletSession): PurchaseWalletState {
+function purchaseWalletState(session: WalletSession, manifest: DeploymentManifest | null): PurchaseWalletState {
   if (!session) return "disconnected";
   if (session.kind === "evm") return session.provider ? "ready" : "preparing";
+  if (!genesisWalletCapabilities(manifest).nativePolkadotTransactions) return "unavailable";
 
   if (session.balanceStatus === "error" || session.contractIdentityStatus === "error") return "unavailable";
   if (!session.api || !session.accounts.some((account) => account.address === session.selectedAccountAddress)
@@ -79,6 +81,7 @@ function errorText(code: string, zh: boolean): string {
     RPC_UNAVAILABLE: ["网络暂时无法连接，请稍后重试。", "The network is temporarily unavailable. Try again shortly."],
     UNKNOWN_ERROR: ["暂时无法完成购买，请重试。", "The purchase could not be completed. Please try again."],
     CONFIGURATION_MISMATCH: ["当前环境配置不匹配。", "The selected environment configuration does not match."],
+    NATIVE_POLKADOT_DISABLED: ["当前 TestNet 不支持 Polkadot 原生钱包交易，请连接 EVM 钱包。", "Native Polkadot transactions are disabled on this TestNet. Connect an EVM wallet."],
   };
   const localized = messages[code];
   return localized ? localized[zh ? 0 : 1] : code;
@@ -123,7 +126,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
     const decimals = session.kind === "polkadot" ? manifest?.source.nativeDecimals ?? 10 : manifest?.evmNativeDecimals ?? 18;
     return Number(formatUnits(session.balance, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 });
   })();
-  const walletState = purchaseWalletState(session);
+  const walletState = purchaseWalletState(session, manifest);
 
   useEffect(() => {
     const interval = window.setInterval(() => setClock(Math.floor(Date.now() / 1000)), 30_000);
@@ -134,6 +137,10 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
     setError(null);
     setMessage(null);
     if (!session) { onConnect(); return; }
+    if (session.kind === "polkadot" && !genesisWalletCapabilities(manifest).nativePolkadotTransactions) {
+      setError(errorText("NATIVE_POLKADOT_DISABLED", zh));
+      return;
+    }
     if (walletState !== "ready") {
       setError(walletState === "preparing"
         ? (zh ? "钱包仍在准备中，请稍后重试。" : "The wallet is still preparing. Please try again shortly.")
@@ -217,6 +224,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         <p className="purchase-balance" data-testid="phase2-wallet-balance">{zh ? "余额" : "Balance"} {balanceLabel} {nativeSymbol}</p>
         {session?.kind === "polkadot" && session.balanceStatus === "error" && <p className="purchase-message error" role="status">{zh ? "暂时无法读取钱包余额，请稍后刷新或重新连接钱包。" : "Wallet balance could not be loaded. Refresh or reconnect the wallet and try again."}</p>}
         {session?.kind === "polkadot" && session.contractIdentityStatus === "error" && <p className="purchase-message error" role="status">{zh ? "无法验证当前 Genesis 合约，请稍后重试。" : "The Genesis contract could not be verified. Please try again shortly."}</p>}
+        {session?.kind === "polkadot" && !genesisWalletCapabilities(manifest).nativePolkadotTransactions && <p className="purchase-message error" role="status" data-testid="phase2-native-wallet-disabled">{errorText("NATIVE_POLKADOT_DISABLED", zh)}</p>}
         <div className="budget-presets" aria-label={zh ? "快捷金额" : "Quick amounts"}>
           {["1", "5", "20"].map((value) => <button key={value} type="button" className={budget === value || budget === `${value}.00` ? "selected" : ""} onClick={() => setBudget(value)}>{value} {nativeSymbol}</button>)}
         </div>

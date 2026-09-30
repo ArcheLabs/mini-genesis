@@ -1,5 +1,6 @@
 import { bytesToHex, decodeEventLog, encodeFunctionData, hexToBytes, type Address } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
+import { genesisWalletCapabilities } from "../wallet/capabilities";
 import { checkAccountMapping, mapAccount } from "../wallet/substrate/mapping";
 import { resolveContractAddress } from "../wallet/substrate/account";
 import { readNativeBalance } from "../wallet/substrate/balance";
@@ -63,6 +64,7 @@ export async function buyExactMiniNative(
   onUpdate: (update: CurveNativeUpdate) => void = () => {},
 ): Promise<{ hash: `0x${string}`; blockNumber: bigint; miniAmount: bigint }> {
   try {
+    if (!genesisWalletCapabilities(manifest).nativePolkadotTransactions) throw new Error("NATIVE_POLKADOT_TRANSACTIONS_DISABLED");
     const data = encodeFunctionData({ abi: curveAbi, functionName: "buyExactMini", args: [miniAmount, maxDotCost] });
     const value = ceilPlanck(maxDotCost);
     const accountResolution = await resolveContractAddress(api, account);
