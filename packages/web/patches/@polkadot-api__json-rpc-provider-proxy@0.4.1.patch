@@ -1,0 +1,14 @@
+diff --git a/package.json b/package.json
+index 6020eef1b00acc7817883b1d727a8646ca84ef77..495c16b7343db351e5498ef1ec783d3d324923da 100644
+--- a/package.json
++++ b/package.json
+@@ -24,6 +24,9 @@
+   "files": [
+     "dist"
+   ],
++  "dependencies": {
++    "@polkadot-api/json-rpc-provider": "0.2.0"
++  },
+   "devDependencies": {
+     "@polkadot-api/json-rpc-provider": "0.2.0"
+   },
