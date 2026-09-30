@@ -127,18 +127,48 @@ export const genesisPhase1ResearchHistory: readonly GenesisWorkItem[] = [
 
 export const genesisPhase2WorkItems: readonly GenesisWorkItem[] = [
   {
+    id: "minijam",
+    name: "MiniJAM",
+    status: "active",
+    summary: text(
+      "Build the next generation of the MiniJAM network, extend PVM with GPU compute, and establish an incentive and subprotocol framework for an open ecosystem.",
+      "建设下一代 MiniJAM 网络，将 PVM 扩展到 GPU 计算，并建立面向开放生态的激励与子协议体系。",
+    ),
+    tasks: [
+      { id: "gpu-pvm", name: "GPU-PVM", summary: text("Introduce GPU compute to PVM, enabling JAM Services to run model training, inference, and other large-scale parallel workloads.", "为 PVM 引入 GPU 计算能力，使 JAM Service 能够执行模型训练、推理及其他大规模并行计算任务。"), status: "active" },
+      { id: "incentive-protocol", name: text("Incentive Protocol", "激励协议"), summary: text("Complete ecosystem incentive infrastructure based on Alpha markets, staking, liquidity, and market-driven emissions, enabling projects to access launch resources and long-term incentives through real markets while preparing the foundation for MiniCells integration.", "完成基于 Alpha 市场、质押、流动性和市场排放的生态激励基础设施，让项目能够通过真实市场获得启动资源和长期激励，并为 MiniCells 接入做好准备。"), status: "planned" },
+      { id: "minicells-training-subprotocol", name: text("MiniCells Training Subprotocol", "MiniCells 训练子协议"), summary: text("Build an open training mechanism on top of the Incentive Protocol, allowing participants to create training subnets, contribute compute and model improvements, and determine contribution acceptance and incentive rules through MiniCells validation and evaluation.", "在激励协议之上建立开放训练机制，允许参与者创建训练子网、贡献计算和模型成果，并根据 MiniCells 的验证与评估结果决定成果采用和激励规则。"), status: "planned" },
+      { id: "next-generation-network", name: text("Next-Generation Network", "新一代网络"), summary: text("Launch the next MiniJAM network with GPU-PVM, the Incentive Protocol, and open subprotocol support, running real applications and compute workloads continuously.", "上线支持 GPU-PVM、激励协议和开放子协议的新一代 MiniJAM 网络，持续运行真实应用与计算负载。"), status: "planned" },
+    ],
+  },
+  {
     id: "jamscript",
     name: "JamScript",
     status: "active",
     summary: text(
-      "Provide high-level development, build, and deployment tools for JAM applications, so developers can work without handling low-level execution and toolchain complexity directly.",
-      "为 JAM 应用提供高层开发、构建和部署工具，让开发者无需直接处理底层执行模型和工具链复杂度。",
+      "Advance JamScript from a JAM development language into a complete application development and runtime platform for JAM.",
+      "将 JamScript 从 JAM 开发语言推进为完整的 JAM 应用开发与运行平台。",
     ),
     tasks: [
-      { id: "language-runtime", name: text("Language and runtime", "语言与运行时"), status: "delivered" },
-      { id: "ownership-primitives", name: text("Ownership primitives", "所有权原语"), status: "active" },
-      { id: "developer-sdk", name: text("Developer SDK", "开发者 SDK"), status: "planned" },
-      { id: "legacy-experiment", name: text("Legacy experimental path", "早期实验方向"), status: "discontinued" },
+      { id: "jamscript-v1", name: "JamScript v1", summary: text("Deliver the first stable release of the language, compiler, type system, and Service Runtime, while continuing to improve numeric computation, memory management, and execution efficiency.", "完成语言、编译器、类型系统和 Service Runtime 的首个稳定版本，并继续优化数值计算、内存管理和执行效率。"), status: "active" },
+      { id: "application-backend", name: "Application Backend", summary: text("Complete the JamScript Backend for production applications, providing unified handling of Transactions, Managed State, batching, finality, execution results, and application state access.", "完善面向真实应用的 JamScript Backend，统一处理 Transaction、Managed State、批处理、最终性、执行结果以及应用状态访问。"), status: "active" },
+      { id: "minikernel", name: "MiniKernel", summary: text("Complete the service interaction framework for JAM Services and applications, enabling composable application execution models.", "完成面向 JAM Service 和应用的服务交互框架，构建可组合的应用执行模型。"), status: "planned" },
+      { id: "developer-toolchain", name: text("Developer Toolchain", "开发工具链"), summary: text("Complete the SDK, Client, CLI, deployment, debugging, and version management workflows required to build and operate JAM Services end to end.", "完善 SDK、Client、CLI、部署、调试和版本管理，让开发者能够以完整工作流构建和运行 JAM Service。"), status: "active" },
+    ],
+  },
+  {
+    id: "ownership-abstraction",
+    name: "Ownership Abstraction",
+    status: "active",
+    summary: text(
+      "Decouple ownership from specific blockchain accounts, wallets, and cryptographic schemes, making Ownership a fundamental control primitive that applications can use directly.",
+      "将所有权从特定区块链账户、钱包和密码学方案中解耦，使 Ownership 成为应用可以直接使用的基础控制原语。",
+    ),
+    tasks: [
+      { id: "unified-ownership-primitive", name: text("Unified Ownership Primitive", "统一所有权原语"), summary: text("Continue refining a unified Ownership representation across different cryptographic systems so application state is no longer tied to a specific wallet or account format.", "继续完善不同密码学体系下的统一 Ownership 表达，让应用状态不再绑定某一种钱包或账户格式。"), status: "active" },
+      { id: "ecosystem-compatibility-layer", name: text("Ecosystem Compatibility Layer", "生态兼容层"), summary: text("Build compatibility interfaces for existing ecosystems including EVM, Polkadot, and Solana, covering RPC, transactions, and wallet interaction so existing tools can connect directly to Ownership-based applications.", "围绕 EVM、Polkadot、Solana 等现有生态建立兼容接口，包括 RPC、交易和钱包交互，使已有工具能够直接连接基于 Ownership 的应用。"), status: "active" },
+      { id: "programmable-ownership", name: text("Programmable Ownership", "可编程所有权"), summary: text("Extend multisig, delegation, composable control, and other programmable ownership models, enabling more flexible control over assets and application state.", "扩展多签、委托、组合控制及其他可编程控制模型，使资产和应用状态能够采用更加灵活的所有权规则。"), status: "planned" },
+      { id: "new-cryptography-support", name: text("New Cryptography Support", "新密码学支持"), summary: text("Continue adding verifiable cryptographic schemes while preserving native extensibility for future ownership systems, including post-quantum cryptography.", "继续扩展可验证的密码学方案，并为后量子密码学等未来所有权类型保留原生扩展能力。"), status: "planned" },
     ],
   },
   {
@@ -146,67 +176,30 @@ export const genesisPhase2WorkItems: readonly GenesisWorkItem[] = [
     name: "MiniCells",
     status: "active",
     summary: text(
-      "Explore a continuously updated, composable AI service architecture that can make model capabilities long-running network resources.",
-      "探索可持续更新和组合的 AI 服务架构，使模型能力可以作为网络中的长期运行资源。",
+      "Complete the first production Cellular Language Model and establish a model system that supports open training, independent evaluation, and continuous evolution.",
+      "完成第一代正式版 Cellular Language Model，并建立能够开放训练、独立评估和持续演化的模型系统。",
     ),
     tasks: [
-      { id: "research-baseline", name: text("Research baseline", "研究基线"), status: "delivered" },
-      { id: "service-architecture", name: text("AI service architecture", "AI 服务架构"), status: "active" },
-      { id: "network-integration", name: text("Network integration", "网络集成"), status: "planned" },
+      { id: "clm-v1", name: "CLM v1", summary: text("Complete the first production Cellular Language Model, refining Cell architecture, routing, training, and model evolution mechanisms.", "完成首个正式版 Cellular Language Model，完善 Cell、路由、训练和模型持续演化机制。"), status: "active" },
+      { id: "mixed-model-30b", name: text("30B Mixed Model", "30B 混合模型"), summary: text("Train the first 30B-scale mixed model as the primary MiniCells model and the foundation for the open training network.", "训练首个 30B 规模混合模型，作为 MiniCells 主模型和开放训练网络的基础。"), status: "planned" },
+      { id: "model-evaluation-system", name: text("Model Evaluation System", "模型评估系统"), summary: text("Build an evaluation mechanism with independent Evaluators / Validators to assess capability gains, regressions, and stability in candidate contributions submitted by different training subnets.", "建立由独立 Evaluator / Validator 参与的模型评估机制，对不同训练子网提交的候选成果进行能力、退化和稳定性评估。"), status: "planned" },
+      { id: "model-evolution-protocol", name: text("Model Evolution Protocol", "模型演化协议"), summary: text("Establish a standard process for candidate training results to enter the main model, allowing validated model contributions to be continuously incorporated into the canonical model.", "建立候选训练成果进入主模型的标准流程，使通过评估的模型贡献能够持续进入主模型。"), status: "planned" },
     ],
   },
   {
-    id: "minijam",
-    name: "MiniJAM",
+    id: "locus",
+    name: "Locus",
     status: "active",
     summary: text(
-      "Build an execution network for shared public state, computation, and AI resources, while testing the boundaries of the JAM service model in real applications.",
-      "建设面向公共状态、计算和 AI 等共享资源的执行网络，并继续验证 JAM 服务模型在真实应用中的边界。",
+      "Advance Locus from an experimental asset application into an open asset hub for mainstream users, enabling assets to move across wallets, applications, and interaction environments.",
+      "将 Locus 从资产实验应用推进为面向普通用户的开放资产中心，让资产能够跨钱包、跨应用和跨交互环境使用。",
     ),
     tasks: [
-      { id: "service-model", name: text("JAM service model", "JAM 服务模型"), status: "delivered" },
-      { id: "shared-resources", name: text("Shared public resources", "共享公共资源"), status: "active" },
-      { id: "execution-network", name: text("Execution network", "执行网络"), status: "planned" },
-    ],
-  },
-  {
-    id: "locus-ownership",
-    name: "Locus & Ownership",
-    status: "active",
-    summary: text(
-      "Create wallet-independent ownership and asset experiences so different identities and cryptographic systems can use a shared asset model.",
-      "建立钱包无关的所有权与资产使用体验，使不同身份和密码体系能够使用统一的资产模型。",
-    ),
-    tasks: [
-      { id: "identity-mapping", name: text("Cross-wallet identity mapping", "跨钱包身份映射"), status: "active" },
-      { id: "shared-asset-model", name: text("Shared asset model", "统一资产模型"), status: "planned" },
-    ],
-  },
-  {
-    id: "mini-utility",
-    name: "MINI Utility",
-    status: "planned",
-    summary: text(
-      "Establish practical uses for MINI in service payments, resource access, and network settlement.",
-      "逐步建立 MINI 在服务支付、资源使用与网络结算中的实际用途。",
-    ),
-    tasks: [
-      { id: "service-payments", name: text("Service payments", "服务支付"), status: "planned" },
-      { id: "network-settlement", name: text("Network settlement", "网络结算"), status: "planned" },
-    ],
-  },
-  {
-    id: "developer-ecosystem",
-    name: "Developer Ecosystem",
-    status: "active",
-    summary: text(
-      "Improve documentation, examples, SDKs, deployment flows, and developer tools to lower the cost of building third-party applications.",
-      "完善文档、示例、SDK、部署流程和开发工具，降低第三方开发者进入生态的成本。",
-    ),
-    tasks: [
-      { id: "documentation-examples", name: text("Documentation and examples", "文档与示例"), status: "delivered" },
-      { id: "developer-sdk", name: text("Developer SDK", "开发者 SDK"), status: "active" },
-      { id: "third-party-apps", name: text("Third-party applications", "第三方应用"), status: "planned" },
+      { id: "open-asset-protocol", name: text("Open Asset Protocol", "开放资产协议"), summary: text("Expand beyond fungible assets to support NFTs and additional asset types, with shared Ownership, transfer, and application interaction infrastructure.", "从同质化资产扩展到 NFT 等更多资产类型，使不同资产共享统一的 Ownership、转移和应用交互基础设施。"), status: "planned" },
+      { id: "multi-ecosystem-integration", name: text("Multi-Ecosystem Integration", "多生态兼容"), summary: text("Support direct integration with external applications and platforms such as Telegram and GitHub.", "支持 Telegram、GitHub 等外部应用和平台直接接入 Locus。"), status: "active" },
+      { id: "native-wallet-compatibility", name: text("Native Wallet Compatibility", "原生钱包兼容"), summary: text("Emulate RPC and native transaction formats from ecosystems such as EVM, Polkadot, and Solana, allowing different wallets to access Locus directly while converting native signatures into unified Ownership authorization.", "模拟 EVM、Polkadot、Solana 等生态的 RPC 与原生交易格式，让不同的钱包能够直接访问 Locus，并将原生签名转换为统一的 Ownership 授权。"), status: "planned" },
+      { id: "secure-authorization", name: text("Secure Authorization", "安全授权"), summary: text("Make the actual effects of asset transfers, approvals, and transactions part of the signed payload, preventing applications from hiding unauthorized asset changes behind opaque calls.", "让资产转移、授权和交易的实际影响成为签名内容的一部分，确保应用无法通过隐藏调用改变用户未明确授权的资产。"), status: "planned" },
+      { id: "open-asset-markets", name: text("Open Asset Markets", "开放资产市场"), summary: text("Expand beyond basic asset management into permissionless liquidity, swaps, and broader asset markets, allowing developers and users to build applications and markets directly around Locus assets.", "从基础资产管理进一步扩展到无许可流动性、兑换以及更多资产市场，使开发者和用户能够围绕 Locus 资产直接建立应用和市场。"), status: "planned" },
     ],
   },
 ];

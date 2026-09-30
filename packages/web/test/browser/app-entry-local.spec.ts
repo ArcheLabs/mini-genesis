@@ -84,21 +84,35 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await expect(page.locator(".phase2-work-items .section-heading h2")).toHaveCSS("font-size", "20px");
   const taskLayout = await page.locator(".phase2-work-items .work-item-tasks li").first().evaluate((row) => {
     const icon = row.querySelector(".work-item-task-status")!.getBoundingClientRect();
-    const taskName = row.querySelector(".work-item-task-name")!;
-    const label = taskName.getBoundingClientRect();
+    const taskTitle = row.querySelector(".work-item-task-title")!;
+    const taskSummary = row.querySelector(".work-item-task-summary")!;
+    const label = taskTitle.getBoundingClientRect();
     const workItem = row.closest(".work-item")!;
-    const summary = workItem.querySelector("p")!;
     return {
       iconBeforeLabel: icon.right <= label.left,
       visibleStatusText: row.querySelector(".work-item-task-status")!.textContent?.trim(),
-      taskFont: getComputedStyle(taskName).fontSize,
-      summaryFont: getComputedStyle(summary).fontSize,
-      taskColor: getComputedStyle(taskName).color,
+      taskFont: getComputedStyle(taskTitle).fontSize,
+      summaryFont: getComputedStyle(taskSummary).fontSize,
+      taskColor: getComputedStyle(taskTitle).color,
+      taskSummaryColor: getComputedStyle(taskSummary).color,
       textColor: getComputedStyle(workItem.querySelector(".work-item-head strong")!).color,
     };
   });
-  expect(taskLayout).toMatchObject({ iconBeforeLabel: true, visibleStatusText: "", taskFont: "14px", summaryFont: "14px" });
+  expect(taskLayout).toMatchObject({ iconBeforeLabel: true, visibleStatusText: "", taskFont: "16px", summaryFont: "14px" });
   expect(taskLayout.taskColor).toBe(taskLayout.textColor);
+  expect(taskLayout.taskSummaryColor).toBe(taskLayout.textColor);
+  const phase2Typography = await page.evaluate(() => ({
+    sectionHeading: getComputedStyle(document.querySelector(".phase2-work-items > .section-heading h2")!).fontSize,
+    workItemTitle: getComputedStyle(document.querySelector(".phase2-work-items .work-item-head strong")!).fontSize,
+    taskTitle: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-title")!).fontSize,
+    workItemSummary: getComputedStyle(document.querySelector(".phase2-work-items .work-item > p")!).fontSize,
+    taskSummary: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-summary")!).fontSize,
+    taskSummaryColor: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-summary")!).color,
+    taskTitleColor: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-title")!).color,
+    workItemGap: getComputedStyle(document.querySelector(".phase2-work-items .work-item-grid")!).rowGap,
+    taskGap: getComputedStyle(document.querySelector(".phase2-work-items .work-item-tasks")!).rowGap,
+    sectionMarginTop: getComputedStyle(document.querySelector(".phase2-work-items")!).marginTop,
+  }));
   await expect(page.locator(".phase2-work-items .work-item-head .status-badge").first()).toHaveCSS("border-top-style", "solid");
   await expect(page.locator(".reserve-banner")).toHaveCount(0);
   await expect(page.getByText("DOT raised", { exact: true })).toHaveCount(0);
@@ -145,7 +159,7 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await expect(page.locator(".genesis-rules .section-heading h2")).toHaveCSS("font-size", "18px");
-  await expect(page.locator(".phase2-work-items .section-heading h2")).toHaveCSS("font-size", "18px");
+  await expect(page.locator(".phase2-work-items .section-heading h2")).toHaveCSS("font-size", "20px");
   await page.getByRole("button", { name: "Switch appearance" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
@@ -194,6 +208,7 @@ test("Genesis stages route from the URL and the first viewport centers the live 
     taskTitleColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-title")!).color,
     workItemGap: getComputedStyle(document.querySelector(".phase1-work-items .work-item-grid")!).rowGap,
     taskGap: getComputedStyle(document.querySelector(".phase1-work-items .work-item-tasks")!).rowGap,
+    sectionMarginTop: getComputedStyle(document.querySelector(".phase1-work-items")!).marginTop,
     cancelledBadgeColor: getComputedStyle(document.querySelector(".phase1-work-items .status-badge-discontinued")!).color,
     cancelledTaskColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-status-discontinued")!).color,
     protocolColor: (() => {
@@ -215,6 +230,17 @@ test("Genesis stages route from the URL and the first viewport centers the live 
     taskGap: "12px",
   });
   expect(phase1Typography.taskSummaryColor).toBe(phase1Typography.taskTitleColor);
+  expect(phase2Typography).toMatchObject({
+    sectionHeading: phase1Typography.sectionHeading,
+    workItemTitle: phase1Typography.workItemTitle,
+    taskTitle: phase1Typography.taskTitle,
+    workItemSummary: phase1Typography.workItemSummary,
+    taskSummary: phase1Typography.taskSummary,
+    taskSummaryColor: phase1Typography.taskSummaryColor,
+    taskTitleColor: phase1Typography.taskTitleColor,
+    workItemGap: phase1Typography.workItemGap,
+    taskGap: phase1Typography.taskGap,
+  });
   expect(phase1Typography.cancelledBadgeColor).toBe(phase1Typography.protocolColor);
   expect(phase1Typography.cancelledTaskColor).toBe(phase1Typography.protocolColor);
   await page.setViewportSize({ width: 390, height: 844 });

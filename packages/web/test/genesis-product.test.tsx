@@ -84,15 +84,27 @@ describe("Genesis product closure", () => {
     expect(markup).toContain('<span class="work-item-task-summary">Complete the build flow from JamScript');
   });
 
-  it("renders six full-width Phase II workstreams with reusable status badges", () => {
+  it("renders the five supplied bilingual Phase II workstreams with reusable status badges", () => {
     const english = renderToStaticMarkup(createElement(GenesisWorkItems, { language: "en", mode: "phase2-funds", workItems: genesisPhase2WorkItems }));
     const chinese = renderToStaticMarkup(createElement(GenesisWorkItems, { language: "zh-CN", mode: "phase2-funds", workItems: genesisPhase2WorkItems }));
-    expect(english.match(/class="work-item work-item-/g)).toHaveLength(6);
+    expect(english.match(/class="work-item work-item-/g)).toHaveLength(5);
     expect(english).toContain("Genesis II Execution");
-    expect(english).toContain("high-level development, build, and deployment tools");
+    expect(english).toContain("Incentive Protocol");
+    expect(english).toContain("MiniCells Training Subprotocol");
+    expect(english).toContain("Application Backend");
+    expect(english).toContain("Unified Ownership Primitive");
+    expect(english).toContain("30B Mixed Model");
+    expect(english).toContain("Native Wallet Compatibility");
+    expect(english).not.toContain("MINI Utility");
+    expect(english).not.toContain("Developer Ecosystem");
     expect(english).toContain("In progress");
     expect(english).toContain("Planned");
     expect(chinese).toContain("Genesis II 执行计划");
+    expect(chinese).toContain("MiniCells 训练子协议");
+    expect(chinese).toContain("新一代网络");
+    expect(chinese).toContain("统一所有权原语");
+    expect(chinese).toContain("模型演化协议");
+    expect(chinese).toContain("安全授权");
     expect(chinese).toContain("计划中");
   });
 
@@ -174,6 +186,9 @@ describe("Genesis product closure", () => {
     expect(markup).not.toContain("phase2-user-mini");
     expect(markup).toContain("Rules");
     expect(markup).toContain("Genesis II Execution");
+    expect(markup).toContain("GPU-PVM");
+    expect(markup).toContain("Build the next generation of the MiniJAM network");
+    expect(markup).toContain("Open Asset Markets");
     expect(markup).toContain("data-current-position=\"25.000000%\"");
     expect(markup).toContain("0.004000 DOT / MINI");
     for (const obsolete of ["Current price", "Maximum price", "Estimated cost", "After buy", "Price after purchase", "Early Operations Reserve", "COMPLETED", "LIVE"]) {
