@@ -2,7 +2,15 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { PHASE2_DURATION_SECONDS, validateManifest } from "./deployment-manifest.mjs";
+import { isConfiguredRpcUrl } from "./rpc-selection.mjs";
 import { validateStagingPagesManifest } from "./validate-staging-pages.mjs";
+
+{
+  const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
+  assert.equal(isConfiguredRpcUrl("https://services.polkadothub-rpc.com/testnet/", staging.source.rpcHttpUrls), true);
+  assert.equal(isConfiguredRpcUrl("https://eth-rpc-testnet.polkadot.io/", staging.source.rpcHttpUrls), true);
+  assert.equal(isConfiguredRpcUrl("https://rpc.example.invalid/", staging.source.rpcHttpUrls), false);
+}
 
 for (const environment of ["local", "staging", "production"]) {
   const manifest = JSON.parse(await readFile(`deployments/${environment}.json`, "utf8"));

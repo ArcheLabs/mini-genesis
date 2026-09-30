@@ -2,6 +2,7 @@ import { access, readFile, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { PHASE2_DURATION_SECONDS } from "./deployment-manifest.mjs";
+import { isConfiguredRpcUrl } from "./rpc-selection.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const environment = process.argv[2];
@@ -155,7 +156,7 @@ async function deploy() {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   const verificationRpcs = environment === "staging" ? manifest.source.rpcHttpUrls : [rpcUrl];
   if (!Array.isArray(verificationRpcs) || verificationRpcs.length === 0) throw new Error("No public RPC endpoints are configured for deployment verification");
-  if (environment === "staging" && normalizedAddress(verificationRpcs[0]) !== normalizedAddress(rpcUrl)) throw new Error("RPC_URL must match the primary TestNet RPC in deployments/staging.json");
+  if (environment === "staging" && !isConfiguredRpcUrl(rpcUrl, verificationRpcs)) throw new Error("RPC_URL must match a configured TestNet RPC in deployments/staging.json");
 
   let verifiedRpcCount = 0;
   for (const verificationRpc of verificationRpcs) {
