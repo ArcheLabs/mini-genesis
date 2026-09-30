@@ -43,8 +43,8 @@ export async function resolveContractAddress(api: any, account: string | Uint8Ar
   let h160: Address;
   try {
     h160 = runtimeH160(await api.apis.ReviveApi.address(origin));
-  } catch {
-    throw new Error("ACCOUNT_ADDRESS_RESOLUTION_FAILED");
+  } catch (error) {
+    throw new Error("ACCOUNT_ADDRESS_RESOLUTION_FAILED", { cause: error });
   }
   if (!isEthereumDerivedAccountId(accountId32) && h160.toLowerCase() !== deriveNativeAccountH160(accountId32).toLowerCase()) {
     throw new Error("ACCOUNT_ADDRESS_MAPPING_MISMATCH");

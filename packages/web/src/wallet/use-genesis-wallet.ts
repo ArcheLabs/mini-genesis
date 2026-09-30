@@ -216,7 +216,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       }
       setNativeRuntimeStatus("supported");
       try {
-        await probeNativeWallet(nativeManifest, selectedPolkadotAccount.txCreator);
+        await probeNativeWallet(nativeManifest, selectedPolkadotAccount.txCreator, describePolkadotWallet(substrateExtension?.name ?? "").displayName);
         if (!disposed) setNativeWalletStatus("supported");
       } catch (error) {
         if (!disposed) setNativeWalletStatus(error instanceof Error && error.message === "NATIVE_WALLET_RUNTIME_UNSUPPORTED" ? "unsupported" : "error");
@@ -227,7 +227,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       setNativeWalletStatus("error");
     });
     return () => { disposed = true; };
-  }, [nativeManifest, selectedPolkadotAccount, substrateApi]);
+  }, [nativeManifest, selectedPolkadotAccount, substrateApi, substrateExtension?.name]);
 
   useEffect(() => {
     if (!substrateExtension) return;
