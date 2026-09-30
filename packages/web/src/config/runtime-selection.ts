@@ -24,6 +24,20 @@ export function resolveRuntimeSelection(input: {
   const availableEnvironments = input.availableEnvironments ?? availableDeploymentEnvironments;
   const isAvailable = (environment: DeploymentEnvironment) => availableEnvironments.some((item) => item === environment);
   const params = new URLSearchParams(input.search ?? "");
+
+  // A production artifact is pinned to Mainnet. URL overrides remain useful
+  // in staging and local builds, but must never route a published production
+  // artifact to a test or local deployment.
+  const configured = input.deploymentEnv?.trim();
+  const productionBuild = configured === "production" || (!configured && input.mode === "production");
+  if (productionBuild) {
+    if (params.has("network") && params.get("network") !== "mainnet") {
+      return { environment: null, error: "CONFIGURATION_MISMATCH", source: "invalid" };
+    }
+    if (!isAvailable("production")) return { environment: null, error: "CONFIGURATION_MISMATCH", source: "invalid" };
+    return { environment: "production", error: null, source: params.has("network") ? "url" : configured ? "build" : "mode" };
+  }
+
   if (params.has("network")) {
     const requested = params.get("network") ?? "";
     const environment = urlEnvironments[requested];
@@ -32,7 +46,6 @@ export function resolveRuntimeSelection(input: {
       : { environment: null, error: "CONFIGURATION_MISMATCH", source: "invalid" };
   }
 
-  const configured = input.deploymentEnv?.trim();
   if (configured) {
     if (buildEnvironments.has(configured as DeploymentEnvironment) && isAvailable(configured as DeploymentEnvironment)) {
       return { environment: configured as DeploymentEnvironment, error: null, source: "build" };

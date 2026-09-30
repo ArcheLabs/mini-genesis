@@ -4,12 +4,8 @@ import { useAppKit, useAppKitAccount, useAppKitProvider, useDisconnect } from "@
 import type { DeploymentManifest } from "../config/manifest";
 import { appKit, polkadotHubNetwork } from "./appkit";
 import { parseEip1193ChainId, readEip1193ChainId, switchEip1193Chain, type Eip1193Provider } from "./eip1193";
-import { accountId32FromSs58, resolveContractAddress } from "./substrate/account";
-import { readNativeBalance } from "./substrate/balance";
-import { getSubstrateApi, getSubstrateClient } from "./substrate/client";
-import { checkNativeRuntime } from "./substrate/runtime";
-import { probeNativeWallet } from "./substrate/wallet-capability";
-import { connectInjectedExtension, getInjectedExtensions, type InjectedExtension, type InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
+import { accountId32FromSs58 } from "./substrate/account";
+import type { InjectedExtension, InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
 import type { EvmWalletSession, PolkadotAccount, PolkadotWalletDescriptor, PolkadotWalletSession, WalletSession } from "./types";
 
 const POLKADOT_WALLET_NAMES: Record<string, string> = {
@@ -87,7 +83,7 @@ export function supportedAccounts(accounts: InjectedPolkadotAccount[]): Polkadot
   });
 }
 
-export function useGenesisWallet(manifest: DeploymentManifest | null, publicClient: PublicClient | null = null, nativeManifest: DeploymentManifest | null = manifest) {
+export function useGenesisWallet(manifest: DeploymentManifest | null, publicClient: PublicClient | null = null, nativeManifest: DeploymentManifest | null = null, nativeEnabled = false) {
   const { open } = useAppKit();
   const { address, isConnected, status } = useAppKitAccount({ namespace: "eip155" });
   const { walletProvider } = useAppKitProvider<unknown>("eip155");
@@ -108,19 +104,26 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const [nativeWalletStatus, setNativeWalletStatus] = useState<PolkadotWalletSession["nativeWalletStatus"]>("checking");
   const [evmBalance, setEvmBalance] = useState<bigint | null>(null);
   const [evmProviderChain, setEvmProviderChain] = useState<{ provider: Eip1193Provider; chainId: number | null } | null>(null);
-  const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>(() => typeof window === "undefined" ? [] : getInjectedExtensions().map(describePolkadotWallet));
-  const [restoreStatus, setRestoreStatus] = useState<PolkadotRestoreStatus>(() => readStoredPolkadotSession() ? "restoring" : "idle");
+  const [availablePolkadotWallets, setAvailablePolkadotWallets] = useState<PolkadotWalletDescriptor[]>([]);
+  const [restoreStatus, setRestoreStatus] = useState<PolkadotRestoreStatus>(() => nativeEnabled && readStoredPolkadotSession() ? "restoring" : "idle");
   const restorationAttempted = useRef(false);
   const evmConnectedRef = useRef(isConnected);
   evmConnectedRef.current = isConnected;
   const selectedAddressRef = useRef<string | null>(selectedPolkadotAddress);
   selectedAddressRef.current = selectedPolkadotAddress;
 
-  const refreshPolkadotWallets = useCallback(() => setAvailablePolkadotWallets(getInjectedExtensions().map(describePolkadotWallet)), []);
+  const refreshPolkadotWallets = useCallback(() => {
+    if (!nativeEnabled) return;
+    void import("polkadot-api/pjs-signer").then(({ getInjectedExtensions }) => {
+      setAvailablePolkadotWallets(getInjectedExtensions().map(describePolkadotWallet));
+    }).catch(() => setAvailablePolkadotWallets([]));
+  }, [nativeEnabled]);
   useEffect(() => {
+    if (!nativeEnabled) return;
+    refreshPolkadotWallets();
     window.addEventListener("focus", refreshPolkadotWallets);
     return () => window.removeEventListener("focus", refreshPolkadotWallets);
-  }, [refreshPolkadotWallets]);
+  }, [nativeEnabled, refreshPolkadotWallets]);
 
   useEffect(() => {
     if (!provider) {
@@ -190,24 +193,29 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   const sessionKey = session?.kind === "evm" ? `evm:${session.address}` : session?.kind === "polkadot" ? `polkadot:${session.accountId32}` : null;
 
   useEffect(() => {
-    if (!substrateExtension || !nativeManifest) return;
-    try {
+    if (!nativeEnabled || !substrateExtension || !nativeManifest) return;
+    let disposed = false;
+    void import("./substrate/client").then(({ getSubstrateApi }) => {
+      if (disposed) return;
       setSubstrateApi(getSubstrateApi(nativeManifest));
       setNativeRuntimeStatus("checking");
       setNativeWalletStatus("checking");
-    } catch {
+    }).catch(() => {
+      if (disposed) return;
       setSubstrateApi(null);
       setNativeRuntimeStatus("error");
       setNativeWalletStatus("error");
-    }
-  }, [nativeManifest, substrateExtension]);
+    });
+    return () => { disposed = true; };
+  }, [nativeEnabled, nativeManifest, substrateExtension]);
 
   useEffect(() => {
-    if (!selectedPolkadotAccount || !substrateApi || !nativeManifest) return;
+    if (!nativeEnabled || !selectedPolkadotAccount || !substrateApi || !nativeManifest) return;
     let disposed = false;
     setNativeRuntimeStatus("checking");
     setNativeWalletStatus("checking");
-    void checkNativeRuntime(getSubstrateClient(nativeManifest), nativeManifest).then(async (runtime) => {
+    void Promise.all([import("./substrate/client"), import("./substrate/runtime"), import("./substrate/wallet-capability")]).then(async ([clientModule, runtimeModule, walletModule]) => {
+      const runtime = await runtimeModule.checkNativeRuntime(clientModule.getSubstrateClient(nativeManifest), nativeManifest);
       if (disposed) return;
       if (runtime.compatibility !== "supported") {
         setNativeRuntimeStatus("unsupported");
@@ -216,7 +224,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       }
       setNativeRuntimeStatus("supported");
       try {
-        await probeNativeWallet(nativeManifest, selectedPolkadotAccount.txCreator, describePolkadotWallet(substrateExtension?.name ?? "").displayName);
+        await walletModule.probeNativeWallet(nativeManifest, selectedPolkadotAccount.txCreator, describePolkadotWallet(substrateExtension?.name ?? "").displayName);
         if (!disposed) setNativeWalletStatus("supported");
       } catch (error) {
         if (!disposed) setNativeWalletStatus(error instanceof Error && error.message === "NATIVE_WALLET_RUNTIME_UNSUPPORTED" ? "unsupported" : "error");
@@ -227,10 +235,10 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       setNativeWalletStatus("error");
     });
     return () => { disposed = true; };
-  }, [nativeManifest, selectedPolkadotAccount, substrateApi, substrateExtension?.name]);
+  }, [nativeEnabled, nativeManifest, selectedPolkadotAccount, substrateApi, substrateExtension?.name]);
 
   useEffect(() => {
-    if (!substrateExtension) return;
+    if (!nativeEnabled || !substrateExtension) return;
     let disposed = false;
     const updateAccounts = (accounts: InjectedPolkadotAccount[]) => {
       const next = supportedAccounts(accounts);
@@ -252,9 +260,9 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     };
     const stop = substrateExtension.subscribe(updateAccounts);
     return () => { disposed = true; stop(); };
-  }, [substrateExtension]);
+  }, [nativeEnabled, substrateExtension]);
 
-  const nativeIdentityKey = selectedPolkadotAccount && nativeManifest ? `${nativeManifest.source.substrateGenesisHash}:${accountId32Hex(selectedPolkadotAccount)}` : null;
+  const nativeIdentityKey = nativeEnabled && selectedPolkadotAccount && nativeManifest ? `${nativeManifest.source.substrateGenesisHash}:${accountId32Hex(selectedPolkadotAccount)}` : null;
   const nativeIdentityRef = useRef<string | null>(null);
   useEffect(() => {
     if (!selectedPolkadotAccount || !substrateApi || !nativeIdentityKey) return;
@@ -272,8 +280,8 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
       setContractIdentityStatus((current) => current === "verified" ? current : "loading");
     }
     void Promise.allSettled([
-      readNativeBalance(substrateApi, requestedAddress),
-      resolveContractAddress(substrateApi, requestedAddress),
+      import("./substrate/balance").then(({ readNativeBalance }) => readNativeBalance(substrateApi, requestedAddress)),
+      import("./substrate/account").then(({ resolveContractAddress }) => resolveContractAddress(substrateApi, requestedAddress)),
     ]).then(([balance, resolution]) => {
       if (disposed || selectedAddressRef.current !== requestedAddress) return;
       if (balance.status === "fulfilled") { setNativeBalance(balance.value.free); setNativeBalanceStatus("ready"); }
@@ -320,7 +328,9 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   }, [expectedChainId, manifest, provider]);
 
   const connectPolkadot = useCallback(async (extensionId?: string, preferredAccountId32?: `0x${string}`) => {
+    if (!nativeEnabled || !nativeManifest || manifest?.environment === "production") throw new Error("NATIVE_POLKADOT_DISABLED");
     if (isConnected) throw new Error("WALLET_DISCONNECT_REQUIRED");
+    const { connectInjectedExtension, getInjectedExtensions } = await import("polkadot-api/pjs-signer");
     const name = extensionId ?? getInjectedExtensions()[0];
     if (!name) throw new Error("NO_POLKADOT_WALLET");
     const extension = await connectInjectedExtension(name, "MINI Genesis");
@@ -344,7 +354,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     setContractIdentityStatus("loading");
     storePolkadotSession({ version: 1, extensionId: extension.name, accountId32: accountId32Hex(selected) });
     return selected.address;
-  }, [isConnected]);
+  }, [isConnected, manifest, nativeEnabled, nativeManifest]);
 
   const selectPolkadotAccount = useCallback((addressToSelect: string) => {
     if (!substrateAccounts.some((account) => account.address === addressToSelect)) return;
@@ -378,6 +388,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     const requestedAddress = selectedPolkadotAddress;
     setNativeBalanceStatus((current) => current === "ready" ? "refreshing" : "loading");
     try {
+      const { readNativeBalance } = await import("./substrate/balance");
       const balance = await readNativeBalance(substrateApi, requestedAddress);
       if (selectedAddressRef.current === requestedAddress) { setNativeBalance(balance.free); setNativeBalanceStatus("ready"); }
     } catch { if (selectedAddressRef.current === requestedAddress) { setNativeBalance(null); setNativeBalanceStatus("error"); } }
@@ -400,22 +411,42 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   }, [refreshEvmBalance, refreshNativeBalance, session]);
 
   useEffect(() => {
+    if (!nativeEnabled) {
+      restorationAttempted.current = true;
+      clearStoredPolkadotSession();
+      setRestoreStatus("done");
+      if (substrateExtension) disconnectPolkadot();
+      return;
+    }
     if (!isConnected) return;
     restorationAttempted.current = true;
     setRestoreStatus("done");
     if (substrateExtension) disconnectPolkadot();
     else clearStoredPolkadotSession();
-  }, [disconnectPolkadot, isConnected, substrateExtension]);
+  }, [disconnectPolkadot, isConnected, nativeEnabled, substrateExtension]);
 
   useEffect(() => {
+    if (!nativeEnabled) {
+      clearStoredPolkadotSession();
+      return;
+    }
     if (restorationAttempted.current || status === "connecting" || isConnected || substrateExtension) return;
     restorationAttempted.current = true;
     const stored = readStoredPolkadotSession();
     if (!stored) { setRestoreStatus("done"); return; }
-    if (!getInjectedExtensions().includes(stored.extensionId)) { clearStoredPolkadotSession(); setRestoreStatus("done"); return; }
     setRestoreStatus("restoring");
-    void connectPolkadot(stored.extensionId, stored.accountId32).catch(() => clearStoredPolkadotSession()).finally(() => setRestoreStatus("done"));
-  }, [connectPolkadot, isConnected, status, substrateExtension]);
+    void import("polkadot-api/pjs-signer").then(({ getInjectedExtensions }) => {
+      if (!getInjectedExtensions().includes(stored.extensionId)) {
+        clearStoredPolkadotSession();
+        setRestoreStatus("done");
+        return;
+      }
+      void connectPolkadot(stored.extensionId, stored.accountId32).catch(() => clearStoredPolkadotSession()).finally(() => setRestoreStatus("done"));
+    }).catch(() => {
+      clearStoredPolkadotSession();
+      setRestoreStatus("done");
+    });
+  }, [connectPolkadot, isConnected, nativeEnabled, status, substrateExtension]);
 
   const { walletReady, walletStatus } = deriveWalletLifecycle(session, restoreStatus, status);
   return {
