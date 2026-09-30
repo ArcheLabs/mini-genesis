@@ -19,7 +19,11 @@ for (const environment of ["local", "staging", "production"]) {
   assert.equal(manifest.genesis.phases.phase2.mechanism, "linear-bonding-curve");
   assert.equal(manifest.genesis.phases.phase1.workItems?.length, 4);
   assert.equal(manifest.genesis.phases.phase1.researchHistory?.[0]?.status, "discontinued");
-  assert.equal(manifest.genesis.phases.phase2.workItems?.length, 6);
+  assert.equal(manifest.genesis.phases.phase2.workItems?.length, 5);
+  assert.deepEqual(
+    manifest.genesis.phases.phase2.workItems?.map((item) => item.id),
+    ["minijam", "jamscript", "ownership-abstraction", "minicells", "locus"],
+  );
   assert.equal(manifest.genesis.phases.phase3.status, "locked");
   validateManifest(manifest, environment);
   assert.throws(
@@ -39,8 +43,15 @@ for (const environment of ["staging", "production"]) {
 {
   const staging = JSON.parse(await readFile("deployments/staging.json", "utf8"));
   validateManifest(staging, "staging");
-  const tasks = staging.genesis.phases.phase2.workItems[0].tasks;
-  assert.equal(tasks.some((task) => task.status === "discontinued"), true);
+  const firstWorkItem = staging.genesis.phases.phase2.workItems[0];
+  const tasks = firstWorkItem.tasks;
+  assert.doesNotThrow(() => validateManifest({
+    ...staging,
+    genesis: { ...staging.genesis, phases: { ...staging.genesis.phases, phase2: {
+      ...staging.genesis.phases.phase2,
+      workItems: [{ ...firstWorkItem, tasks: [...tasks, { ...tasks[0], id: "discontinued-status-fixture", status: "discontinued" }] }, ...staging.genesis.phases.phase2.workItems.slice(1)],
+    } } },
+  }, "staging"));
   assert.throws(() => validateManifest({
     ...staging,
     genesis: { ...staging.genesis, phases: { ...staging.genesis.phases, phase2: {
