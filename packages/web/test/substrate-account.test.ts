@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { fromBufferToBase58 } from "@polkadot-api/substrate-bindings";
+import { paseo_asset_hub } from "@polkadot-api/descriptors";
+import { decAnyMetadata, fromBufferToBase58, unifyMetadata } from "@polkadot-api/substrate-bindings";
 import { hexToBytes } from "viem";
 import { deriveContractAddress, deriveNativeAccountH160, resolveContractAddress } from "../src/wallet/substrate/account";
 
 describe("Polkadot native account mapping", () => {
+  it("includes current Paseo runtime API metadata for Revive address resolution", async () => {
+    const metadata = unifyMetadata(decAnyMetadata(await paseo_asset_hub.getMetadata()));
+    const reviveApi = metadata.apis.find(({ name }) => name === "ReviveApi");
+
+    expect(metadata.version).toBe(16);
+    expect(reviveApi?.methods.map(({ name }) => name)).toContain("address");
+    expect(reviveApi?.methods.map(({ name }) => name)).toContain("call");
+  });
+
   it.each([
     ["111111111111111111111111111111111HC1", "0x88386Fc84bA6bC95484008F6362F93160eF3e563"],
     ["1mkmXsb3yPEMYPTnfvCnTJXMTxEsh5sRfD21tgmryszueHv", "0xc0b30c2acC9fBDD52Dc5E0D76917DE4034ebdf59"],

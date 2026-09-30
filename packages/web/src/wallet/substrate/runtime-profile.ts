@@ -33,25 +33,25 @@ export type NativeRuntimeProfile = {
 
 export type PendingNativeRuntimeProfile = { id: string; enabled: false; reason: string };
 
-/** Exact V14 extension schema from Paseo Asset Hub runtime v2.5.2. */
+/** Exact V16 extension schema from Paseo Asset Hub runtime v2.5.2. */
 export const PASEO_EXTENSION_SCHEMA: readonly NativeExtensionSchemaEntry[] = [
-  { identifier: "UnitTransactionExtension", type: 39, additionalSigned: 39 },
-  { identifier: "AuthorizeCall", type: 1036, additionalSigned: 39 },
-  { identifier: "AsPgas", type: 1037, additionalSigned: 39 },
-  { identifier: "AsDotnsGateway", type: 1040, additionalSigned: 39 },
-  { identifier: "RestrictOrigins", type: 1043, additionalSigned: 39 },
-  { identifier: "CheckNonZeroSender", type: 1044, additionalSigned: 39 },
-  { identifier: "CheckSpecVersion", type: 1045, additionalSigned: 4 },
-  { identifier: "CheckTxVersion", type: 1046, additionalSigned: 4 },
-  { identifier: "CheckGenesis", type: 1047, additionalSigned: 13 },
-  { identifier: "CheckMortality", type: 1048, additionalSigned: 13 },
-  { identifier: "CheckNonce", type: 1050, additionalSigned: 39 },
-  { identifier: "CheckWeight", type: 1051, additionalSigned: 39 },
-  { identifier: "ChargeAssetTxPayment", type: 1052, additionalSigned: 39 },
-  { identifier: "PrevalidateAttests", type: 1054, additionalSigned: 39 },
-  { identifier: "CheckMetadataHash", type: 1055, additionalSigned: 34 },
-  { identifier: "EthSetOrigin", type: 1057, additionalSigned: 39 },
-  { identifier: "StorageWeightReclaim", type: 39, additionalSigned: 39 },
+  { identifier: "UnitTransactionExtension", type: 4, additionalSigned: 4 },
+  { identifier: "AuthorizeCall", type: 481, additionalSigned: 4 },
+  { identifier: "AsPgas", type: 482, additionalSigned: 4 },
+  { identifier: "AsDotnsGateway", type: 485, additionalSigned: 4 },
+  { identifier: "RestrictOrigins", type: 488, additionalSigned: 4 },
+  { identifier: "CheckNonZeroSender", type: 489, additionalSigned: 4 },
+  { identifier: "CheckSpecVersion", type: 490, additionalSigned: 14 },
+  { identifier: "CheckTxVersion", type: 491, additionalSigned: 14 },
+  { identifier: "CheckGenesis", type: 492, additionalSigned: 16 },
+  { identifier: "CheckMortality", type: 493, additionalSigned: 16 },
+  { identifier: "CheckNonce", type: 495, additionalSigned: 4 },
+  { identifier: "CheckWeight", type: 496, additionalSigned: 4 },
+  { identifier: "ChargeAssetTxPayment", type: 497, additionalSigned: 4 },
+  { identifier: "PrevalidateAttests", type: 498, additionalSigned: 4 },
+  { identifier: "CheckMetadataHash", type: 499, additionalSigned: 466 },
+  { identifier: "EthSetOrigin", type: 501, additionalSigned: 4 },
+  { identifier: "StorageWeightReclaim", type: 4, additionalSigned: 4 },
 ];
 
 export const PASEO_ASSET_HUB_PROFILE: NativeRuntimeProfile = {
