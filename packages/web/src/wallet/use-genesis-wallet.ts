@@ -328,7 +328,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
   }, [expectedChainId, manifest, provider]);
 
   const connectPolkadot = useCallback(async (extensionId?: string, preferredAccountId32?: `0x${string}`) => {
-    if (!nativeEnabled || !nativeManifest || nativeManifest.environment === "production") throw new Error("NATIVE_POLKADOT_DISABLED");
+    if (!nativeEnabled || !nativeManifest || manifest?.environment === "production") throw new Error("NATIVE_POLKADOT_DISABLED");
     if (isConnected) throw new Error("WALLET_DISCONNECT_REQUIRED");
     const { connectInjectedExtension, getInjectedExtensions } = await import("polkadot-api/pjs-signer");
     const name = extensionId ?? getInjectedExtensions()[0];
@@ -354,7 +354,7 @@ export function useGenesisWallet(manifest: DeploymentManifest | null, publicClie
     setContractIdentityStatus("loading");
     storePolkadotSession({ version: 1, extensionId: extension.name, accountId32: accountId32Hex(selected) });
     return selected.address;
-  }, [isConnected, nativeEnabled, nativeManifest]);
+  }, [isConnected, manifest, nativeEnabled, nativeManifest]);
 
   const selectPolkadotAccount = useCallback((addressToSelect: string) => {
     if (!substrateAccounts.some((account) => account.address === addressToSelect)) return;
