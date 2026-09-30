@@ -13,7 +13,7 @@ import { genesisPhase2WorkItems, mergeGenesisWorkItems } from "./work-items";
 import { BasisInfo } from "./BasisInfo";
 import { BondingCurveChart } from "./BondingCurveChart";
 import { GenesisRules } from "./GenesisRules";
-import { normalizePurchaseError, purchaseErrorDiagnostics } from "./purchase-error";
+import { normalizePurchaseError, purchaseErrorDiagnostics, shouldLogPurchaseDiagnostics } from "./purchase-error";
 import { SectionHeading } from "../components/SectionHeading";
 import { MiniIcon } from "../components/SectionIcons";
 import { formatTokenAmount } from "../assets/format";
@@ -179,7 +179,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         await buyExactMiniNative(session.api, publicClient, selected.txCreator, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei, (update) => {
           if (update.state === "finalized" || update.state === "verifying_event") setNativeVerificationPendingFor(session.selectedAccountAddress);
           if (update.state === "success") setNativeVerificationPendingFor(null);
-        });
+        }, { wallet: session.walletName || session.extensionId });
       }
       await onReconcile();
       setBudget("");
@@ -193,7 +193,11 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         });
       }
     } catch (reason) {
-      if (import.meta.env.DEV || manifest.environment === "local") console.error("Genesis II purchase diagnostic", purchaseErrorDiagnostics(reason));
+      if (shouldLogPurchaseDiagnostics(manifest.environment, import.meta.env.DEV)) {
+        console.error("Genesis II purchase diagnostic", purchaseErrorDiagnostics(reason, {
+          wallet: session?.kind === "polkadot" ? session.walletName : session?.kind === "evm" ? "EVM wallet" : "disconnected",
+        }));
+      }
       const code = normalizePurchaseError(reason);
       setError(errorText(code, zh));
     } finally {

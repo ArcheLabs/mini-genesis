@@ -6,6 +6,7 @@ import { readNativeBalance } from "../wallet/substrate/balance";
 import { assertNativeRuntimeSupported, NativeTransactionError, probeNativeWalletCapability, submitNativeTransaction } from "../wallet/substrate/native-transaction";
 import { getSubstrateClient } from "../wallet/substrate/client";
 import { getNativeRuntimeProfile } from "../wallet/substrate/runtime-profile";
+import { NativePurchaseFailure, normalizePurchaseError, type NativePurchaseStage } from "./purchase-error";
 import type { InjectedPolkadotAccount } from "polkadot-api/pjs-signer";
 import { validateWeightRequired } from "./execution/substrate";
 import { curveAbi } from "./curve-abi.generated";
@@ -22,8 +23,24 @@ export type NativePurchaseResult = {
 };
 const purchasedEvent = parseAbiItem("event Purchased(address indexed buyer, uint256 miniAmount, uint256 dotCost, uint256 totalSoldMini, uint256 totalRaisedDot, uint256 spotPriceAfter)");
 
-function errorDescription(error: unknown): string { return error instanceof Error ? error.message : String(error); }
+function errorDescription(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const value = error as { message?: unknown; shortMessage?: unknown; type?: unknown; name?: unknown; code?: unknown };
+    return [value.message, value.shortMessage, value.type, value.name, value.code].filter((item): item is string | number => typeof item === "string" || typeof item === "number").join(" ");
+  }
+  return String(error);
+}
 function ceilPlanck(value: bigint): bigint { return (value + NATIVE_TO_EVM_RATIO - 1n) / NATIVE_TO_EVM_RATIO; }
+function classifySimulationFailure(error: unknown): string {
+  const description = errorDescription(error);
+  if (/account.?unmapped|unmapped.?account|original.?account/i.test(description)) return "ACCOUNT_UNMAPPED";
+  if (/storage.?deposit.*(limit|exceed|exhaust)|(?:limit|exceed|exhaust).*storage.?deposit/i.test(description)) return "REVIVE_STORAGE_DEPOSIT_LIMIT";
+  if (/weight.*(limit|exceed|exhaust)|(?:limit|exceed|exhaust).*(weight|gas)/i.test(description)) return "REVIVE_WEIGHT_LIMIT";
+  if (/revert|contract|dispatch error/i.test(description)) return "REVIVE_CONTRACT_REVERTED";
+  return "REVIVE_DRY_RUN_FAILED";
+}
 function storageChargeOrZero(value: unknown): bigint {
   if (!value || typeof value !== "object") return 0n;
   const deposit = value as { type?: unknown; value?: unknown };
@@ -35,12 +52,16 @@ async function simulateNativeCurve(api: any, account: string, contract: Address,
   try {
     simulation = await api.apis.ReviveApi.call(account, contract, value, undefined, undefined, hexToBytes(data));
   } catch (error) {
-    if (/account.?unmapped|unmapped.?account|original.?account/i.test(errorDescription(error))) throw new Error("ACCOUNT_UNMAPPED");
-    throw new Error("REVIVE_DRY_RUN_FAILED");
+    throw new Error(classifySimulationFailure(error), { cause: error });
   }
-  if (!simulation?.result || simulation.result.success !== true) throw new Error("REVIVE_CONTRACT_REVERTED");
+  if (!simulation?.result) throw new Error("REVIVE_DRY_RUN_FAILED", { cause: simulation });
+  if (simulation.result.success !== true) {
+    const cause = simulation.result.error ?? simulation.result.value ?? simulation;
+    const code = classifySimulationFailure(cause);
+    throw new Error(code === "REVIVE_DRY_RUN_FAILED" ? "REVIVE_CONTRACT_REVERTED" : code, { cause });
+  }
   const resultValue = simulation.result.value as { flags?: unknown; type?: unknown } | undefined;
-  if ((typeof resultValue?.flags === "number" && (resultValue.flags & 1) !== 0) || /revert/i.test(String(resultValue?.type ?? ""))) throw new Error("REVIVE_CONTRACT_REVERTED");
+  if ((typeof resultValue?.flags === "number" && (resultValue.flags & 1) !== 0) || /revert/i.test(String(resultValue?.type ?? ""))) throw new Error("REVIVE_CONTRACT_REVERTED", { cause: simulation.result.value });
   const weight = validateWeightRequired(simulation.weight_required);
   return { refTime: weight.ref_time, proofSize: weight.proof_size, storageDepositLimit: storageChargeOrZero(simulation.max_storage_deposit) };
 }
@@ -103,22 +124,30 @@ export async function buyExactMiniNative(
   miniAmount: bigint,
   maxDotCost: bigint,
   onUpdate: (update: CurveNativeUpdate) => void = () => {},
+  purchaseContext: { wallet?: string } = {},
 ): Promise<NativePurchaseResult> {
+  const runtimeProfile = getNativeRuntimeProfile(manifest);
+  const wallet = purchaseContext.wallet ?? "Polkadot wallet";
+  let transactionStage: NativePurchaseStage = "tx-build";
   try {
     const data = encodeFunctionData({ abi: curveAbi, functionName: "buyExactMini", args: [miniAmount, maxDotCost] });
     const value = ceilPlanck(maxDotCost);
+    transactionStage = "runtime-check";
     const runtimeCheck = await assertNativeRuntimeSupported(getSubstrateClient(manifest), manifest);
-    const profile = getNativeRuntimeProfile(manifest);
-    if (!profile.enabled || runtimeCheck.profileId !== profile.id) throw new NativeTransactionError("NATIVE_RUNTIME_PROFILE_INCOMPLETE", "NATIVE_RUNTIME_PROFILE_INCOMPLETE");
+    if (!runtimeProfile.enabled || runtimeCheck.profileId !== runtimeProfile.id) throw new NativeTransactionError("NATIVE_RUNTIME_PROFILE_INCOMPLETE", "NATIVE_RUNTIME_PROFILE_INCOMPLETE");
+    transactionStage = "address-resolution";
     const accountResolution = await resolveContractAddress(api, account);
+    transactionStage = "balance-check";
     let balance = await readNativeBalance(api, account);
     if (balance.spendable < value) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
     onUpdate({ state: "simulating" });
     let limits;
+    transactionStage = "dry-run";
     try {
       limits = await simulateNativeCurve(api, account, contract, value, data);
     } catch (error) {
       if (!(error instanceof Error) || error.message !== "ACCOUNT_UNMAPPED") throw error;
+      transactionStage = "account-mapping";
       onUpdate({ state: "checking_mapping" });
       const mapping = await checkAccountMapping(api, accountResolution.h160, account);
       if (mapping === "conflict") throw new Error("ACCOUNT_MAPPING_CONFLICT");
@@ -129,18 +158,30 @@ export async function buyExactMiniNative(
         onUpdate({ state: "mapping_finalized" });
         onUpdate({ state: "verifying_mapping" });
       }
+      transactionStage = "dry-run";
       limits = await simulateNativeCurve(api, account, contract, value, data);
+      transactionStage = "balance-check";
       balance = await readNativeBalance(api, account);
     }
-    const tx = api.tx.Revive.call({ dest: contract, value, weight_limit: { ref_time: limits.refTime, proof_size: limits.proofSize }, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) });
+    transactionStage = "tx-build";
+    let tx: any;
+    try {
+      tx = api.tx.Revive.call({ dest: contract, value, weight_limit: { ref_time: limits.refTime, proof_size: limits.proofSize }, storage_deposit_limit: limits.storageDepositLimit, data: hexToBytes(data) });
+    } catch (error) {
+      throw new NativeTransactionError("NATIVE_TRANSACTION_BUILD_FAILED", errorDescription(error), error);
+    }
+    transactionStage = "fee-estimation";
     const fee = await probeNativeWalletCapability(tx, txCreator, manifest);
     if (balance.spendable < value + fee + limits.storageDepositLimit) throw new Error("NATIVE_INSUFFICIENT_BALANCE");
     onUpdate({ state: "awaiting_signature" });
+    transactionStage = "submission";
     const finalized = await submitNativeTransaction({
-      client: getSubstrateClient(manifest), manifest, tx, txCreator,
+      client: getSubstrateClient(manifest), manifest, tx, txCreator, feeEstimate: fee,
+      onStage: (stage) => { transactionStage = stage; },
       onStatus: (status) => { if (status === "broadcast") onUpdate({ state: "submitted" }); if (status === "inBestBlock") onUpdate({ state: "included" }); },
     });
     onUpdate({ state: "finalized", substrateTxHash: finalized.substrateTxHash });
+    transactionStage = "event-reconciliation";
     onUpdate({ state: "verifying_event" });
     const purchase = validateNativePurchasedEvent(finalized.events, contract, accountResolution.h160, miniAmount, maxDotCost);
     await reconcileNativePurchasedLog(publicClient, contract, purchase, finalized.finalizedBlockNumber);
@@ -153,8 +194,9 @@ export async function buyExactMiniNative(
       miniAmount,
     };
   } catch (error) {
-    const code = error instanceof NativeTransactionError ? error.code : errorDescription(error);
+    const code = error instanceof NativeTransactionError ? error.code : normalizePurchaseError(error);
+    const failure = new NativePurchaseFailure(code, transactionStage, wallet, runtimeProfile.id, "Revive.call", error);
     onUpdate({ state: "failed", error: code });
-    throw new Error(code);
+    throw failure;
   }
 }
