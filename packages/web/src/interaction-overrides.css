@@ -198,3 +198,8 @@
 
 /* Genesis I Delivered and Genesis II Execution use the same section spacing. */
 .work-items-section{margin-top:30px}
+
+/* Keep wallet labels centered beside their marks; use the Polkadot brand color. */
+.wallet-menu button:has(.wallet-choice-icon){display:flex;align-items:center;gap:10px;min-height:56px;padding-block:14px}
+.wallet-menu .wallet-choice-icon{display:block;flex:0 0 22px;width:22px;height:22px}
+.wallet-menu .polkadot-choice-icon{color:#ff2670}
