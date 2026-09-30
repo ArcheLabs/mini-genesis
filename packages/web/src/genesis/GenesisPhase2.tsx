@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { formatUnits, type PublicClient } from "viem";
+import { formatUnits, type Hash, type PublicClient } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
 import { buyExactMini, waitForTransactionFinality } from "./curve-contribution";
 import { buyExactMiniNative } from "./curve-contribution-native";
@@ -30,6 +30,7 @@ type Props = {
   demoMode: boolean;
   onConnect: () => void;
   onReconcile: () => Promise<void>;
+  onPurchaseSuccess: (amount: string, transactionHash: Hash) => void;
 };
 
 const NATIVE_TO_EVM_RATIO = 100_000_000n;
@@ -58,6 +59,28 @@ function countdown(seconds: bigint, zh: boolean): string {
 }
 
 type PurchaseWalletState = "disconnected" | "preparing" | "ready" | "unavailable";
+type PurchaseStep = "preparing" | "simulating" | "checking_mapping" | "mapping_required" | "mapping_submitted" | "mapping_finalized" | "verifying_mapping" | "awaiting_signature" | "submitted" | "included" | "finalizing" | "finalized" | "verifying_event" | "success" | "failed";
+
+function purchaseProgressCopy(step: PurchaseStep, zh: boolean): string {
+  const messages: Record<PurchaseStep, [string, string]> = {
+    preparing: ["正在准备交易…", "Preparing transaction…"],
+    simulating: ["正在检查交易是否可执行…", "Checking that the transaction can execute…"],
+    checking_mapping: ["正在检查账户映射…", "Checking account mapping…"],
+    mapping_required: ["请在钱包中确认账户设置…", "Confirm account setup in your wallet…"],
+    mapping_submitted: ["账户设置已提交，等待上链…", "Account setup submitted, waiting for inclusion…"],
+    mapping_finalized: ["账户设置已确认…", "Account setup confirmed…"],
+    verifying_mapping: ["正在验证账户设置…", "Verifying account setup…"],
+    awaiting_signature: ["请在钱包中确认交易…", "Confirm the transaction in your wallet…"],
+    submitted: ["交易已提交，等待上链…", "Transaction submitted, waiting for inclusion…"],
+    included: ["交易已上链，正在等待最终确认…", "Transaction included, waiting for finality…"],
+    finalizing: ["交易仍在等待最终确认…", "Still waiting for transaction finality…"],
+    finalized: ["交易已确认，正在核对购买记录…", "Transaction finalized, verifying purchase…"],
+    verifying_event: ["正在核对 MINI 到账记录…", "Verifying the MINI purchase record…"],
+    success: ["购买完成…", "Purchase complete…"],
+    failed: ["交易未能完成…", "The transaction could not be completed…"],
+  };
+  return messages[step][zh ? 0 : 1];
+}
 
 function purchaseWalletState(session: WalletSession): PurchaseWalletState {
   if (!session) return "disconnected";
@@ -84,10 +107,11 @@ function errorText(code: string, zh: boolean): string {
   return localized ? localized[zh ? 0 : 1] : code;
 }
 
-export function GenesisPhase2({ language, manifest, publicClient, session, provider, correctChain, dynamic, demoMode, onConnect, onReconcile }: Props) {
+export function GenesisPhase2({ language, manifest, publicClient, session, provider, correctChain, dynamic, demoMode, onConnect, onReconcile, onPurchaseSuccess }: Props) {
   const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
   const [budget, setBudget] = useState("1.00");
   const [busy, setBusy] = useState(false);
+  const [purchaseStep, setPurchaseStep] = useState<PurchaseStep>("preparing");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const zh = language === "zh-CN";
@@ -149,31 +173,48 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
       if (balanceInEvmUnits < budgetWei) { setError(errorText("INSUFFICIENT_BALANCE", zh)); return; }
     }
 
+    setPurchaseStep("preparing");
     setBusy(true);
     try {
       let finalized = true;
       let evmBlockNumber: bigint | null = null;
+      let transactionHash: Hash | null = null;
+      let purchasedMini = affordableMini;
       if (session.kind === "evm") {
         if (!provider || !publicClient) throw new Error("WRONG_CHAIN");
         // The user's displayed budget is both maxDotCost and msg.value.
-        const result = await buyExactMini(publicClient, walletClient(provider, manifest), manifest, session.address, contract, affordableMini, budgetWei);
+        const result = await buyExactMini(publicClient, walletClient(provider, manifest), manifest, session.address, contract, affordableMini, budgetWei, (update) => setPurchaseStep(update.state));
         finalized = result.finalized;
         evmBlockNumber = result.blockNumber;
+        transactionHash = result.hash;
+        purchasedMini = result.miniAmount;
       } else {
         if (!session.api) throw new Error("CONFIGURATION_MISMATCH");
         const selected = session.accounts.find((item) => item.address === session.selectedAccountAddress);
         if (!selected) throw new Error("SUBSTRATE_ACCOUNT_NOT_SELECTED");
-        await buyExactMiniNative(session.api, selected.signer, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei);
+        const result = await buyExactMiniNative(session.api, selected.signer, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei, (update) => setPurchaseStep(update.state));
+        transactionHash = result.hash;
+        purchasedMini = result.miniAmount;
       }
-      await onReconcile();
       setBudget("");
-      const received = zh ? `已获得约 ${formatMini(affordableMini)} MINI。` : `Received approximately ${formatMini(affordableMini)} MINI.`;
-      setMessage(finalized ? received : (zh ? `交易已打包，正在等待最终确认；余额与曲线已刷新。${formatMini(affordableMini)} MINI` : `Transaction included; waiting for finality. Balances and curve were refreshed. ${formatMini(affordableMini)} MINI`));
+      const amount = formatMini(purchasedMini);
+      const received = zh ? `已获得 ${amount} MINI。` : `Received ${amount} MINI.`;
+      try { await onReconcile(); } catch { /* Keep the included transaction result if a balance refresh fails. */ }
+      setMessage(finalized ? received : (zh ? `交易已上链，正在等待最终确认。${amount} MINI` : `Transaction included; waiting for finality. ${amount} MINI`));
+      if (finalized && transactionHash) {
+        setPurchaseStep("success");
+        onPurchaseSuccess(amount, transactionHash);
+      }
       if (!finalized && publicClient && evmBlockNumber !== null) {
+        setPurchaseStep("finalizing");
         const confirmed = await waitForTransactionFinality(publicClient, evmBlockNumber, 300_000);
         if (confirmed) {
           try { await onReconcile(); } catch { /* Preserve the included purchase result if refresh fails. */ }
           setMessage(received);
+          if (transactionHash) {
+            setPurchaseStep("success");
+            onPurchaseSuccess(amount, transactionHash);
+          }
         }
       }
     } catch (reason) {
@@ -229,7 +270,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         </button>
         {message && <p className="purchase-message success" role="status">{message}</p>}
         {error && <p className="purchase-message error" role="alert">{error}</p>}
-        {busy && <div className="purchase-processing-overlay" role="status" aria-live="polite"><span className="purchase-processing-spinner" aria-hidden="true" />{zh ? "交易进行中，请稍候…" : "Transaction in progress…"}</div>}
+        {busy && <div className="purchase-processing-overlay" role="status" aria-live="polite"><span className="purchase-processing-spinner" aria-hidden="true" /><span className="purchase-processing-copy">{purchaseProgressCopy(purchaseStep, zh)}</span></div>}
       </section>}
     </div>
 

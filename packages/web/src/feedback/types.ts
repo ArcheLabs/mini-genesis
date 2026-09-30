@@ -4,7 +4,7 @@ import type { FeedbackCode } from "./codes";
 export type FeedbackKind = "error" | "warning" | "success" | "info";
 export type FeedbackSurface = "field" | "notification" | "banner" | "silent";
 export type FeedbackAction = "switch-network" | "connect-wallet" | "retry-global-data" | "retry-user-data" | "view-transaction";
-export type FeedbackParams = { minimum?: string; available?: string; required?: string; networkName?: string; transactionHash?: Hash; explorerUrl?: string };
+export type FeedbackParams = { minimum?: string; available?: string; required?: string; networkName?: string; amount?: string; transactionHash?: Hash; explorerUrl?: string };
 export type NormalizedFeedback = {
   code: FeedbackCode;
   kind: FeedbackKind;

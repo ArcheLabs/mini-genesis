@@ -4,6 +4,7 @@ import type { FeedbackParams } from "./types";
 export type FeedbackCopy = { title: string; message: string; actionLabel?: string };
 const minimumText = (params: FeedbackParams) => params.minimum ?? "—";
 const networkText = (params: FeedbackParams) => params.networkName ?? "the configured network";
+const amountText = (params: FeedbackParams) => params.amount ?? "—";
 const catalog: Record<FeedbackCode, { zh: FeedbackCopy; en: FeedbackCopy }> = {
   INVALID_AMOUNT: { zh: { title: "金额格式不正确", message: "请输入大于 0 的数字，最多支持 10 位小数。" }, en: { title: "Invalid amount", message: "Enter a number greater than zero with no more than 10 decimal places." } },
   FIRST_CONTRIBUTION_TOO_SMALL: { zh: { title: "未达到首笔投入要求", message: "首笔投入至少需要 {minimum} DOT。" }, en: { title: "Below the initial minimum", message: "The first contribution must be at least {minimum} DOT." } },
@@ -25,6 +26,7 @@ const catalog: Record<FeedbackCode, { zh: FeedbackCopy; en: FeedbackCopy }> = {
   TRANSACTION_RECEIPT_UNAVAILABLE: { zh: { title: "暂时无法确认交易", message: "已提交交易，但暂时无法获取链上回执，请通过区块浏览器查看。" }, en: { title: "Transaction status unavailable", message: "The transaction was submitted, but its receipt is not available yet. Check the block explorer." } },
   CONTRIBUTED_EVENT_MISMATCH: { zh: { title: "交易结果无法确认", message: "交易已有回执，但未找到预期的投入记录，请通过区块浏览器检查。" }, en: { title: "Transaction result could not be verified", message: "A receipt was found, but the expected contribution event was missing. Check the block explorer." } },
   TRANSACTION_INCLUDED: { zh: { title: "交易已上链", message: "你的投入已经成功写入区块，页面数据可能需要几秒更新。" }, en: { title: "Transaction included", message: "Your contribution was successfully included in a block. The page may take a few seconds to update." } },
+  MINI_PURCHASE_SUCCEEDED: { zh: { title: "MINI 已到账", message: "本次获得 {amount} MINI。" }, en: { title: "MINI received", message: "You received {amount} MINI." } },
   ADDRESS_COPIED: { zh: { title: "地址已复制", message: "钱包地址已复制到剪贴板。" }, en: { title: "Address copied", message: "The wallet address was copied to your clipboard." } },
   TEMPLATE_MANIFEST_NOT_RUNTIME_READY: { zh: { title: "当前页面尚未配置", message: "当前前端版本没有可用的链上部署配置。" }, en: { title: "Frontend is not configured", message: "This frontend build does not contain an active on-chain deployment." } },
   CONFIGURATION_MISMATCH: { zh: { title: "页面配置不匹配", message: "当前页面配置与链上合约不一致，请刷新页面或联系维护者。" }, en: { title: "Configuration mismatch", message: "The frontend configuration does not match the deployed contract." } },
@@ -60,6 +62,6 @@ export function feedbackCopy(code: FeedbackCode, locale: "zh-CN" | "en", params:
   const copy = item[locale === "zh-CN" ? "zh" : "en"];
   return {
     ...copy,
-    message: copy.message.replace(/\{minimum\}/g, minimumText(params)).replace(/\{networkName\}/g, networkText(params)),
+    message: copy.message.replace(/\{minimum\}/g, minimumText(params)).replace(/\{networkName\}/g, networkText(params)).replace(/\{amount\}/g, amountText(params)),
   };
 }
