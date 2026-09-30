@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatUnits, type PublicClient } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
-import { isNativePolkadotEnabled } from "../config/native-wallet";
 import { buyExactMini, waitForTransactionFinality } from "./curve-contribution";
+import { buyExactMiniNative } from "./curve-contribution-native";
 import { curvePriceAt, curveQuote, maxMiniForBudget, parseDotBudget, productionCurve, type CurveParameters } from "./curve";
 import { getPhase2Contract, type GenesisCurveDynamic } from "./curve-reads";
 import { walletClient } from "../wallet/wallet-client";
@@ -125,7 +125,6 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
   const phase2Status = dynamic?.phaseName ?? (manifest?.genesis?.phases.phase2?.status === "active" || demoMode ? "Active" : "Waiting");
   const ended = phase2Status === "Ended" || manifest?.genesis?.phases.phase2?.status === "ended";
   const waiting = phase2Status === "Waiting";
-  const productionTemplateWaiting = manifest?.environment === "production" && manifest.genesis?.phases.phase2?.status === "template";
   const remaining = dynamic ? (waiting ? dynamic.startTime - BigInt(clock) : phase2Status === "Active" ? dynamic.endTime - BigInt(clock) : 0n) : 0n;
   const purchaseEnabled = Boolean(dynamic?.phase === 1 && contract && !ended);
   const configuredWorkItems = manifest?.genesis?.phases.phase2?.workItems ?? [];
@@ -173,12 +172,10 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         finalized = result.finalized;
         evmBlockNumber = result.blockNumber;
       } else {
-        if (!isNativePolkadotEnabled(manifest.environment, import.meta.env.VITE_ENABLE_EXPERIMENTAL_NATIVE_POLKADOT)) throw new Error("NATIVE_POLKADOT_DISABLED");
         if (!session.api) throw new Error("CONFIGURATION_MISMATCH");
         if (!publicClient) throw new Error("RPC_UNAVAILABLE");
         const selected = session.accounts.find((item) => item.address === session.selectedAccountAddress);
         if (!selected) throw new Error("SUBSTRATE_ACCOUNT_NOT_SELECTED");
-        const { buyExactMiniNative } = await import("./curve-contribution-native");
         await buyExactMiniNative(session.api, publicClient, selected.txCreator, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei, (update) => {
           if (update.state === "finalized" || update.state === "verifying_event") setNativeVerificationPendingFor(session.selectedAccountAddress);
           if (update.state === "success") setNativeVerificationPendingFor(null);
@@ -232,10 +229,9 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
       </div>
       {ended ? <section className="curve-purchase purchase-panel purchase-closed"><SectionHeading size="compact" icon={<MiniIcon />}>{zh ? "获得 MINI" : "Get MINI"}</SectionHeading><p>{zh ? "当前阶段已结束。" : "This stage has ended."}</p></section> : <section className="curve-purchase purchase-panel" aria-label={zh ? "获得 MINI" : "Get MINI"}>
         <SectionHeading size="compact" icon={<MiniIcon />}>{zh ? "获得 MINI" : "Get MINI"}</SectionHeading>
-        {productionTemplateWaiting && <p className="purchase-message" role="status">{zh ? "Genesis II 即将开放。当前为生产模板，暂不接受购买。" : "Genesis II is coming soon. This production template is not accepting purchases yet."}</p>}
         <label className="budget-label" htmlFor="phase2-native-budget">{zh ? "支付" : "Pay"}</label>
         <div className="budget-input-wrap">
-          <input id="phase2-native-budget" aria-label={zh ? `支付 ${nativeSymbol} 数量` : `${nativeSymbol} budget`} inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="0.00" disabled={productionTemplateWaiting} />
+          <input id="phase2-native-budget" aria-label={zh ? `支付 ${nativeSymbol} 数量` : `${nativeSymbol} budget`} inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="0.00" />
           <span>{nativeSymbol}</span>
         </div>
         <p className="purchase-balance" data-testid="phase2-wallet-balance">{zh ? "余额" : "Balance"} {balanceLabel} {nativeSymbol}</p>
@@ -245,14 +241,14 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
         {session?.kind === "polkadot" && session.nativeWalletStatus === "error" && <p className="purchase-message error" role="status">{zh ? "无法验证当前钱包对 Runtime 的支持，已禁用原生签名。" : "Wallet support for this runtime could not be verified; native signing is disabled."}</p>}
         {session?.kind === "polkadot" && nativeVerificationPendingFor === session.selectedAccountAddress && <p className="purchase-message error" role="status">{zh ? "交易已最终确认，但购买事件核验未完成。请勿重复购买；请先检查历史记录。" : "The transaction finalized, but purchase-event verification is incomplete. Do not resubmit; check history first."}</p>}
         <div className="budget-presets" aria-label={zh ? "快捷金额" : "Quick amounts"}>
-          {["1", "5", "20"].map((value) => <button key={value} type="button" disabled={productionTemplateWaiting} className={budget === value || budget === `${value}.00` ? "selected" : ""} onClick={() => setBudget(value)}>{value} {nativeSymbol}</button>)}
+          {["1", "5", "20"].map((value) => <button key={value} type="button" className={budget === value || budget === `${value}.00` ? "selected" : ""} onClick={() => setBudget(value)}>{value} {nativeSymbol}</button>)}
         </div>
         <div className="purchase-receive">
           <span>{zh ? "你将获得" : "You receive"}</span>
           <strong data-testid="phase2-mini-quote">≈ {formatMini(affordableMini)} MINI</strong>
         </div>
         <button className="submit-button" type="button" disabled={busy || (session?.kind === "polkadot" && nativeVerificationPendingFor === session.selectedAccountAddress) || !purchaseEnabled || affordableMini === 0n || (walletState !== "disconnected" && walletState !== "ready")} onClick={() => void submit()}>
-          {busy ? (zh ? "处理中…" : "Processing…") : productionTemplateWaiting ? (zh ? "即将开放" : "Coming soon") : walletState === "disconnected" ? (zh ? "连接钱包" : "Connect wallet") : walletState === "ready" ? (zh ? "获得 MINI" : "Get MINI") : walletState === "preparing" ? (zh ? "正在准备钱包…" : "Preparing wallet…") : (zh ? "钱包暂不可用" : "Wallet unavailable")}
+          {busy ? (zh ? "处理中…" : "Processing…") : walletState === "disconnected" ? (zh ? "连接钱包" : "Connect wallet") : walletState === "ready" ? (zh ? "获得 MINI" : "Get MINI") : walletState === "preparing" ? (zh ? "正在准备钱包…" : "Preparing wallet…") : (zh ? "钱包暂不可用" : "Wallet unavailable")}
         </button>
         {message && <p className="purchase-message success" role="status">{message}</p>}
         {error && <p className="purchase-message error" role="alert">{error}</p>}

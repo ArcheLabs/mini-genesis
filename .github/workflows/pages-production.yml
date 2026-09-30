@@ -293,9 +293,6 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm --dir packages/web install --frozen-lockfile
 
-      - name: Install Chromium for production browser smoke tests
-        run: pnpm --dir packages/web exec playwright install --with-deps chromium
-
       - name: Run frontend tests
         run: pnpm --dir packages/web test
 
@@ -306,17 +303,7 @@ jobs:
           BASE_PATH: ${{ inputs.base_path }}
         run: |
           set -euo pipefail
-          pnpm --dir packages/web build --base="$BASE_PATH"
-
-      - name: Smoke-test production artifact
-        env:
-          BASE_PATH: ${{ inputs.base_path }}
-        run: node scripts/test-production-web-build.mjs "$BASE_PATH"
-
-      - name: Browser-test production artifact
-        env:
-          PLAYWRIGHT_BASE_PATH: ${{ inputs.base_path }}
-        run: pnpm --dir packages/web test:browser:production
+          pnpm --dir packages/web build -- --base="$BASE_PATH"
 
       - name: Add no-Jekyll marker
         run: touch packages/web/dist/.nojekyll

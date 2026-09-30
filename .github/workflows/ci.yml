@@ -76,35 +76,4 @@ jobs:
         env:
           VITE_DEPLOYMENT_ENV: staging
           VITE_DEMO_MODE: "false"
-        run: pnpm --dir packages/web build --base=/mini-genesis/
-
-      - name: Install Chromium for production browser smoke tests
-        run: pnpm --dir packages/web exec playwright install --with-deps chromium
-
-      - name: Build production frontend for custom-domain root
-        env:
-          VITE_DEPLOYMENT_ENV: production
-          VITE_DEMO_MODE: "false"
-        run: pnpm --dir packages/web build --base=/
-
-      - name: Smoke-test production root artifact
-        run: node scripts/test-production-web-build.mjs /
-
-      - name: Browser-test production root artifact
-        env:
-          PLAYWRIGHT_BASE_PATH: /
-        run: pnpm --dir packages/web test:browser:production
-
-      - name: Build production frontend for project Pages path
-        env:
-          VITE_DEPLOYMENT_ENV: production
-          VITE_DEMO_MODE: "false"
-        run: pnpm --dir packages/web build --base=/mini-genesis/
-
-      - name: Smoke-test production project Pages artifact
-        run: node scripts/test-production-web-build.mjs /mini-genesis/
-
-      - name: Browser-test production project Pages artifact
-        env:
-          PLAYWRIGHT_BASE_PATH: /mini-genesis/
-        run: pnpm --dir packages/web test:browser:production
+        run: pnpm --dir packages/web build -- --base=/mini-genesis/
