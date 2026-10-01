@@ -55,7 +55,14 @@ function countdown(seconds: bigint, zh: boolean): string {
   const days = seconds / 86_400n;
   const hours = seconds % 86_400n / 3_600n;
   const minutes = seconds % 3_600n / 60n;
-  return zh ? `${days ? `${days} 天 ` : ""}${hours} 小时` : days ? `${days}d ${hours}h` : `${hours}h ${minutes}m`;
+  if (zh) {
+    const parts: string[] = [];
+    if (days > 0n) parts.push(`${days} 天`);
+    if (hours > 0n) parts.push(`${hours} 小时`);
+    if (minutes > 0n || parts.length === 0) parts.push(`${minutes || 1n} 分钟`);
+    return parts.join(" ");
+  }
+  return days ? `${days}d ${hours}h` : `${hours}h ${minutes}m`;
 }
 
 type PurchaseWalletState = "disconnected" | "preparing" | "ready" | "unavailable";
