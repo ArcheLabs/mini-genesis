@@ -54,7 +54,7 @@ C(Q) = C(2,000,000 MINI) = 9,000 DOT
 
 Approximately 80% sell-through therefore corresponds to 6,880 DOT raised, and
 full-sale capacity is 9,000 DOT. Genesis II is not all-or-nothing crowdfunding:
-if the seven-day campaign ends before sell-out, the actual raised amount and
+if the fifteen-day campaign ends before sell-out, the actual raised amount and
 terminal price remain visible and there is no automatic refund.
 
 The page emphasizes current price, starting price, maximum price, distributed

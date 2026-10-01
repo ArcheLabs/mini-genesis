@@ -184,6 +184,43 @@ jobs:
             "subsequentContributionMinimumExclusive is incorrect",
           );
 
+          const phase2 = manifest.genesis?.phases?.phase2 ?? {};
+          assert(
+            ["active", "ended"].includes(phase2.status),
+            "Genesis II must have a deployed contract before production Pages can be published",
+          );
+          assert(
+            phase2.mechanism === "linear-bonding-curve",
+            "Genesis II mechanism must be the linear bonding curve",
+          );
+          assert(
+            typeof phase2.contract === "string" && /^0x[0-9a-f]{40}$/i.test(phase2.contract) && !zeroAddress.test(phase2.contract),
+            "Genesis II contract address is missing",
+          );
+          assert(
+            typeof phase2.treasury === "string" && /^0x[0-9a-f]{40}$/i.test(phase2.treasury) && !zeroAddress.test(phase2.treasury),
+            "Genesis II treasury is missing",
+          );
+          assert(
+            phase2.treasury.toLowerCase() === config.treasury.toLowerCase(),
+            "Genesis II treasury must match the independently configured production treasury",
+          );
+          assert(
+            typeof phase2.runtimeCodeHash === "string" && /^0x[0-9a-f]{64}$/i.test(phase2.runtimeCodeHash) && !zeroHash.test(phase2.runtimeCodeHash),
+            "Genesis II runtime code hash is missing",
+          );
+          assert(BigInt(phase2.deploymentBlock ?? "0") > 0n, "Genesis II deployment block must be greater than zero");
+          assert(String(phase2.allocationMini) === "2000000000000000000000000", "Genesis II allocation must equal 2,000,000 MINI");
+          assert(String(phase2.startPriceX18) === "3500000000000000", "Genesis II start price is incorrect");
+          assert(String(phase2.endPriceX18) === "5500000000000000", "Genesis II end price is incorrect");
+          for (const name of ["startTime", "endTime"]) {
+            assert(/^\d+$/.test(String(phase2[name] ?? "")), `Genesis II ${name} must be a decimal timestamp`);
+          }
+          assert(
+            BigInt(phase2.endTime) - BigInt(phase2.startTime) === 15n * 24n * 60n * 60n,
+            "Genesis II production duration must be exactly 15 days",
+          );
+
           console.log("Production manifest validation passed.");
           NODE
 
@@ -285,10 +322,60 @@ jobs:
             exit 1
           }
 
+          PHASE2_CONTRACT="$(jq -r '.genesis.phases.phase2.contract' "$MANIFEST")"
+          PHASE2_STATUS="$(jq -r '.genesis.phases.phase2.status' "$MANIFEST")"
+          PHASE2_CODE_HASH="$(jq -r '.genesis.phases.phase2.runtimeCodeHash' "$MANIFEST")"
+          PHASE2_TREASURY="$(jq -r '.genesis.phases.phase2.treasury' "$MANIFEST")"
+          PHASE2_ALLOCATION="$(jq -r '.genesis.phases.phase2.allocationMini' "$MANIFEST")"
+          PHASE2_START_PRICE="$(jq -r '.genesis.phases.phase2.startPriceX18' "$MANIFEST")"
+          PHASE2_END_PRICE="$(jq -r '.genesis.phases.phase2.endPriceX18' "$MANIFEST")"
+          PHASE2_START_TIME="$(jq -r '.genesis.phases.phase2.startTime' "$MANIFEST")"
+          PHASE2_END_TIME="$(jq -r '.genesis.phases.phase2.endTime' "$MANIFEST")"
+
+          PHASE2_RUNTIME_CODE="$(cast code "$PHASE2_CONTRACT" --rpc-url "$RPC_URL")"
+          if [[ -z "$PHASE2_RUNTIME_CODE" || "$PHASE2_RUNTIME_CODE" == "0x" ]]; then
+            echo "::error::Genesis II contract has no runtime bytecode."
+            exit 1
+          fi
+          PHASE2_ACTUAL_CODE_HASH="$(cast keccak "$PHASE2_RUNTIME_CODE")"
+          if [[ "${PHASE2_ACTUAL_CODE_HASH,,}" != "${PHASE2_CODE_HASH,,}" ]]; then
+            echo "::error::Genesis II runtime code hash does not match production manifest."
+            exit 1
+          fi
+
+          read_phase2() {
+            cast call "$PHASE2_CONTRACT" "$1" --rpc-url "$RPC_URL" | awk '{print $1}'
+          }
+          PHASE2_ACTUAL_TREASURY="$(read_phase2 'treasury()(address)')"
+          PHASE2_ACTUAL_ALLOCATION="$(read_phase2 'allocation()(uint256)')"
+          PHASE2_ACTUAL_START_PRICE="$(read_phase2 'startPrice()(uint256)')"
+          PHASE2_ACTUAL_END_PRICE="$(read_phase2 'endPrice()(uint256)')"
+          PHASE2_ACTUAL_START_TIME="$(read_phase2 'startTime()(uint64)')"
+          PHASE2_ACTUAL_END_TIME="$(read_phase2 'endTime()(uint64)')"
+          PHASE2_ACTUAL_PHASE="$(read_phase2 'phase()(uint8)')"
+          PHASE2_ACTUAL_SOLD_OUT="$(read_phase2 'soldOut()(bool)')"
+
+          [[ "${PHASE2_ACTUAL_TREASURY,,}" == "${PHASE2_TREASURY,,}" ]] || { echo "::error::Genesis II treasury mismatch."; exit 1; }
+          [[ "$PHASE2_ACTUAL_ALLOCATION" == "$PHASE2_ALLOCATION" ]] || { echo "::error::Genesis II allocation mismatch."; exit 1; }
+          [[ "$PHASE2_ACTUAL_START_PRICE" == "$PHASE2_START_PRICE" ]] || { echo "::error::Genesis II start price mismatch."; exit 1; }
+          [[ "$PHASE2_ACTUAL_END_PRICE" == "$PHASE2_END_PRICE" ]] || { echo "::error::Genesis II end price mismatch."; exit 1; }
+          [[ "$PHASE2_ACTUAL_START_TIME" == "$PHASE2_START_TIME" ]] || { echo "::error::Genesis II start timestamp mismatch."; exit 1; }
+          [[ "$PHASE2_ACTUAL_END_TIME" == "$PHASE2_END_TIME" ]] || { echo "::error::Genesis II end timestamp mismatch."; exit 1; }
+          if [[ "$PHASE2_STATUS" == "active" && ( "$PHASE2_ACTUAL_PHASE" == "2" || "$PHASE2_ACTUAL_SOLD_OUT" == "true" ) ]]; then
+            echo "::error::Genesis II manifest says active, but the contract has ended or sold out."
+            exit 1
+          fi
+          if [[ "$PHASE2_STATUS" == "ended" && "$PHASE2_ACTUAL_PHASE" != "2" ]]; then
+            echo "::error::Genesis II manifest says ended, but the contract is not ended."
+            exit 1
+          fi
+
           echo "Production contract verification passed."
           echo "Chain ID: $ACTUAL_CHAIN_ID"
           echo "Contract: $CONTRACT"
           echo "Runtime code hash: $ACTUAL_CODE_HASH"
+          echo "Genesis II contract: $PHASE2_CONTRACT"
+          echo "Genesis II runtime code hash: $PHASE2_ACTUAL_CODE_HASH"
 
       - name: Install frontend dependencies
         run: pnpm --dir packages/web install --frozen-lockfile

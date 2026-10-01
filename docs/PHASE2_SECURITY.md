@@ -6,13 +6,18 @@ deadline-extension mechanism.
 
 The constructor fixes the treasury, allocation, prices, and timestamps. The
 production verifier additionally requires the fixed 2,000,000 MINI allocation,
-0.003500 start price, 0.005500 end price, a seven-day time range, and the
+0.003500 start price, 0.005500 end price, a fifteen-day time range, and the
 corresponding 9,000 DOT full-sale cumulative cost.
 
 `buyExactMini` is protected by `ReentrancyGuard`. It checks the active time
 window, exact output amount, allocation cap, slippage limit, and payment before
 updating state. Treasury forwarding and excess-value refunds are checked calls;
 failure reverts all state changes.
+
+The production deployment script requires the campaign start to be at least one
+hour after the latest mainnet block. It checks chain identity on two independent
+RPC hosts before broadcasting, then checks the deployed code hash and immutable
+configuration against those endpoints before writing the production manifest.
 
 The principal invariants are:
 
