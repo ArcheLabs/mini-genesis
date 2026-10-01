@@ -1096,8 +1096,17 @@ export const deploymentManifests = {
           ]
         },
         "phase2": {
-          "status": "template",
+          "status": "active",
           "mechanism": "linear-bonding-curve",
+          "contract": "0x9dcd586f8ea9cd12f27ca61bbdd07cce6b363b2f",
+          "treasury": "0x2A8E2fFc8d10e04a477623252026F4378d210b3A",
+          "deploymentBlock": "21298228",
+          "runtimeCodeHash": "0xf03c2a039a2ea30872c49d2445a2afa990721955a4f1e8732cd23d8554ec011a",
+          "allocationMini": "2000000000000000000000000",
+          "startPriceX18": "3500000000000000",
+          "endPriceX18": "5500000000000000",
+          "startTime": "1790849160",
+          "endTime": "1792145160",
           "workItems": [
             {
               "id": "minijam",
