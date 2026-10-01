@@ -933,7 +933,8 @@ export const deploymentManifests = {
       "nativeDecimals": 10,
       "evmNativeDecimals": 18,
       "rpcHttpUrls": [
-        "https://services.polkadothub-rpc.com/mainnet/"
+        "https://eth-rpc.polkadot.io/",
+        "https://asset-hub.polkadot.eth-rpc.deserve.network/"
       ],
       "substrateWsUrls": [
         "wss://polkadot-asset-hub-rpc.polkadot.io"

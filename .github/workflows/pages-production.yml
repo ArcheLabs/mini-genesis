@@ -96,18 +96,22 @@ jobs:
 
           assert(
             Array.isArray(manifest.source?.rpcHttpUrls) &&
-              manifest.source.rpcHttpUrls.length >= 1 &&
-              manifest.source.rpcHttpUrls.every(
-                (url) => typeof url === "string" && /^https:\/\//.test(url),
-              ),
-            "at least one browser-compatible public HTTPS RPC URL is required",
+              manifest.source.rpcHttpUrls.length >= 2 &&
+              manifest.source.rpcHttpUrls.every((url) => {
+                if (typeof url !== "string") return false;
+                try {
+                  const parsed = new URL(url);
+                  return parsed.protocol === "https:" && !parsed.username && !parsed.password;
+                } catch {
+                  return false;
+                }
+              }),
+            "at least two browser-compatible public HTTPS RPC URLs on independent hosts are required",
           );
 
           assert(
-            manifest.source.rpcHttpUrls.every(
-              (url) => !url.toLowerCase().includes("eth-rpc.polkadot.io"),
-            ),
-            "production RPC URLs must not include eth-rpc.polkadot.io",
+            new Set(manifest.source.rpcHttpUrls.map((url) => new URL(url).hostname.toLowerCase())).size >= 2,
+            "production RPC URLs must use independent hosts",
           );
 
           assert(
