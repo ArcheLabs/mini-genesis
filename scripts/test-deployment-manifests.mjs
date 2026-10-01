@@ -22,6 +22,8 @@ for (const environment of ["local", "staging", "production"]) {
     assert.match(manifest.source.substrateWsUrls[0], /^ws:\/\/127\.0\.0\.1:9944\/?$/);
   } else if (environment === "staging" && manifest.status === "deployed" && manifest.genesis.phases.phase2.status === "active") {
     validateStagingPagesManifest(manifest);
+  } else if (environment === "production" && manifest.status === "deployed") {
+    assert.ok(["active", "ended"].includes(manifest.genesis.phases.phase2.status));
   } else {
     assert.equal(manifest.genesis.phases.phase2.status, "template");
   }
