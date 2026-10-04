@@ -6,6 +6,9 @@ import { MiniGenesisCurve } from "../src/MiniGenesisCurve.sol";
 
 /// @notice Deploys the independent Genesis II curve. This script never touches Phase I.
 contract DeployMiniGenesisCurve is Script {
+    uint256 internal constant POLKADOT_HUB_MAINNET_CHAIN_ID = 420420419;
+    uint256 internal constant PRODUCTION_START_BUFFER = 1 hours;
+
     function run() external returns (MiniGenesisCurve curve) {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
         address treasury = vm.envAddress("TREASURY");
@@ -19,6 +22,12 @@ contract DeployMiniGenesisCurve is Script {
         require(block.chainid == expectedChainId, "unexpected chain id");
         require(startTimestamp <= type(uint64).max, "start timestamp exceeds uint64");
         require(endTimestamp <= type(uint64).max, "end timestamp exceeds uint64");
+        if (expectedChainId == POLKADOT_HUB_MAINNET_CHAIN_ID) {
+            require(
+                startTimestamp >= block.timestamp + PRODUCTION_START_BUFFER,
+                "production start must be at least one hour ahead"
+            );
+        }
 
         console2.log("chain id", block.chainid);
         console2.log("treasury", treasury);

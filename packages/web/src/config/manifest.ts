@@ -18,7 +18,8 @@ export type GenesisLocalizedText = { "zh-CN": string; en: string };
 export type GenesisExecutionTask = {
   id: string;
   name: string | GenesisLocalizedText;
-  status: "delivered" | "active" | "planned";
+  status: "delivered" | "active" | "planned" | "discontinued";
+  summary?: string | GenesisLocalizedText;
 };
 export type GenesisWorkItem = {
   id: string;
@@ -34,7 +35,20 @@ export type GenesisAchievement = GenesisWorkItem;
 export type GenesisPhase2Manifest = {
   status: "template" | "active" | "ended";
   mechanism: "linear-bonding-curve";
+  previousDeployment?: {
+    status: "retained-immutable";
+    contract: Address;
+    treasury: Address;
+    deploymentBlock: string;
+    runtimeCodeHash: Hex;
+    allocationMini: string;
+    startPriceX18: string;
+    endPriceX18: string;
+    startTime: string;
+    endTime: string;
+  };
   contract?: Address;
+  treasury?: Address;
   deploymentBlock?: string;
   runtimeCodeHash?: Hex;
   allocationMini?: string;
@@ -87,6 +101,13 @@ export type DeploymentManifest = {
     rpcHttpUrls: string[];
     substrateWsUrls: string[];
     substrateGenesisHash: Hex;
+    substrateRuntime?: {
+      profileId: string;
+      specName: string;
+      specVersion: number;
+      transactionVersion: number;
+      wasmCodeHash: Hex;
+    };
     ss58Prefix: number;
     explorerUrl: string;
     contract: Address;
@@ -120,7 +141,8 @@ export function selectedEnvironment(mode: string, value = import.meta.env.VITE_D
 
 export function getManifest(environment: DeploymentEnvironment | null): DeploymentManifest | null {
   if (!environment) return null;
-  return deploymentManifests[environment] as unknown as DeploymentManifest;
+  const manifests = deploymentManifests as unknown as Partial<Record<DeploymentEnvironment, DeploymentManifest>>;
+  return manifests[environment] ?? null;
 }
 
 export function assertManifestRuntime(manifest: DeploymentManifest): void {
@@ -135,6 +157,7 @@ export function assertManifestRuntime(manifest: DeploymentManifest): void {
   if (!manifest.source.rpcHttpUrls.length || manifest.source.rpcHttpUrls.some((url) => !url)) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.substrateWsUrls.length || manifest.source.substrateWsUrls.some((url) => !url)) throw new Error("CONFIGURATION_MISMATCH");
   if (!manifest.source.substrateGenesisHash || /^0x0+$/i.test(manifest.source.substrateGenesisHash)) throw new Error("CONFIGURATION_MISMATCH");
+  if (manifest.source.substrateRuntime && (!manifest.source.substrateRuntime.profileId || !manifest.source.substrateRuntime.specName || !Number.isInteger(manifest.source.substrateRuntime.specVersion) || !Number.isInteger(manifest.source.substrateRuntime.transactionVersion) || !/^0x[0-9a-f]{64}$/i.test(manifest.source.substrateRuntime.wasmCodeHash))) throw new Error("CONFIGURATION_MISMATCH");
   for (const url of manifest.source.rpcHttpUrls) {
     try {
       const parsed = new URL(url);

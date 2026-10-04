@@ -8,6 +8,7 @@ export type BondingCurveChartProps = {
   endBasis: bigint;
   currentBasis?: bigint;
   language: "zh-CN" | "en";
+  nativeSymbol?: string;
 };
 
 const VIEW_WIDTH = 600;
@@ -16,6 +17,7 @@ const RIGHT = 570;
 const TOP = 30;
 const BOTTOM = 218;
 const SCALE = 1_000_000_000n;
+const COORDINATE_SCALE = 100;
 
 function grouped(value: bigint): string { return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
 
@@ -44,7 +46,7 @@ function asPoint(amount: bigint, allocation: bigint) {
   };
 }
 
-export function BondingCurveChart({ allocation, sold, startBasis, endBasis, currentBasis, language }: BondingCurveChartProps) {
+export function BondingCurveChart({ allocation, sold, startBasis, endBasis, currentBasis, language, nativeSymbol = "DOT" }: BondingCurveChartProps) {
   const [inspection, setInspection] = useState<bigint | null>(null);
   const current = asPoint(sold, allocation);
   const observedCurrentBasis = currentBasis ?? curvePriceAt({ allocation, startPrice: startBasis, endPrice: endBasis }, sold);
@@ -70,8 +72,11 @@ export function BondingCurveChart({ allocation, sold, startBasis, endBasis, curr
       point.y = event.clientY;
       chartX = point.matrixTransform(transform).x;
     }
-    const fraction = Math.max(0, Math.min(1, (chartX - LEFT) / (RIGHT - LEFT)));
-    setInspection(BigInt(Math.round(fraction * Number(SCALE))));
+    const coordinate = BigInt(Math.round(chartX * COORDINATE_SCALE));
+    const left = BigInt(LEFT * COORDINATE_SCALE);
+    const width = BigInt((RIGHT - LEFT) * COORDINATE_SCALE);
+    const offset = coordinate <= left ? 0n : coordinate >= left + width ? width : coordinate - left;
+    setInspection((offset * SCALE + width / 2n) / width);
   };
 
   const inspectKey = (event: KeyboardEvent<SVGSVGElement>) => {
@@ -94,13 +99,13 @@ export function BondingCurveChart({ allocation, sold, startBasis, endBasis, curr
   return <section className="curve-section" aria-label={language === "zh-CN" ? "购入曲线" : "Acquisition curve"}>
     <div className="curve-title-row">
       <h2>Bonding Curve</h2>
-      <span>{language === "zh-CN" ? "最高购入基准" : "Maximum acquisition basis"} · {formatBasis(endBasis)} DOT / MINI</span>
+      <span>{language === "zh-CN" ? "最高购入基准" : "Maximum acquisition basis"} · {formatBasis(endBasis)} {nativeSymbol} / MINI</span>
     </div>
     <div className="curve-chart" data-testid="bonding-curve-chart">
       <svg viewBox="0 0 600 260" role="slider" tabIndex={0}
         aria-label={language === "zh-CN" ? "检查曲线上的购入基准" : "Inspect acquisition basis on the curve"}
         aria-valuemin={0} aria-valuemax={100} aria-valuenow={Number((BigInt(Math.round(progress * Number(SCALE))) * 10_000n) / SCALE) / 100}
-        aria-valuetext={`${formatMini(allocation * BigInt(Math.round(progress * Number(SCALE))) / SCALE, 0)} MINI, ${formatBasis(curvePriceAt({ allocation, startPrice: startBasis, endPrice: endBasis }, allocation * BigInt(Math.round(progress * Number(SCALE))) / SCALE))} DOT / MINI`}
+        aria-valuetext={`${formatMini(allocation * BigInt(Math.round(progress * Number(SCALE))) / SCALE, 0)} MINI, ${formatBasis(curvePriceAt({ allocation, startPrice: startBasis, endPrice: endBasis }, allocation * BigInt(Math.round(progress * Number(SCALE))) / SCALE))} ${nativeSymbol} / MINI`}
         onPointerMove={inspect} onPointerDown={inspect} onPointerLeave={leave} onKeyDown={inspectKey}
         data-current-position={currentPosition} data-current-basis={observedCurrentBasis.toString()} data-testid="bonding-curve-interaction">
         <path className="curve-grid-line" d="M48 30H570M48 124H570M48 218H570M48 30V218M309 30V218M570 30V218" />
@@ -115,7 +120,7 @@ export function BondingCurveChart({ allocation, sold, startBasis, endBasis, curr
       {amountAtInspection !== null && inspectionBasis !== null && <div className="curve-tooltip" role="status" data-testid="curve-tooltip">
         <strong>{(Number(inspection) / Number(SCALE) * 100).toFixed(2)}%</strong>
         <span>{formatMini(amountAtInspection, 0)} MINI</span>
-        <span>{formatBasis(inspectionBasis)} DOT / MINI</span>
+        <span>{formatBasis(inspectionBasis)} {nativeSymbol} / MINI</span>
       </div>}
       <div className="curve-axis"><span>0 MINI</span><span>{formatMini(allocation, 0)} MINI</span></div>
       <div className="curve-range"><span>{language === "zh-CN" ? "起始购入基准" : "Starting acquisition basis"} · {formatBasis(startBasis)}</span><span>{language === "zh-CN" ? "最高购入基准" : "Maximum acquisition basis"} · {formatBasis(endBasis)}</span></div>

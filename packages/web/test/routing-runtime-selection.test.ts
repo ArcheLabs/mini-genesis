@@ -42,6 +42,12 @@ describe("URL runtime environment selection", () => {
     expect(resolveRuntimeSelection({ search: "?network=local", mode: "production", deploymentEnv: "production" }).environment).toBe("local");
   });
 
+  it("fails closed when the requested environment is not bundled into the published frontend", () => {
+    const availableEnvironments = ["staging", "production"] as const;
+    expect(resolveRuntimeSelection({ search: "?network=local", mode: "production", deploymentEnv: "staging", availableEnvironments })).toMatchObject({ environment: null, error: "CONFIGURATION_MISMATCH", source: "invalid" });
+    expect(resolveRuntimeSelection({ search: "?network=testnet", mode: "production", deploymentEnv: "staging", availableEnvironments })).toMatchObject({ environment: "staging", error: null, source: "url" });
+  });
+
   it("honors the build environment and mode fallbacks", () => {
     expect(resolveRuntimeSelection({ search: "", mode: "production", deploymentEnv: "staging" }).environment).toBe("staging");
     expect(resolveRuntimeSelection({ search: "", mode: "development" }).environment).toBe("local");

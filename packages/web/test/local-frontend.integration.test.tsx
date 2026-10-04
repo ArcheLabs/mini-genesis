@@ -71,7 +71,7 @@ function LocalReadLifecycle({ client }: { client: PublicClient }) {
   const [stage, setStage] = useState<GenesisStageId>("phase2");
   return <>
     <GenesisStageNavigation language="en" stage={stage} phase2Status="LIVE" onSelect={setStage} />
-    <GenesisStages language="en" stage={stage} refreshKey={0} onPhase2StatusChange={() => {}} manifest={localManifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onRefresh={() => {}} />
+    <GenesisStages language="en" stage={stage} refreshKey={0} onPhase2StatusChange={() => {}} manifest={localManifest} publicClient={client} session={null} provider={null} walletReady={false} correctChain={false} demoMode={false} onConnect={() => {}} onReconcile={async () => {}} />
   </>;
 }
 

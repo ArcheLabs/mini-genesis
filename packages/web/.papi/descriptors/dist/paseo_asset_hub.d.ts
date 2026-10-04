@@ -15775,28 +15775,28 @@ type IRuntimeCalls = {
         account_nonce: RuntimeDescriptor<[account: SS58String], number>;
     };
     /**
-    
+
      */
     TransactionPaymentApi: {
         /**
-        
+
          */
         query_info: RuntimeDescriptor<[uxt: Uint8Array, len: number], Anonymize<I6spmpef2c7svf>>;
         /**
-        
+
          */
         query_fee_details: RuntimeDescriptor<[uxt: Uint8Array, len: number], Anonymize<Iei2mvq0mjvt81>>;
         /**
-        
+
          */
         query_weight_to_fee: RuntimeDescriptor<[weight: Anonymize<I4q39t5hn830vp>], bigint>;
         /**
-        
+
          */
         query_length_to_fee: RuntimeDescriptor<[length: number], bigint>;
     };
     /**
-    
+
      */
     TransactionPaymentCallApi: {
         /**
@@ -16095,7 +16095,7 @@ type IRuntimeCalls = {
         pool_accounts: RuntimeDescriptor<[pool_id: number], Anonymize<I2na29tt2afp0j>>;
     };
     /**
-    
+
      */
     StakingApi: {
         /**
@@ -16112,7 +16112,7 @@ type IRuntimeCalls = {
         pending_rewards: RuntimeDescriptor<[era: number, account: SS58String], boolean>;
     };
     /**
-    
+
      */
     Inflation: {
         /**

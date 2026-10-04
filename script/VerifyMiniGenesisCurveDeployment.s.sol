@@ -11,13 +11,18 @@ contract VerifyMiniGenesisCurveDeployment is Script {
     uint256 internal constant EXPECTED_START_PRICE = 3_500_000_000_000_000;
     uint256 internal constant EXPECTED_END_PRICE = 5_500_000_000_000_000;
     uint256 internal constant EXPECTED_FULL_SALE_PROCEEDS = 9_000 ether;
-    uint64 internal constant EXPECTED_DURATION = 7 days;
+    uint256 internal constant POLKADOT_HUB_TESTNET_CHAIN_ID = 420420417;
+    uint256 internal constant POLKADOT_HUB_MAINNET_CHAIN_ID = 420420419;
 
     function run() external view {
         uint256 expectedChainId = vm.envUint("EXPECTED_CHAIN_ID");
         address curveAddress = vm.envAddress("MINI_GENESIS_CURVE_ADDRESS");
         uint256 expectedStart = vm.envUint("PHASE2_START_TIMESTAMP");
         uint256 expectedEnd = vm.envUint("PHASE2_END_TIMESTAMP");
+        uint64 expectedDuration;
+        if (expectedChainId == POLKADOT_HUB_TESTNET_CHAIN_ID) expectedDuration = 1 hours;
+        else if (expectedChainId == POLKADOT_HUB_MAINNET_CHAIN_ID) expectedDuration = 15 days;
+        else revert("unsupported deployment network");
         require(expectedStart <= type(uint64).max, "expected start exceeds uint64");
         require(expectedEnd <= type(uint64).max, "expected end exceeds uint64");
 
@@ -31,7 +36,7 @@ contract VerifyMiniGenesisCurveDeployment is Script {
         require(curve.startTime() == uint64(expectedStart), "start timestamp mismatch");
         require(curve.endTime() == uint64(expectedEnd), "end timestamp mismatch");
         require(curve.endTime() > curve.startTime(), "invalid time range");
-        require(curve.endTime() - curve.startTime() == EXPECTED_DURATION, "duration mismatch");
+        require(curve.endTime() - curve.startTime() == expectedDuration, "duration mismatch");
         require(
             curve.cumulativeCost(curve.allocation()) == EXPECTED_FULL_SALE_PROCEEDS,
             "full-sale proceeds mismatch"

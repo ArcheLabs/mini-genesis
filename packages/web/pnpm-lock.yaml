@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@polkadot-api/json-rpc-provider-proxy@0.4.1':
+    hash: 9c9845e91202da7765de586afbdfa85959181aa14c62ab95b119cdcca5ecde86
+    path: patches/@polkadot-api__json-rpc-provider-proxy@0.4.1.patch
+
 importers:
 
   .:
@@ -3457,7 +3462,7 @@ snapshots:
   '@polkadot-api/json-rpc-provider-proxy@0.1.0':
     optional: true
 
-  '@polkadot-api/json-rpc-provider-proxy@0.4.1': {}
+  '@polkadot-api/json-rpc-provider-proxy@0.4.1(patch_hash=9c9845e91202da7765de586afbdfa85959181aa14c62ab95b119cdcca5ecde86)': {}
 
   '@polkadot-api/json-rpc-provider@0.0.1':
     optional: true
@@ -3542,7 +3547,7 @@ snapshots:
   '@polkadot-api/sm-provider@0.3.8(@polkadot-api/smoldot@0.4.6)':
     dependencies:
       '@polkadot-api/json-rpc-provider': 0.2.0
-      '@polkadot-api/json-rpc-provider-proxy': 0.4.1
+      '@polkadot-api/json-rpc-provider-proxy': 0.4.1(patch_hash=9c9845e91202da7765de586afbdfa85959181aa14c62ab95b119cdcca5ecde86)
       '@polkadot-api/smoldot': 0.4.6
 
   '@polkadot-api/smoldot@0.4.6':
@@ -3590,7 +3595,7 @@ snapshots:
   '@polkadot-api/ws-middleware@0.3.6(rxjs@7.8.2)':
     dependencies:
       '@polkadot-api/json-rpc-provider': 0.2.0
-      '@polkadot-api/json-rpc-provider-proxy': 0.4.1
+      '@polkadot-api/json-rpc-provider-proxy': 0.4.1(patch_hash=9c9845e91202da7765de586afbdfa85959181aa14c62ab95b119cdcca5ecde86)
       '@polkadot-api/raw-client': 0.3.0
       '@polkadot-api/substrate-bindings': 0.20.3
       '@polkadot-api/utils': 0.4.0
@@ -3599,7 +3604,7 @@ snapshots:
   '@polkadot-api/ws-provider@0.9.1(rxjs@7.8.2)':
     dependencies:
       '@polkadot-api/json-rpc-provider': 0.2.0
-      '@polkadot-api/json-rpc-provider-proxy': 0.4.1
+      '@polkadot-api/json-rpc-provider-proxy': 0.4.1(patch_hash=9c9845e91202da7765de586afbdfa85959181aa14c62ab95b119cdcca5ecde86)
       '@polkadot-api/utils': 0.4.0
       rxjs: 7.8.2
 

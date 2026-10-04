@@ -1,4 +1,7 @@
-import { StatusBadge, type ProductStatus } from "../components/StatusBadge";
+import { StatusBadge, productStatusLabel, type ProductStatus } from "../components/StatusBadge";
+import { StatusIcon } from "../components/StatusIcon";
+import { SectionHeading } from "../components/SectionHeading";
+import { DeliveredIcon } from "../components/SectionIcons";
 import type { GenesisWorkItem } from "./work-items";
 
 type Language = "zh-CN" | "en";
@@ -22,7 +25,7 @@ export function GenesisWorkItems({ language, mode, workItems }: Props) {
     ? (language === "zh-CN" ? "已交付" : "Delivered")
     : (language === "zh-CN" ? "Genesis II 执行计划" : "Genesis II Execution");
   return <section className={`work-items-section ${phase1 ? "phase1-work-items" : "phase2-work-items"}`}>
-    <h2>{heading}</h2>
+    <SectionHeading size="default" icon={<DeliveredIcon />}>{heading}</SectionHeading>
     <div className="work-item-grid">
       {workItems.map((item) => <article key={item.id} className={`work-item work-item-${item.status}`} data-testid={`genesis-work-item-${item.id}`}>
         <div className="work-item-head">
@@ -30,9 +33,13 @@ export function GenesisWorkItems({ language, mode, workItems }: Props) {
           <StatusBadge status={statusFor(item)} language={language} />
         </div>
         <p>{localized(item.summary, language)}</p>
-        {item.tasks && item.tasks.length > 0 && <ul className="work-item-tasks">{item.tasks.map((task) => <li key={task.id}>
-          <span>{localized(task.name, language)}</span>
-          <StatusBadge status={task.status} language={language} />
+        {item.tasks && item.tasks.length > 0 && <ul className="work-item-tasks">{item.tasks.map((task) => <li key={task.id} data-status={task.status}>
+          <span className={`work-item-task-status work-item-task-status-${task.status}`} role="img" aria-label={productStatusLabel(task.status, language)}>
+            <StatusIcon status={task.status} size="sm" />
+          </span>
+          {task.summary
+            ? <span className="work-item-task-copy"><strong className="work-item-task-title">{localized(task.name, language)}</strong><span className="work-item-task-summary">{localized(task.summary, language)}</span></span>
+            : <span className="work-item-task-name">{localized(task.name, language)}</span>}
         </li>)}</ul>}
         {item.evidenceUrl && <a className="work-item-evidence" href={item.evidenceUrl} target="_blank" rel="noreferrer">{language === "zh-CN" ? "查看证据 ↗" : "View evidence ↗"}</a>}
       </article>)}

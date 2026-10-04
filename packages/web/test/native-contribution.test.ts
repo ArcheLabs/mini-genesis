@@ -3,6 +3,7 @@ import { hexToBytes, type Address } from "viem";
 import { createNativeDiagnostic, createSubstrateExecutionAdapter, estimateNativeMax, inspectWeightShape, recordSimulationDiagnostic, validateNativeEvents, validatePolkadotJsNativeEvents, validateWeightRequired } from "../src/genesis/execution/substrate";
 import { parseDotAmount } from "../src/genesis/amount";
 import { readNativeBalance } from "../src/wallet/substrate/balance";
+import { buyExactMiniNative } from "../src/genesis/curve-contribution-native";
 import { ACCOUNT, contributedLog, manifest, SOURCE_CONTRACT } from "./helpers";
 
 const mocks = vi.hoisted(() => ({ submitNativeReviveCall: vi.fn() }));

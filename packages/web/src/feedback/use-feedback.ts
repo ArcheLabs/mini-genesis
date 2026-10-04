@@ -10,7 +10,8 @@ export function useFeedback(): FeedbackController {
   const present = useCallback((feedback: NormalizedFeedback) => {
     if (feedback.surface === "silent" || feedback.surface === "field") return feedback;
     setItems((current) => { const existing = current.find((item) => item.dedupeKey === feedback.dedupeKey); if (existing && existing.code === feedback.code && existing.message === feedback.message) return current; return [feedback, ...current.filter((item) => item.dedupeKey !== feedback.dedupeKey)].slice(0, 8); });
-    if (import.meta.env.DEV) console.error("[MINI Genesis]", { code: feedback.code, operation: feedback.dedupeKey }); else console.warn("[MINI Genesis]", feedback.code);
+    if (feedback.kind === "success") console.info("[MINI Genesis]", feedback.code);
+    else if (feedback.kind === "error") { if (import.meta.env.DEV) console.error("[MINI Genesis]", { code: feedback.code, operation: feedback.dedupeKey }); else console.warn("[MINI Genesis]", feedback.code); }
     if (feedback.autoDismissMs) { const old = timers.current.get(feedback.dedupeKey); if (old) window.clearTimeout(old); const timer = window.setTimeout(() => { setItems((current) => current.filter((item) => item.dedupeKey !== feedback.dedupeKey)); timers.current.delete(feedback.dedupeKey); }, feedback.autoDismissMs); timers.current.set(feedback.dedupeKey, timer); }
     return feedback;
   }, []);

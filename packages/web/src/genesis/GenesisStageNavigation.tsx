@@ -40,7 +40,7 @@ export function GenesisStageNavigation({ language, stage, phase2Status, onSelect
         onClick={() => onSelect(item.id)}
       >
         <span>{item.title}</span>
-        <StatusBadge status={status} language={language} />
+        <StatusBadge status={status} language={language} tone={item.id === "phase1" ? "historical" : "default"} />
       </a>;
     })}
   </nav>;

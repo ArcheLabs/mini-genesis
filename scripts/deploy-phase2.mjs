@@ -1,11 +1,18 @@
 import { access, readFile, writeFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
+import { PHASE2_DURATION_SECONDS } from "./deployment-manifest.mjs";
+import { isConfiguredRpcUrl } from "./rpc-selection.mjs";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 const environment = process.argv[2];
 const finalizeOnly = process.argv[3] === "--finalize-only";
-const PRODUCTION_DURATION_SECONDS = 7n * 24n * 60n * 60n;
+const PHASE2_ALLOCATION = 2_000_000n * 10n ** 18n;
+const PHASE2_START_PRICE_X18 = 3_500_000_000_000_000n;
+const PHASE2_END_PRICE_X18 = 5_500_000_000_000_000n;
+const POLKADOT_HUB_MAINNET_CHAIN_ID = "420420419";
+const PRODUCTION_START_BUFFER_SECONDS = 60n * 60n;
+const UINT64_MAX = (1n << 64n) - 1n;
 const deploymentEnvironment = [
   "RPC_URL",
   "TREASURY",
@@ -46,7 +53,11 @@ function runJson(command, args) {
 }
 
 function decimal(value) {
-  return BigInt(value).toString();
+  // Foundry's human-readable uint output can append a bracketed SI hint,
+  // e.g. `2000000000000000000000000 [2e24]`. Only parse the exact leading
+  // integer so deployment finalization preserves the contract's full value.
+  const exactValue = String(value).trim().split(/\s+/, 1)[0];
+  return BigInt(exactValue).toString();
 }
 
 function normalizedAddress(value) {
@@ -64,29 +75,88 @@ function parseBroadcastDeployment(broadcast) {
   return { contractAddress: transaction.contractAddress, transactionHash };
 }
 
-function ensureProductionConstants() {
-  if (environment !== "production") return;
-  if (decimal(requiredEnv("PHASE2_ALLOCATION")) !== "2000000000000000000000000") throw new Error("Production allocation must be 2,000,000 MINI");
-  if (decimal(requiredEnv("PHASE2_START_PRICE_X18")) !== "3500000000000000") throw new Error("Production start price must be 0.003500 DOT/MINI");
-  if (decimal(requiredEnv("PHASE2_END_PRICE_X18")) !== "5500000000000000") throw new Error("Production end price must be 0.005500 DOT/MINI");
+function ensurePhase2Constants() {
+  if (BigInt(requiredEnv("PHASE2_ALLOCATION")) !== PHASE2_ALLOCATION) throw new Error("Phase II allocation must be 2,000,000 MINI");
+  if (BigInt(requiredEnv("PHASE2_START_PRICE_X18")) !== PHASE2_START_PRICE_X18) throw new Error("Phase II start price must be 0.003500 DOT/MINI");
+  if (BigInt(requiredEnv("PHASE2_END_PRICE_X18")) !== PHASE2_END_PRICE_X18) throw new Error("Phase II end price must be 0.005500 DOT/MINI");
   const start = BigInt(requiredEnv("PHASE2_START_TIMESTAMP"));
   const end = BigInt(requiredEnv("PHASE2_END_TIMESTAMP"));
-  if (end - start !== PRODUCTION_DURATION_SECONDS) throw new Error("Production Phase II duration must be exactly 7 days");
+  const expectedDuration = PHASE2_DURATION_SECONDS[environment];
+  if (start <= 0n || end <= start || end > UINT64_MAX) throw new Error("Phase II timestamps must be positive, increasing, and fit uint64");
+  if (end - start !== expectedDuration) throw new Error(`Phase II duration must be exactly ${expectedDuration} seconds for ${environment}`);
+}
+
+function assertExpectedChainId(rpcUrl) {
+  const expectedByEnvironment = { staging: "420420417", production: POLKADOT_HUB_MAINNET_CHAIN_ID };
+  const expectedChainId = decimal(requiredEnv("EXPECTED_CHAIN_ID"));
+  if (expectedChainId !== expectedByEnvironment[environment]) throw new Error(`EXPECTED_CHAIN_ID must be ${expectedByEnvironment[environment]} for ${environment}`);
+  const actualChainId = decimal(runText("cast", ["chain-id", "--rpc-url", rpcUrl]).split(/\s+/)[0]);
+  if (actualChainId !== expectedChainId) throw new Error(`Phase II deployment chain ID ${actualChainId} does not match EXPECTED_CHAIN_ID ${expectedChainId}`);
+  return actualChainId;
+}
+
+function assertProductionStartBuffer(rpcUrl) {
+  const latestBlock = runJson("cast", ["block", "latest", "--rpc-url", rpcUrl, "--json"]);
+  const latestTimestamp = BigInt(latestBlock.timestamp);
+  const start = BigInt(requiredEnv("PHASE2_START_TIMESTAMP"));
+  if (start < latestTimestamp + PRODUCTION_START_BUFFER_SECONDS) {
+    throw new Error("Production Phase II start time must be at least one hour after the latest mainnet block");
+  }
+}
+
+function rpcHost(rpcUrl) {
+  try {
+    const parsed = new URL(rpcUrl);
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password) throw new Error("unsafe URL");
+    return parsed.hostname.toLowerCase();
+  } catch {
+    throw new Error("Production RPC endpoints must be HTTPS URLs without embedded credentials");
+  }
 }
 
 async function deploy() {
   if (environment !== "staging" && environment !== "production") throw new Error("Deployment environment must be staging or production");
   for (const name of deploymentEnvironment) requiredEnv(name);
+  if (environment === "production" && !finalizeOnly && process.env.CONFIRM_MAINNET_DEPLOYMENT !== "DEPLOY_PRODUCTION_PHASE2") {
+    throw new Error("Set CONFIRM_MAINNET_DEPLOYMENT=DEPLOY_PRODUCTION_PHASE2 to authorize a production broadcast");
+  }
   if (!finalizeOnly) requiredEnv("PRIVATE_KEY");
-  ensureProductionConstants();
+  ensurePhase2Constants();
 
   const rpcUrl = requiredEnv("RPC_URL");
+  let chainId = assertExpectedChainId(rpcUrl);
+  const manifestPath = resolve(repositoryRoot, "deployments", `${environment}.json`);
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const configuredRpcs = manifest.source?.rpcHttpUrls;
+  if (!Array.isArray(configuredRpcs) || configuredRpcs.length === 0) throw new Error("No public RPC endpoints are configured for deployment verification");
+  if (environment === "staging" && !isConfiguredRpcUrl(rpcUrl, configuredRpcs)) throw new Error("RPC_URL must match a configured TestNet RPC in deployments/staging.json");
+  if (environment === "production") {
+    const configuredTreasury = manifest.source?.contractConfig?.treasury;
+    if (!configuredTreasury || normalizedAddress(requiredEnv("TREASURY")) !== normalizedAddress(configuredTreasury)) {
+      throw new Error("Production TREASURY must match the independently configured production treasury");
+    }
+  }
+
+  const publicRpcUrl = process.env.PUBLIC_RPC_URL?.trim();
+  if (environment === "production" && publicRpcUrl && !configuredRpcs.includes(publicRpcUrl)) {
+    throw new Error("PUBLIC_RPC_URL must already be approved in deployments/production.json");
+  }
+  const verificationRpcs = [...new Set([rpcUrl, ...configuredRpcs, ...(publicRpcUrl ? [publicRpcUrl] : [])])];
+  if (environment === "production") {
+    const verificationHosts = new Set(verificationRpcs.map(rpcHost));
+    if (verificationHosts.size < 2) throw new Error("Production deployment requires independent RPC endpoints on at least two hosts");
+    for (const verificationRpc of verificationRpcs) {
+      const verificationChainId = decimal(runText("cast", ["chain-id", "--rpc-url", verificationRpc]).split(/\s+/)[0]);
+      if (verificationChainId !== chainId) throw new Error(`Production verification RPC returned chain ID ${verificationChainId}; expected ${chainId}`);
+    }
+    if (!finalizeOnly) assertProductionStartBuffer(rpcUrl);
+  }
+
   if (!finalizeOnly) {
     run("forge", ["script", "script/DeployMiniGenesisCurve.s.sol", "--rpc-url", rpcUrl, "--broadcast"]);
   }
 
-  const chainId = decimal(runText("cast", ["chain-id", "--rpc-url", rpcUrl]).split(/\s+/)[0]);
-  if (chainId !== decimal(requiredEnv("EXPECTED_CHAIN_ID"))) throw new Error("Phase II deployment chain ID does not match EXPECTED_CHAIN_ID");
+  chainId = assertExpectedChainId(rpcUrl);
 
   const broadcastPath = resolve(repositoryRoot, "broadcast", "DeployMiniGenesisCurve.s.sol", chainId, "run-latest.json");
   let broadcast;
@@ -110,6 +180,12 @@ async function deploy() {
   const endPriceX18 = decimal(call("endPrice()(uint256)"));
   const startTime = decimal(call("startTime()(uint64)"));
   const endTime = decimal(call("endTime()(uint64)"));
+  const totalSoldMini = decimal(call("totalSoldMini()(uint256)"));
+  const totalRaisedDot = decimal(call("totalRaisedDot()(uint256)"));
+  const buyerCount = decimal(call("buyerCount()(uint256)"));
+  const remainingMini = decimal(call("remainingMini()(uint256)"));
+  const phase = decimal(call("phase()(uint8)"));
+  const spotPrice = decimal(call("spotPrice()(uint256)"));
 
   if (normalizedAddress(treasury) !== normalizedAddress(requiredEnv("TREASURY"))) throw new Error("Phase II deployment treasury does not match TREASURY");
   if (allocationMini !== decimal(requiredEnv("PHASE2_ALLOCATION"))) throw new Error("Phase II deployment allocation does not match PHASE2_ALLOCATION");
@@ -118,28 +194,66 @@ async function deploy() {
   if (startTime !== decimal(requiredEnv("PHASE2_START_TIMESTAMP"))) throw new Error("Phase II deployment start time does not match PHASE2_START_TIMESTAMP");
   if (endTime !== decimal(requiredEnv("PHASE2_END_TIMESTAMP"))) throw new Error("Phase II deployment end time does not match PHASE2_END_TIMESTAMP");
 
+  const latestBlock = runJson("cast", ["block", "latest", "--rpc-url", rpcUrl, "--json"]);
+  const latestTimestamp = BigInt(latestBlock.timestamp);
+  const expectedPhase = latestTimestamp < BigInt(startTime) ? "0" : latestTimestamp >= BigInt(endTime) ? "2" : "1";
+  if (environment === "production" && expectedPhase === "2") throw new Error("Production Genesis II deployment window has already ended");
+  if (totalSoldMini !== "0" || totalRaisedDot !== "0" || buyerCount !== "0") throw new Error("Genesis II initial sale totals are not zero");
+  if (remainingMini !== allocationMini) throw new Error("Genesis II initial remaining allocation is incorrect");
+  if (spotPrice !== startPriceX18) throw new Error("Genesis II initial spot price is incorrect");
+  if (phase !== expectedPhase) throw new Error("Genesis II initial phase does not match the current chain time");
+
   if (BigInt(endTime) <= BigInt(startTime) || BigInt(allocationMini) === 0n || BigInt(startPriceX18) === 0n || BigInt(endPriceX18) <= BigInt(startPriceX18)) {
     throw new Error("Phase II deployment parameters failed the economics gate");
   }
-  if (environment === "production") {
-    if (allocationMini !== "2000000000000000000000000" || startPriceX18 !== "3500000000000000" || endPriceX18 !== "5500000000000000") {
-      throw new Error("Phase II deployment parameters failed the production economics gate");
-    }
-    if (BigInt(endTime) - BigInt(startTime) !== PRODUCTION_DURATION_SECONDS) {
-      throw new Error("Phase II deployment duration failed the production seven-day gate");
+  let verifiedRpcCount = 0;
+  for (const verificationRpc of verificationRpcs) {
+    try {
+      const verificationChainId = decimal(runText("cast", ["chain-id", "--rpc-url", verificationRpc]).split(/\s+/)[0]);
+      if (verificationChainId !== chainId) throw Object.assign(new Error("Cross-RPC chain ID mismatch"), { verificationMismatch: true });
+      const verificationCode = runText("cast", ["code", contractAddress, "--rpc-url", verificationRpc]).split(/\s+/)[0];
+      if (!verificationCode || verificationCode === "0x") throw Object.assign(new Error("Cross-RPC contract bytecode is empty"), { verificationMismatch: true });
+      const verificationHash = runText("cast", ["keccak", verificationCode]).split(/\s+/)[0];
+      if (verificationHash.toLowerCase() !== runtimeCodeHash.toLowerCase()) throw Object.assign(new Error("Cross-RPC runtime code hash mismatch"), { verificationMismatch: true });
+      const verificationCall = (signature) => runText("cast", ["call", contractAddress, signature, "--rpc-url", verificationRpc]);
+      const verificationTreasury = verificationCall("treasury()(address)").trim();
+      const verificationAllocation = decimal(verificationCall("allocation()(uint256)"));
+      const verificationStartPrice = decimal(verificationCall("startPrice()(uint256)"));
+      const verificationEndPrice = decimal(verificationCall("endPrice()(uint256)"));
+      const verificationStartTime = decimal(verificationCall("startTime()(uint64)"));
+      const verificationEndTime = decimal(verificationCall("endTime()(uint64)"));
+      if (normalizedAddress(verificationTreasury) !== normalizedAddress(treasury)
+        || verificationAllocation !== allocationMini
+        || verificationStartPrice !== startPriceX18
+        || verificationEndPrice !== endPriceX18
+        || verificationStartTime !== startTime
+        || verificationEndTime !== endTime) {
+        throw Object.assign(new Error("Cross-RPC immutable getter mismatch"), { verificationMismatch: true });
+      }
+      verifiedRpcCount += 1;
+      console.log(`CROSS_RPC_VERIFIED=${verificationRpc}`);
+    } catch (error) {
+      if (error?.verificationMismatch) throw error;
+      console.warn(`Cross-RPC verification unavailable: ${verificationRpc}`);
     }
   }
+  if (verifiedRpcCount === 0) throw new Error("No RPC endpoint independently verified the deployed Genesis II contract");
+  if (environment === "production" && verifiedRpcCount !== verificationRpcs.length) {
+    throw new Error("Every independent production RPC must verify the deployed Genesis II contract");
+  }
+  if (verifiedRpcCount < verificationRpcs.length) console.warn("RPC_REDUNDANCY=DEGRADED");
+  else console.log("RPC_REDUNDANCY=PASS");
 
-  const manifestPath = resolve(repositoryRoot, "deployments", `${environment}.json`);
-  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   manifest.genesis ??= { phases: {} };
   manifest.genesis.phases ??= {};
   manifest.genesis.phases.phase1 ??= { status: "ended", mechanism: "stream", finalReferencePriceX18: "89460000000000" };
+  const previousDeployment = manifest.genesis.phases.phase2?.previousDeployment;
   const phase2WorkItems = manifest.genesis.phases.phase2?.workItems;
   manifest.genesis.phases.phase2 = {
     status: "active",
     mechanism: "linear-bonding-curve",
     contract: contractAddress,
+    treasury,
     deploymentBlock,
     runtimeCodeHash,
     allocationMini,
@@ -147,6 +261,7 @@ async function deploy() {
     endPriceX18,
     startTime,
     endTime,
+    ...(previousDeployment ? { previousDeployment } : {}),
     ...(phase2WorkItems ? { workItems: phase2WorkItems } : {}),
   };
   manifest.genesis.phases.phase3 ??= { status: "locked" };
@@ -157,7 +272,6 @@ async function deploy() {
   manifest.source.nativeDecimals = 10;
   manifest.source.evmNativeDecimals = 18;
   manifest.source.ss58Prefix = 0;
-  const publicRpcUrl = process.env.PUBLIC_RPC_URL?.trim();
   if (publicRpcUrl) manifest.source.rpcHttpUrls = [publicRpcUrl];
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 

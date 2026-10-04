@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { PublicClient } from "viem";
+import type { Hash, PublicClient } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
 import { getPhase2Contract, readCurveDynamic, type GenesisCurveDynamic } from "./curve-reads";
 import type { Eip1193Provider } from "../wallet/eip1193";
@@ -19,11 +19,11 @@ type Props = {
   publicClient: PublicClient | null;
   session: WalletSession;
   provider: Eip1193Provider | null;
-  walletReady: boolean;
   correctChain: boolean;
   demoMode?: boolean;
   onConnect: () => void;
-  onRefresh: () => void;
+  onReconcile: () => Promise<void>;
+  onPurchaseSuccess: (amount: string, transactionHash: Hash) => void;
 };
 
 function phase2Snapshot(manifest: DeploymentManifest | null): GenesisCurveDynamic | null {
@@ -57,7 +57,7 @@ export function phase2Status(dynamic: GenesisCurveDynamic | null, manifest: Depl
   return "WAITING";
 }
 
-export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChange, manifest, publicClient, session, provider, walletReady, correctChain, demoMode = false, onConnect, onRefresh }: Props) {
+export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChange, manifest, publicClient, session, provider, correctChain, demoMode = false, onConnect, onReconcile, onPurchaseSuccess }: Props) {
   const [dynamic, setDynamic] = useState<GenesisCurveDynamic | null>(null);
   const [error, setError] = useState<string | null>(null);
   const snapshot = useMemo(() => phase2Snapshot(manifest), [manifest]);
@@ -88,8 +88,8 @@ export function GenesisStages({ language, stage, refreshKey, onPhase2StatusChang
 
   return <main className="genesis-stages">
     {error && <p className="genesis-data-note" role="status">{error}</p>}
-    {stage === "phase1" && <GenesisPhase1 language={language} workItems={manifest?.genesis?.phases.phase1.workItems ?? manifest?.genesis?.phases.phase1.achievements} />}
-    {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} walletReady={walletReady} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onRefresh={() => { onRefresh(); void refresh(); }} />}
+    {stage === "phase1" && <GenesisPhase1 language={language} workItems={manifest?.genesis?.phases.phase1.workItems ?? manifest?.genesis?.phases.phase1.achievements} researchHistory={manifest?.genesis?.phases.phase1.researchHistory} />}
+    {stage === "phase2" && <GenesisPhase2 language={language} manifest={manifest} publicClient={publicClient} session={session} provider={provider} correctChain={correctChain} dynamic={dynamic} demoMode={demoMode} onConnect={onConnect} onReconcile={async () => { await onReconcile(); await refresh(); }} onPurchaseSuccess={onPurchaseSuccess} />}
     {stage === "phase3" && <GenesisPhase3 language={language} />}
   </main>;
 }

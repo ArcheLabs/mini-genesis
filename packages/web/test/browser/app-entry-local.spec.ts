@@ -59,6 +59,13 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await expect(page.locator('[data-testid="phase2-holder-count"]')).toHaveText("0");
   await expect(page.locator('[data-testid="phase2-time-remaining"]')).not.toHaveText("—");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator(".curve-title-row h2")).toHaveCSS("font-weight", "500");
+  const titleAlignment = await page.locator(".purchase-panel .section-heading").evaluate((heading) => {
+    const icon = heading.querySelector(".section-heading-icon")!.getBoundingClientRect();
+    const text = heading.querySelector(".section-heading-copy")!.getBoundingClientRect();
+    return icon.right <= text.left;
+  });
+  expect(titleAlignment).toBe(true);
   const lightBackground = await page.locator("html").evaluate((element) => getComputedStyle(element).getPropertyValue("--bg").trim());
   await page.getByRole("button", { name: "Switch appearance" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -73,19 +80,56 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   const rulesHeading = page.getByRole("heading", { name: "Rules" });
   await rulesHeading.scrollIntoViewIfNeeded();
   await expect(rulesHeading).toBeVisible();
+  await expect(rulesHeading).toHaveCSS("font-size", "20px");
+  await expect(page.locator(".phase2-work-items .section-heading h2")).toHaveCSS("font-size", "20px");
+  const taskLayout = await page.locator(".phase2-work-items .work-item-tasks li").first().evaluate((row) => {
+    const icon = row.querySelector(".work-item-task-status")!.getBoundingClientRect();
+    const taskTitle = row.querySelector(".work-item-task-title")!;
+    const taskSummary = row.querySelector(".work-item-task-summary")!;
+    const label = taskTitle.getBoundingClientRect();
+    const workItem = row.closest(".work-item")!;
+    return {
+      iconBeforeLabel: icon.right <= label.left,
+      visibleStatusText: row.querySelector(".work-item-task-status")!.textContent?.trim(),
+      taskFont: getComputedStyle(taskTitle).fontSize,
+      summaryFont: getComputedStyle(taskSummary).fontSize,
+      taskColor: getComputedStyle(taskTitle).color,
+      taskSummaryColor: getComputedStyle(taskSummary).color,
+      textColor: getComputedStyle(workItem.querySelector(".work-item-head strong")!).color,
+    };
+  });
+  expect(taskLayout).toMatchObject({ iconBeforeLabel: true, visibleStatusText: "", taskFont: "16px", summaryFont: "14px" });
+  expect(taskLayout.taskColor).toBe(taskLayout.textColor);
+  expect(taskLayout.taskSummaryColor).toBe(taskLayout.textColor);
+  const phase2Typography = await page.evaluate(() => ({
+    sectionHeading: getComputedStyle(document.querySelector(".phase2-work-items > .section-heading h2")!).fontSize,
+    workItemTitle: getComputedStyle(document.querySelector(".phase2-work-items .work-item-head strong")!).fontSize,
+    taskTitle: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-title")!).fontSize,
+    workItemSummary: getComputedStyle(document.querySelector(".phase2-work-items .work-item > p")!).fontSize,
+    taskSummary: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-summary")!).fontSize,
+    taskSummaryColor: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-summary")!).color,
+    taskTitleColor: getComputedStyle(document.querySelector(".phase2-work-items .work-item-task-title")!).color,
+    workItemGap: getComputedStyle(document.querySelector(".phase2-work-items .work-item-grid")!).rowGap,
+    taskGap: getComputedStyle(document.querySelector(".phase2-work-items .work-item-tasks")!).rowGap,
+    sectionMarginTop: getComputedStyle(document.querySelector(".phase2-work-items")!).marginTop,
+  }));
+  await expect(page.locator(".phase2-work-items .work-item-head .status-badge").first()).toHaveCSS("border-top-style", "solid");
   await expect(page.locator(".reserve-banner")).toHaveCount(0);
   await expect(page.getByText("DOT raised", { exact: true })).toHaveCount(0);
   await expect(page.getByText("MINI distributed", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("MINI remaining", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("MINI sold", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Raised", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("My MINI", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("MINI remaining", { exact: true })).toBeVisible();
 
   const curve = page.locator('[data-testid="bonding-curve-interaction"]');
   await expect(page.locator('[data-testid="curve-current-point"]')).toBeVisible();
-  await expect(page.getByLabel("DOT budget")).toHaveValue("1.00");
+  await expect(page.getByLabel("MINI budget")).toHaveValue("1.00");
   await expect(page.getByTestId("phase2-mini-quote")).toContainText("MINI");
   await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
-  await page.getByRole("button", { name: "20 DOT", exact: true }).click();
-  await expect(page.getByLabel("DOT budget")).toHaveValue("20");
-  await expect(page.getByRole("button", { name: "1 DOT", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "20 MINI", exact: true }).click();
+  await expect(page.getByLabel("MINI budget")).toHaveValue("20");
+  await expect(page.getByRole("button", { name: "1 MINI", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
 
   const curveBox = await curve.boundingBox();
@@ -105,7 +149,7 @@ test("Genesis stages route from the URL and the first viewport centers the live 
   await page.mouse.move(center.x, center.y);
   await expect(page.getByTestId("curve-tooltip")).toContainText("50.00%");
   await expect(page.getByTestId("curve-tooltip")).toContainText("1,000,000 MINI");
-  await expect(page.getByTestId("curve-tooltip")).toContainText("0.004500 DOT / MINI");
+  await expect(page.getByTestId("curve-tooltip")).toContainText("0.004500 MINI / MINI");
 
   await expect(page.locator(".genesis-data-note")).toHaveCount(0);
   await expect.poll(() => readAddresses.length).toBeGreaterThanOrEqual(10);
@@ -114,6 +158,16 @@ test("Genesis stages route from the URL and the first viewport centers the live 
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await expect(page.locator(".genesis-rules .section-heading h2")).toHaveCSS("font-size", "18px");
+  await expect(page.locator(".phase2-work-items .section-heading h2")).toHaveCSS("font-size", "20px");
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.locator(".phase2-work-items").scrollIntoViewIfNeeded();
+  const taskOverflow390 = await page.locator(".work-item-tasks li").evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
+  expect(taskOverflow390).toBe(false);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
   const mobileCurve = await curve.boundingBox();
   const mobilePurchase = await page.locator(".purchase-panel").boundingBox();
   expect(mobileCurve && mobilePurchase && mobilePurchase.x === mobileCurve.x && mobilePurchase.y > mobileCurve.y).toBe(true);
@@ -122,22 +176,96 @@ test("Genesis stages route from the URL and the first viewport centers the live 
 
   await page.setViewportSize({ width: 430, height: 932 });
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
+  const taskOverflow430 = await page.locator(".work-item-tasks li").evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
+  expect(taskOverflow430).toBe(false);
   await expect(page.locator('[data-testid="stage-nav-phase2"]')).toBeVisible();
   await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
 
   await page.goto("/?network=local#/genesis/i");
   await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
   await expect(page.locator(".phase1-closing-basis > span")).toContainText("Closing basis");
   await expect(page.locator(".phase1-panel")).toContainText("0.00008946 DOT / MINI");
   await expect(page.getByText("Final reference price", { exact: true })).toHaveCount(0);
+  const phase1Hierarchy = await page.locator(".phase1-work-items .work-item").first().evaluate((item) => {
+    const summary = item.querySelector("p")!.getBoundingClientRect();
+    const tasks = item.querySelector(".work-item-tasks")!.getBoundingClientRect();
+    const status = item.querySelector(".work-item-head .status-badge")!.getBoundingClientRect();
+    const heading = item.querySelector(".work-item-head strong")!.getBoundingClientRect();
+    return { tasksBelowSummary: tasks.top >= summary.bottom, statusToRight: status.left >= heading.right };
+  });
+  expect(phase1Hierarchy).toEqual({ tasksBelowSummary: true, statusToRight: true });
+  const phase1Typography = await page.evaluate(() => ({
+    sectionHeading: getComputedStyle(document.querySelector(".phase1-work-items > .section-heading h2")!).fontSize,
+    workItemTitle: getComputedStyle(document.querySelector(".phase1-work-items .work-item-head strong")!).fontSize,
+    taskTitle: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-title")!).fontSize,
+    workItemSummary: getComputedStyle(document.querySelector(".phase1-work-items .work-item > p")!).fontSize,
+    taskSummary: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-summary")!).fontSize,
+    taskSummaryColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-summary")!).color,
+    taskTitleColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-title")!).color,
+    workItemGap: getComputedStyle(document.querySelector(".phase1-work-items .work-item-grid")!).rowGap,
+    taskGap: getComputedStyle(document.querySelector(".phase1-work-items .work-item-tasks")!).rowGap,
+    sectionMarginTop: getComputedStyle(document.querySelector(".phase1-work-items")!).marginTop,
+    cancelledBadgeColor: getComputedStyle(document.querySelector(".phase1-work-items .status-badge-discontinued")!).color,
+    cancelledTaskColor: getComputedStyle(document.querySelector(".phase1-work-items .work-item-task-status-discontinued")!).color,
+    protocolColor: (() => {
+      const probe = document.createElement("span");
+      probe.style.color = "var(--protocol)";
+      document.body.append(probe);
+      const color = getComputedStyle(probe).color;
+      probe.remove();
+      return color;
+    })(),
+  }));
+  expect(phase1Typography).toMatchObject({
+    sectionHeading: "20px",
+    workItemTitle: "20px",
+    taskTitle: "16px",
+    workItemSummary: "14px",
+    taskSummary: "14px",
+    workItemGap: "16px",
+    taskGap: "12px",
+  });
+  expect(phase1Typography.taskSummaryColor).toBe(phase1Typography.taskTitleColor);
+  expect(phase2Typography).toMatchObject({
+    sectionHeading: phase1Typography.sectionHeading,
+    workItemTitle: phase1Typography.workItemTitle,
+    taskTitle: phase1Typography.taskTitle,
+    workItemSummary: phase1Typography.workItemSummary,
+    taskSummary: phase1Typography.taskSummary,
+    taskSummaryColor: phase1Typography.taskSummaryColor,
+    taskTitleColor: phase1Typography.taskTitleColor,
+    workItemGap: phase1Typography.workItemGap,
+    taskGap: phase1Typography.taskGap,
+  });
+  expect(phase1Typography.cancelledBadgeColor).toBe(phase1Typography.protocolColor);
+  expect(phase1Typography.cancelledTaskColor).toBe(phase1Typography.protocolColor);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  const phase1TaskOverflow390 = await page.locator(".phase1-work-items .work-item-tasks li").evaluateAll((rows) => rows.some((row) => row.scrollWidth > row.clientWidth));
+  expect(phase1TaskOverflow390).toBe(false);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
+  const phase1DesktopType = await page.locator(".phase1-work-items .work-item-task-title").first().evaluate((element) => getComputedStyle(element).fontSize);
+  expect(phase1DesktopType).toBe("16px");
+  await page.setViewportSize({ width: 430, height: 932 });
   expect(readAddresses.every((address) => address === phase2Address)).toBe(true);
   await page.reload();
   await expect(page.locator("h1.sr-only")).toHaveText("Genesis I");
 
   await page.goto("/?network=local#/genesis/iii");
-  await expect(page.locator("h1.sr-only")).toHaveText("Genesis III");
+  await expect(page.getByRole("heading", { name: "Genesis III" })).toBeVisible();
   await expect(page.getByText("Liquidity Accumulation", { exact: true })).toBeVisible();
-  await expect(page.locator('[data-testid="genesis-phase3"]')).not.toContainText("LOCKED");
+  await expect(page.locator('[data-testid="genesis-phase3"]')).toHaveAttribute("data-phase-state", "locked");
+  await expect(page.locator('[data-testid="genesis-phase3"] button, [data-testid="genesis-phase3"] a')).toHaveCount(0);
+  const phase3Copy = await page.locator(".phase3-copy").boundingBox();
+  expect(phase3Copy?.width).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Switch appearance" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(430);
 
   await page.goto("/?network=local#/rules");
   await expect(page).toHaveURL(/\?network=local#\/genesis\/ii$/);
@@ -159,7 +287,7 @@ test("stage URL survives reload, browser history, and a new tab; invalid network
 
   const copiedRoute = await page.context().newPage();
   await copiedRoute.goto("/?network=local#/genesis/iii");
-  await expect(copiedRoute.locator("h1.sr-only")).toHaveText("Genesis III");
+  await expect(copiedRoute.getByRole("heading", { name: "Genesis III" })).toBeVisible();
   await copiedRoute.close();
 
   await page.goto("/?network=tesnet#/genesis/ii");

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { formatUnits, type PublicClient } from "viem";
+import { formatUnits, type Hash, type PublicClient } from "viem";
 import type { DeploymentManifest } from "../config/manifest";
-import { buyExactMini } from "./curve-contribution";
+import { buyExactMini, waitForTransactionFinality } from "./curve-contribution";
 import { buyExactMiniNative } from "./curve-contribution-native";
 import { curvePriceAt, curveQuote, maxMiniForBudget, parseDotBudget, productionCurve, type CurveParameters } from "./curve";
 import { getPhase2Contract, type GenesisCurveDynamic } from "./curve-reads";
@@ -9,11 +9,14 @@ import { walletClient } from "../wallet/wallet-client";
 import type { Eip1193Provider } from "../wallet/eip1193";
 import type { WalletSession } from "../wallet/types";
 import { GenesisWorkItems } from "./GenesisWorkItems";
-import { genesisPhase2WorkItems } from "./work-items";
+import { genesisPhase2WorkItems, mergeGenesisWorkItems } from "./work-items";
 import { BasisInfo } from "./BasisInfo";
 import { BondingCurveChart } from "./BondingCurveChart";
 import { GenesisRules } from "./GenesisRules";
 import { normalizePurchaseError, purchaseErrorDiagnostics } from "./purchase-error";
+import { SectionHeading } from "../components/SectionHeading";
+import { MiniIcon } from "../components/SectionIcons";
+import { formatTokenAmount } from "../assets/format";
 
 type Language = "zh-CN" | "en";
 type Props = {
@@ -22,12 +25,12 @@ type Props = {
   publicClient: PublicClient | null;
   session: WalletSession;
   provider: Eip1193Provider | null;
-  walletReady: boolean;
   correctChain: boolean;
   dynamic: GenesisCurveDynamic | null;
   demoMode: boolean;
   onConnect: () => void;
-  onRefresh: () => void;
+  onReconcile: () => Promise<void>;
+  onPurchaseSuccess: (amount: string, transactionHash: Hash) => void;
 };
 
 const NATIVE_TO_EVM_RATIO = 100_000_000n;
@@ -52,7 +55,49 @@ function countdown(seconds: bigint, zh: boolean): string {
   const days = seconds / 86_400n;
   const hours = seconds % 86_400n / 3_600n;
   const minutes = seconds % 3_600n / 60n;
-  return zh ? `${days ? `${days} 天 ` : ""}${hours} 小时` : days ? `${days}d ${hours}h` : `${hours}h ${minutes}m`;
+  if (zh) {
+    const parts: string[] = [];
+    if (days > 0n) parts.push(`${days} 天`);
+    if (hours > 0n) parts.push(`${hours} 小时`);
+    if (minutes > 0n || parts.length === 0) parts.push(`${minutes || 1n} 分钟`);
+    return parts.join(" ");
+  }
+  return days ? `${days}d ${hours}h` : `${hours}h ${minutes}m`;
+}
+
+type PurchaseWalletState = "disconnected" | "preparing" | "ready" | "unavailable";
+type PurchaseStep = "preparing" | "simulating" | "checking_mapping" | "mapping_required" | "mapping_submitted" | "mapping_finalized" | "verifying_mapping" | "awaiting_signature" | "submitted" | "included" | "finalizing" | "finalized" | "verifying_event" | "success" | "failed";
+
+function purchaseProgressCopy(step: PurchaseStep, zh: boolean): string {
+  const messages: Record<PurchaseStep, [string, string]> = {
+    preparing: ["正在准备交易…", "Preparing transaction…"],
+    simulating: ["正在检查交易是否可执行…", "Checking that the transaction can execute…"],
+    checking_mapping: ["正在检查账户映射…", "Checking account mapping…"],
+    mapping_required: ["请在钱包中确认账户设置…", "Confirm account setup in your wallet…"],
+    mapping_submitted: ["账户设置已提交，等待上链…", "Account setup submitted, waiting for inclusion…"],
+    mapping_finalized: ["账户设置已确认…", "Account setup confirmed…"],
+    verifying_mapping: ["正在验证账户设置…", "Verifying account setup…"],
+    awaiting_signature: ["请在钱包中确认交易…", "Confirm the transaction in your wallet…"],
+    submitted: ["交易已提交，等待上链…", "Transaction submitted, waiting for inclusion…"],
+    included: ["交易已上链，正在等待最终确认…", "Transaction included, waiting for finality…"],
+    finalizing: ["交易仍在等待最终确认…", "Still waiting for transaction finality…"],
+    finalized: ["交易已确认，正在核对购买记录…", "Transaction finalized, verifying purchase…"],
+    verifying_event: ["正在核对 MINI 到账记录…", "Verifying the MINI purchase record…"],
+    success: ["购买完成…", "Purchase complete…"],
+    failed: ["交易未能完成…", "The transaction could not be completed…"],
+  };
+  return messages[step][zh ? 0 : 1];
+}
+
+function purchaseWalletState(session: WalletSession): PurchaseWalletState {
+  if (!session) return "disconnected";
+  if (session.kind === "evm") return session.provider ? "ready" : "preparing";
+
+  if (session.balanceStatus === "error" || session.contractIdentityStatus === "error") return "unavailable";
+  if (!session.api || !session.accounts.some((account) => account.address === session.selectedAccountAddress)
+    || (session.balanceStatus !== "ready" && session.balanceStatus !== "refreshing")
+    || session.contractIdentityStatus !== "verified") return "preparing";
+  return "ready";
 }
 
 function errorText(code: string, zh: boolean): string {
@@ -69,10 +114,11 @@ function errorText(code: string, zh: boolean): string {
   return localized ? localized[zh ? 0 : 1] : code;
 }
 
-export function GenesisPhase2({ language, manifest, publicClient, session, provider, walletReady, correctChain, dynamic, demoMode, onConnect, onRefresh }: Props) {
+export function GenesisPhase2({ language, manifest, publicClient, session, provider, correctChain, dynamic, demoMode, onConnect, onReconcile, onPurchaseSuccess }: Props) {
   const [clock, setClock] = useState(() => Math.floor(Date.now() / 1000));
   const [budget, setBudget] = useState("1.00");
   const [busy, setBusy] = useState(false);
+  const [purchaseStep, setPurchaseStep] = useState<PurchaseStep>("preparing");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const zh = language === "zh-CN";
@@ -83,6 +129,7 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
     endPrice: dynamic?.endPrice ?? productionCurve.endPrice,
   }), [dynamic]);
   const sold = dynamic?.totalSoldMini ?? 0n;
+  const remainingMini = dynamic ? (dynamic.allocation > dynamic.totalSoldMini ? dynamic.allocation - dynamic.totalSoldMini : 0n) : null;
   const currentBasis = dynamic?.spotPrice ?? curvePriceAt(parameters, sold > parameters.allocation ? parameters.allocation : sold);
   const budgetWei = useMemo(() => {
     try {
@@ -100,16 +147,14 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
   const remaining = dynamic ? (waiting ? dynamic.startTime - BigInt(clock) : phase2Status === "Active" ? dynamic.endTime - BigInt(clock) : 0n) : 0n;
   const purchaseEnabled = Boolean(dynamic?.phase === 1 && contract && !ended);
   const configuredWorkItems = manifest?.genesis?.phases.phase2?.workItems ?? [];
-  const workItems = useMemo(() => genesisPhase2WorkItems.map((item) => {
-    const configured = configuredWorkItems.find((candidate) => candidate.id === item.id);
-    return configured ? { ...item, status: configured.status, tasks: configured.tasks } : item;
-  }), [configuredWorkItems]);
-  const nativeSymbol = "DOT";
+  const workItems = useMemo(() => mergeGenesisWorkItems(genesisPhase2WorkItems, configuredWorkItems), [configuredWorkItems]);
+  const nativeSymbol = manifest?.source.currencySymbol ?? "DOT";
   const balanceLabel = (() => {
     if (!session || session.balance === null) return "—";
     const decimals = session.kind === "polkadot" ? manifest?.source.nativeDecimals ?? 10 : manifest?.evmNativeDecimals ?? 18;
     return Number(formatUnits(session.balance, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 });
   })();
+  const walletState = purchaseWalletState(session);
 
   useEffect(() => {
     const interval = window.setInterval(() => setClock(Math.floor(Date.now() / 1000)), 30_000);
@@ -119,7 +164,13 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
   const submit = async () => {
     setError(null);
     setMessage(null);
-    if (!session || !walletReady) { onConnect(); return; }
+    if (!session) { onConnect(); return; }
+    if (walletState !== "ready") {
+      setError(walletState === "preparing"
+        ? (zh ? "钱包仍在准备中，请稍后重试。" : "The wallet is still preparing. Please try again shortly.")
+        : (zh ? "钱包暂不可用于购买，请检查上方提示后重试。" : "The wallet is currently unavailable for purchases. Check the message above and try again."));
+      return;
+    }
     if (!manifest || !contract) { setError(errorText("CONFIGURATION_MISMATCH", zh)); return; }
     if (!dynamic || dynamic.phase !== 1) { setError(zh ? "当前阶段暂不接受购买。" : "Purchases are not active right now."); return; }
     if (affordableMini === 0n || quoteCost === 0n || budgetWei === 0n) { setError(zh ? "该预算不足以购买 MINI。" : "This budget is too small to acquire MINI."); return; }
@@ -129,21 +180,50 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
       if (balanceInEvmUnits < budgetWei) { setError(errorText("INSUFFICIENT_BALANCE", zh)); return; }
     }
 
+    setPurchaseStep("preparing");
     setBusy(true);
     try {
+      let finalized = true;
+      let evmBlockNumber: bigint | null = null;
+      let transactionHash: Hash | null = null;
+      let purchasedMini = affordableMini;
       if (session.kind === "evm") {
         if (!provider || !publicClient) throw new Error("WRONG_CHAIN");
         // The user's displayed budget is both maxDotCost and msg.value.
-        await buyExactMini(publicClient, walletClient(provider, manifest), manifest, session.address, contract, affordableMini, budgetWei);
+        const result = await buyExactMini(publicClient, walletClient(provider, manifest), manifest, session.address, contract, affordableMini, budgetWei, (update) => setPurchaseStep(update.state));
+        finalized = result.finalized;
+        evmBlockNumber = result.blockNumber;
+        transactionHash = result.hash;
+        purchasedMini = result.miniAmount;
       } else {
         if (!session.api) throw new Error("CONFIGURATION_MISMATCH");
         const selected = session.accounts.find((item) => item.address === session.selectedAccountAddress);
         if (!selected) throw new Error("SUBSTRATE_ACCOUNT_NOT_SELECTED");
-        await buyExactMiniNative(session.api, selected.signer, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei);
+        const result = await buyExactMiniNative(session.api, selected.signer, session.selectedAccountAddress, manifest, contract, affordableMini, budgetWei, (update) => setPurchaseStep(update.state));
+        transactionHash = result.hash;
+        purchasedMini = result.miniAmount;
       }
       setBudget("");
-      setMessage(zh ? `已获得约 ${formatMini(affordableMini)} MINI。` : `Received approximately ${formatMini(affordableMini)} MINI.`);
-      onRefresh();
+      const amount = formatMini(purchasedMini);
+      const received = zh ? `已获得 ${amount} MINI。` : `Received ${amount} MINI.`;
+      try { await onReconcile(); } catch { /* Keep the included transaction result if a balance refresh fails. */ }
+      setMessage(finalized ? received : (zh ? `交易已上链，正在等待最终确认。${amount} MINI` : `Transaction included; waiting for finality. ${amount} MINI`));
+      if (finalized && transactionHash) {
+        setPurchaseStep("success");
+        onPurchaseSuccess(amount, transactionHash);
+      }
+      if (!finalized && publicClient && evmBlockNumber !== null) {
+        setPurchaseStep("finalizing");
+        const confirmed = await waitForTransactionFinality(publicClient, evmBlockNumber, 300_000);
+        if (confirmed) {
+          try { await onReconcile(); } catch { /* Preserve the included purchase result if refresh fails. */ }
+          setMessage(received);
+          if (transactionHash) {
+            setPurchaseStep("success");
+            onPurchaseSuccess(amount, transactionHash);
+          }
+        }
+      }
     } catch (reason) {
       if (import.meta.env.DEV || manifest.environment === "local") console.error("Genesis II purchase diagnostic", purchaseErrorDiagnostics(reason));
       const code = normalizePurchaseError(reason);
@@ -159,40 +239,45 @@ export function GenesisPhase2({ language, manifest, publicClient, session, provi
     <h1 className="sr-only">Genesis II</h1>
     <header className="phase2-heading">
       <div className="phase2-price-block">
-        <span>{zh ? "当前购入基准" : "Current acquisition basis"} <BasisInfo kind="current" language={language} /></span>
-        <strong data-testid="phase2-current-basis">{formatBasis(currentBasis)} <small>DOT / MINI</small></strong>
-      </div>
-      <div className="phase2-facts" aria-label={zh ? "Genesis II 状态" : "Genesis II status"}>
-        {/* UI Holders currently maps to buyerCount. Transferability can make these differ later. */}
-        <div><strong data-testid="phase2-holder-count">{dynamic?.buyerCount.toLocaleString() ?? "—"}</strong><span>{zh ? "参与者" : "Holders"}</span></div>
-        <div><strong data-testid="phase2-time-remaining">{dynamic ? countdown(remaining, zh) : "—"}</strong><span>{timeLabel}</span></div>
+        <span>{zh ? "当前购入基准" : "Current acquisition basis"} <BasisInfo kind="current" language={language} nativeSymbol={nativeSymbol} /></span>
+        <strong data-testid="phase2-current-basis">{formatBasis(currentBasis)} <small>{nativeSymbol} / MINI</small></strong>
       </div>
     </header>
 
     {ended && <p className="campaign-closed" role="status">{zh ? "购买已关闭" : "Purchases are closed"}</p>}
 
     <div className="phase2-trade-layout">
-      <BondingCurveChart allocation={parameters.allocation} sold={sold} startBasis={parameters.startPrice} endBasis={parameters.endPrice} currentBasis={currentBasis} language={language} />
-      {ended ? <section className="curve-purchase purchase-panel purchase-closed"><h2>{zh ? "获得 MINI" : "Get MINI"}</h2><p>{zh ? "当前阶段已结束。" : "This stage has ended."}</p></section> : <section className="curve-purchase purchase-panel" aria-label={zh ? "获得 MINI" : "Get MINI"}>
-        <h2>{zh ? "获得 MINI" : "Get MINI"}</h2>
-        <label className="budget-label" htmlFor="phase2-dot-budget">{zh ? "支付" : "Pay"}</label>
+      <div className="phase2-market-column">
+        <BondingCurveChart allocation={parameters.allocation} sold={sold} startBasis={parameters.startPrice} endBasis={parameters.endPrice} currentBasis={currentBasis} language={language} nativeSymbol={nativeSymbol} />
+        <div className="phase2-facts" aria-label={zh ? "Genesis II 状态" : "Genesis II status"}>
+          <div><strong data-testid="phase2-holder-count">{dynamic?.buyerCount.toLocaleString() ?? "—"}</strong><span>{zh ? "参与者" : "Holders"}</span></div>
+          <div><strong data-testid="phase2-remaining-mini">{remainingMini === null ? "—" : `${formatTokenAmount(remainingMini)} MINI`}</strong><span>{zh ? "剩余 MINI" : "MINI remaining"}</span></div>
+          <div><strong data-testid="phase2-time-remaining">{dynamic ? countdown(remaining, zh) : "—"}</strong><span>{timeLabel}</span></div>
+        </div>
+      </div>
+      {ended ? <section className="curve-purchase purchase-panel purchase-closed"><SectionHeading size="compact" icon={<MiniIcon />}>{zh ? "获得 MINI" : "Get MINI"}</SectionHeading><p>{zh ? "当前阶段已结束。" : "This stage has ended."}</p></section> : <section className={`curve-purchase purchase-panel${busy ? " is-processing" : ""}`} aria-label={zh ? "获得 MINI" : "Get MINI"} aria-busy={busy}>
+        <SectionHeading size="compact" icon={<MiniIcon />}>{zh ? "获得 MINI" : "Get MINI"}</SectionHeading>
+        <label className="budget-label" htmlFor="phase2-native-budget">{zh ? "支付" : "Pay"}</label>
         <div className="budget-input-wrap">
-          <input id="phase2-dot-budget" aria-label={zh ? "支付 DOT 数量" : "DOT budget"} inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="0.00" />
+          <input id="phase2-native-budget" aria-label={zh ? `支付 ${nativeSymbol} 数量` : `${nativeSymbol} budget`} inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="0.00" disabled={busy} />
           <span>{nativeSymbol}</span>
         </div>
         <p className="purchase-balance" data-testid="phase2-wallet-balance">{zh ? "余额" : "Balance"} {balanceLabel} {nativeSymbol}</p>
+        {session?.kind === "polkadot" && session.balanceStatus === "error" && <p className="purchase-message error" role="status">{zh ? "暂时无法读取钱包余额，请稍后刷新或重新连接钱包。" : "Wallet balance could not be loaded. Refresh or reconnect the wallet and try again."}</p>}
+        {session?.kind === "polkadot" && session.contractIdentityStatus === "error" && <p className="purchase-message error" role="status">{zh ? "无法验证当前 Genesis 合约，请稍后重试。" : "The Genesis contract could not be verified. Please try again shortly."}</p>}
         <div className="budget-presets" aria-label={zh ? "快捷金额" : "Quick amounts"}>
-          {["1", "5", "20"].map((value) => <button key={value} type="button" className={budget === value || budget === `${value}.00` ? "selected" : ""} onClick={() => setBudget(value)}>{value} {nativeSymbol}</button>)}
+          {["1", "5", "20"].map((value) => <button key={value} type="button" disabled={busy} className={budget === value || budget === `${value}.00` ? "selected" : ""} onClick={() => setBudget(value)}>{value} {nativeSymbol}</button>)}
         </div>
         <div className="purchase-receive">
           <span>{zh ? "你将获得" : "You receive"}</span>
           <strong data-testid="phase2-mini-quote">≈ {formatMini(affordableMini)} MINI</strong>
         </div>
-        <button className="submit-button" type="button" disabled={busy || !purchaseEnabled || affordableMini === 0n} onClick={() => void submit()}>
-          {busy ? (zh ? "处理中…" : "Processing…") : session && walletReady ? (zh ? "获得 MINI" : "Get MINI") : (zh ? "连接钱包" : "Connect wallet")}
+        <button className="submit-button" type="button" disabled={busy || !purchaseEnabled || affordableMini === 0n || (walletState !== "disconnected" && walletState !== "ready")} onClick={() => void submit()}>
+          {busy ? (zh ? "处理中…" : "Processing…") : walletState === "disconnected" ? (zh ? "连接钱包" : "Connect wallet") : walletState === "ready" ? (zh ? "获得 MINI" : "Get MINI") : walletState === "preparing" ? (zh ? "正在准备钱包…" : "Preparing wallet…") : (zh ? "钱包暂不可用" : "Wallet unavailable")}
         </button>
         {message && <p className="purchase-message success" role="status">{message}</p>}
         {error && <p className="purchase-message error" role="alert">{error}</p>}
+        {busy && <div className="purchase-processing-overlay" role="status" aria-live="polite"><span className="purchase-processing-spinner" aria-hidden="true" /><span className="purchase-processing-copy">{purchaseProgressCopy(purchaseStep, zh)}</span></div>}
       </section>}
     </div>
 
